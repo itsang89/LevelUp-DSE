@@ -26,7 +26,7 @@ export function PlannerGrid({
           <div className="p-5 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center border-r border-border-hairline">
             Time
           </div>
-          {weekDays.map((date, index) => {
+          {weekDays.map((date) => {
             const [dayName] = formatDayHeader(date).split(' ');
             const isToday = formatIsoDate(date) === formatIsoDate(new Date());
             

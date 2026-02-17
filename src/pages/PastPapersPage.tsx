@@ -32,7 +32,7 @@ export function PastPapersPage({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("date");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortDirection] = useState<SortDirection>("desc");
 
   const subjectsById = useMemo(
     () => Object.fromEntries(subjects.map((subject) => [subject.id, subject])),

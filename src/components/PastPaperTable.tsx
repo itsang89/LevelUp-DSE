@@ -1,5 +1,4 @@
 import type { PastPaperAttempt, Subject } from "../types";
-import { Button } from "./ui/Button";
 
 interface PastPaperTableProps {
   attempts: PastPaperAttempt[];
