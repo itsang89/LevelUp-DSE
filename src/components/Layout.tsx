@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import { useState, useMemo, useEffect, useRef } from "react";
 
 function navLinkClassName(isActive: boolean): string {
@@ -14,7 +14,6 @@ export function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

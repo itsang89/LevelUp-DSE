@@ -22,7 +22,6 @@ function createTaskId(): string {
   return `task-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
-const MAX_WEEKS_INITIAL = 4;
 const LOAD_LIMIT = 12; // Maximum weeks in each direction before "Load More" button
 
 export function PlannerPage({ subjects }: PlannerPageProps) {
