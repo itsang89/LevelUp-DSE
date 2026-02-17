@@ -1,9 +1,10 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useState, useMemo } from "react";
 import type { Subject } from "../types";
 import { getSubjectGradientStyle } from "../utils/subjectStyles";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
+import { Modal } from "../components/ui/Modal";
 
 interface SettingsPageProps {
   subjects: Subject[];
@@ -21,6 +22,7 @@ function createSubjectId(shortCode: string): string {
 }
 
 export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newSubject, setNewSubject] = useState<SubjectDraft>({
     name: "",
     shortCode: "",
@@ -62,6 +64,7 @@ export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
 
     setSubjects((prev) => [...prev, newItem]);
     setNewSubject({ name: "", shortCode: "", baseColor: "#3b82f6" });
+    setIsAddModalOpen(false);
     setError(null);
   }
 
@@ -113,13 +116,17 @@ export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
   }
 
   return (
-    <section className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div>
-        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Configuration</h3>
-        <p className="text-3xl font-light text-foreground tracking-tight mb-2">Study Preferences</p>
-        <p className="text-muted-foreground text-lg font-light leading-relaxed max-w-2xl">
-          Customize your study environment by managing your subjects and preferences.
-        </p>
+    <section className="space-y-16 pt-6 lg:pt-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-6">
+        <div>
+          <p className="text-3xl font-light text-primary tracking-tight">Study Preferences</p>
+        </div>
+        <Button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="rounded-full px-8 text-[11px] font-black uppercase tracking-widest shadow-soft h-11"
+        >
+          Add Subject
+        </Button>
       </div>
 
       <div className="grid gap-8">
@@ -197,42 +204,84 @@ export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
                 )}
               </Card>
             ))}
-
-            {/* Add New Subject Card */}
-            <Card variant="hairline" padding="sm" className="border-dashed bg-muted/20 flex flex-col items-center justify-center min-h-[180px]">
-              <h4 className="text-[10px] font-black text-muted-foreground mb-6 uppercase tracking-[0.2em] opacity-40">Add New Subject</h4>
-              <form onSubmit={handleAddSubject} className="w-full space-y-4">
-                <Input
-                  placeholder="Subject Name"
-                  className="h-9 px-3 text-xs font-bold"
-                  value={newSubject.name}
-                  onChange={(event) => setNewSubject((prev) => ({ ...prev, name: event.target.value }))}
-                />
-                <Input
-                  placeholder="Short Code (e.g. ENG)"
-                  className="h-9 px-3 text-xs font-black uppercase tracking-widest"
-                  value={newSubject.shortCode}
-                  onChange={(event) =>
-                    setNewSubject((prev) => ({ ...prev, shortCode: event.target.value.toUpperCase() }))
-                  }
-                />
-                <div className="flex gap-2">
-                  <input
-                    type="color"
-                    className="h-9 w-12 rounded-xl border border-border-hairline bg-surface cursor-pointer hairline-border"
-                    value={newSubject.baseColor}
-                    onChange={(event) =>
-                      setNewSubject((prev) => ({ ...prev, baseColor: event.target.value }))
-                    }
-                  />
-                  <Button type="submit" size="sm" className="flex-1 rounded-full text-[9px] font-black uppercase tracking-widest">Add</Button>
-                </div>
-              </form>
-              {error && <p className="mt-4 text-[9px] font-black text-dot-red uppercase tracking-widest text-center">{error}</p>}
-            </Card>
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="New Subject"
+        description="Add a new subject to track in your planner."
+      >
+        <form onSubmit={handleAddSubject} className="space-y-8">
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Subject Name</label>
+              <Input
+                placeholder="e.g. Mathematics"
+                className="h-11 px-4 text-sm font-bold"
+                value={newSubject.name}
+                onChange={(event) => setNewSubject((prev) => ({ ...prev, name: event.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Short Code</label>
+              <Input
+                placeholder="e.g. MATH"
+                className="h-11 px-4 text-sm font-black uppercase tracking-widest"
+                value={newSubject.shortCode}
+                onChange={(event) =>
+                  setNewSubject((prev) => ({ ...prev, shortCode: event.target.value.toUpperCase() }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Color Theme</label>
+              <div className="flex gap-4 items-center">
+                <input
+                  type="color"
+                  className="h-12 w-20 rounded-2xl border border-border-hairline bg-surface cursor-pointer hairline-border"
+                  value={newSubject.baseColor}
+                  onChange={(event) =>
+                    setNewSubject((prev) => ({ ...prev, baseColor: event.target.value }))
+                  }
+                />
+                <div className="flex-1 p-4 rounded-2xl border border-border-hairline bg-muted/5 flex items-center gap-3">
+                   <div 
+                    className="h-3 w-3 rounded-full" 
+                    style={{ backgroundColor: newSubject.baseColor }}
+                  />
+                  <span className="text-xs font-bold text-muted-foreground tracking-tight">Theme Color</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-4 rounded-2xl bg-dot-red/10 border border-dot-red/20 text-[10px] font-black uppercase tracking-widest text-dot-red text-center">
+              {error}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              type="button"
+              className="flex-1 rounded-full text-[10px] font-black uppercase tracking-widest h-12"
+              onClick={() => setIsAddModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="flex-[2] rounded-full text-[10px] font-black uppercase tracking-widest h-12"
+            >
+              Add Subject
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </section>
   );
 }

@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef, useLayoutEffect } from "react";
 import { PLANNER_SESSIONS, STORAGE_KEYS } from "../constants";
 import { usePersistentState } from "../hooks/usePersistentState";
 import type { PlannerCell as PlannerCellType, PlannerTask, Subject } from "../types";
-import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday } from "../utils/dateHelpers";
+import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
 import { PlannerGrid } from "../components/PlannerGrid";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
@@ -22,8 +22,16 @@ function createTaskId(): string {
   return `task-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
+const MAX_WEEKS_INITIAL = 4;
+const LOAD_LIMIT = 12; // Maximum weeks in each direction before "Load More" button
+
 export function PlannerPage({ subjects }: PlannerPageProps) {
-  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekSunday(new Date()));
+  const initialWeek = useMemo(() => startOfWeekSunday(new Date()), []);
+  const [weeks, setWeeks] = useState<Date[]>([initialWeek]);
+  const [currentWeekLabel, setCurrentWeekLabel] = useState<string>(formatWeekLabel(initialWeek));
+  const weekRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const scrollAdjustmentRef = useRef<{ oldScrollHeight: number; oldScrollTop: number } | null>(null);
+
   const [cells, setCells] = usePersistentState<PlannerCellType[]>(STORAGE_KEYS.plannerCells, []);
   const [activeCell, setActiveCell] = useState<CellEditorState | null>(null);
   const [subjectId, setSubjectId] = useState<string>("");
@@ -31,8 +39,66 @@ export function PlannerPage({ subjects }: PlannerPageProps) {
   const [notes, setNotes] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
-  const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
-  const weekLabel = useMemo(() => formatWeekLabel(weekStart), [weekStart]);
+  // Load initial surrounding weeks
+  useEffect(() => {
+    const initialWeeks = [
+      addWeeks(initialWeek, -1),
+      initialWeek,
+      addWeeks(initialWeek, 1),
+      addWeeks(initialWeek, 2),
+    ];
+    setWeeks(initialWeeks);
+  }, [initialWeek]);
+
+  // Scroll to current week on initial load
+  useEffect(() => {
+    const currentWeekKey = formatIsoDate(initialWeek);
+    const element = weekRefs.current.get(currentWeekKey);
+    if (element) {
+      element.scrollIntoView({ block: "start" });
+    }
+  }, [weeks.length === 4]); // Only run when initial weeks are loaded
+
+  // Intersection Observer for updating week label
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleWeeks = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (visibleWeeks[0]) {
+          const weekStartStr = visibleWeeks[0].target.getAttribute("data-week-start");
+          if (weekStartStr) {
+            setCurrentWeekLabel(formatWeekLabel(new Date(weekStartStr)));
+          }
+        }
+      },
+      {
+        threshold: [0.1, 0.5, 0.9],
+        rootMargin: "-20% 0px -20% 0px", // Focus on middle area
+      }
+    );
+
+    weekRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, [weeks]);
+
+  // Handle scroll position after loading previous weeks to prevent jumping
+  useLayoutEffect(() => {
+    if (scrollAdjustmentRef.current) {
+      const container = weekRefs.current.get(formatIsoDate(weeks[1]))?.closest('.overflow-y-auto');
+      if (container) {
+        const { oldScrollHeight, oldScrollTop } = scrollAdjustmentRef.current;
+        const newScrollHeight = container.scrollHeight;
+        container.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+      }
+      scrollAdjustmentRef.current = null;
+    }
+  }, [weeks]);
 
   const cellMap = useMemo(() => {
     const map = new Map<string, PlannerTask | null>();
@@ -107,32 +173,143 @@ export function PlannerPage({ subjects }: PlannerPageProps) {
     closeEditor();
   }
 
+  function loadPreviousWeek(): void {
+    const firstWeekKey = formatIsoDate(weeks[0]);
+    const container = weekRefs.current.get(firstWeekKey)?.closest('.overflow-y-auto');
+    if (container) {
+      scrollAdjustmentRef.current = {
+        oldScrollHeight: container.scrollHeight,
+        oldScrollTop: container.scrollTop
+      };
+    }
+
+    setWeeks((prev) => {
+      const first = prev[0];
+      return [addWeeks(first, -1), ...prev];
+    });
+  }
+
+  function loadNextWeek(): void {
+    setWeeks((prev) => {
+      const last = prev[prev.length - 1];
+      return [...prev, addWeeks(last, 1)];
+    });
+  }
+
+  const reachedPastLimit = useMemo(() => {
+    if (weeks.length === 0) return false;
+    const diff = (initialWeek.getTime() - weeks[0].getTime()) / (1000 * 60 * 60 * 24 * 7);
+    return diff >= LOAD_LIMIT;
+  }, [weeks, initialWeek]);
+
+  const reachedFutureLimit = useMemo(() => {
+    if (weeks.length === 0) return false;
+    const diff = (weeks[weeks.length - 1].getTime() - initialWeek.getTime()) / (1000 * 60 * 60 * 24 * 7);
+    return diff >= LOAD_LIMIT;
+  }, [weeks, initialWeek]);
+
+  function scrollToToday(): void {
+    const element = weekRefs.current.get(formatIsoDate(initialWeek));
+    if (element) {
+      const grid = element.querySelector('.planner-grid-container');
+      if (grid) {
+        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }
+
+  function getActiveWeekIndex(): number {
+    return weeks.findIndex(w => formatWeekLabel(w) === currentWeekLabel);
+  }
+
+  function scrollToOneWeek(direction: 'up' | 'down'): void {
+    const currentIndex = getActiveWeekIndex();
+    
+    if (direction === 'up') {
+      if (currentIndex > 0) {
+        const prevWeek = weeks[currentIndex - 1];
+        const element = weekRefs.current.get(formatIsoDate(prevWeek));
+        if (element) {
+          const grid = element.querySelector('.planner-grid-container');
+          if (grid) {
+            grid.scrollIntoView({ behavior: "smooth", block: "start" });
+          } else {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      } else if (!reachedPastLimit) {
+        loadPreviousWeek();
+      }
+    } else {
+      if (currentIndex < weeks.length - 1) {
+        const nextWeek = weeks[currentIndex + 1];
+        const element = weekRefs.current.get(formatIsoDate(nextWeek));
+        if (element) {
+          const grid = element.querySelector('.planner-grid-container');
+          if (grid) {
+            grid.scrollIntoView({ behavior: "smooth", block: "start" });
+          } else {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      } else if (!reachedFutureLimit) {
+        loadNextWeek();
+        const nextDate = addWeeks(weeks[weeks.length - 1], 1);
+        setTimeout(() => {
+          const element = weekRefs.current.get(formatIsoDate(nextDate));
+          if (element) {
+            const grid = element.querySelector('.planner-grid-container');
+            if (grid) {
+              grid.scrollIntoView({ behavior: "smooth", block: "start" });
+            } else {
+              element.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }
+        }, 100);
+      }
+    }
+  }
+
   return (
     <section className="space-y-12">
-      <div className="flex flex-col sm:flex-row justify-between items-end gap-6">
+      <div className="flex flex-col sm:flex-row justify-between items-end gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
         <div>
           <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Weekly Focus</h3>
-          <p className="text-3xl font-light text-foreground tracking-tight">Daily Mastery Tracker</p>
+          <p className="text-3xl font-light text-primary tracking-tight">Daily Mastery Tracker</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center bg-white/50 backdrop-blur-sm border border-border-hairline rounded-full p-1 shadow-sm">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={scrollToToday}
+            className="rounded-full px-4 text-[10px] font-black uppercase tracking-widest text-primary bg-surface border-border-hairline shadow-sm hover:bg-muted/50 transition-all"
+          >
+            Today
+          </Button>
+          <div className="flex items-center bg-surface/50 backdrop-blur-sm border border-border-hairline rounded-full p-1 shadow-sm">
             <button 
-              onClick={() => setWeekStart((prev) => addWeeks(prev, -1))}
-              className="p-2 text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => scrollToOneWeek('up')}
+              disabled={reachedPastLimit && getActiveWeekIndex() === 0}
+              className="p-2 text-muted-foreground hover:text-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+              title="Previous week"
             >
-              <span className="material-symbols-outlined text-lg">chevron_left</span>
+              <span className="material-symbols-outlined text-lg">keyboard_arrow_up</span>
             </button>
             <button 
-              onClick={() => setWeekStart(startOfWeekSunday(new Date()))}
-              className="px-4 text-[10px] font-black uppercase tracking-widest text-primary"
+              onClick={scrollToToday}
+              className="px-4 text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-70 transition-opacity"
             >
-              {weekLabel}
+              {currentWeekLabel}
             </button>
             <button 
-              onClick={() => setWeekStart((prev) => addWeeks(prev, 1))}
-              className="p-2 text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => scrollToOneWeek('down')}
+              disabled={reachedFutureLimit && getActiveWeekIndex() === weeks.length - 1}
+              className="p-2 text-muted-foreground hover:text-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+              title="Next week"
             >
-              <span className="material-symbols-outlined text-lg">chevron_right</span>
+              <span className="material-symbols-outlined text-lg">keyboard_arrow_down</span>
             </button>
           </div>
           <Button variant="outline" size="sm" className="rounded-full px-6 text-[10px] font-black uppercase tracking-widest">
@@ -141,13 +318,81 @@ export function PlannerPage({ subjects }: PlannerPageProps) {
         </div>
       </div>
 
-      <PlannerGrid
-        weekDays={weekDays}
-        sessions={PLANNER_SESSIONS}
-        getTask={getTask}
-        subjectsById={subjectsById}
-        onEditCell={openEditor}
-      />
+      <div className="space-y-12">
+        {/* Load Previous Week Button */}
+        {!reachedPastLimit && (
+          <div className="flex justify-center pt-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={loadPreviousWeek}
+              className="gap-2 group"
+            >
+              <span className="material-symbols-outlined text-lg group-hover:-translate-y-1 transition-transform">keyboard_double_arrow_up</span>
+              Load Previous Week
+            </Button>
+          </div>
+        )}
+        
+        {reachedPastLimit && (
+          <div className="text-center py-8 opacity-20 text-[10px] font-black uppercase tracking-[0.3em]">
+            Timeline Start Reached
+          </div>
+        )}
+
+        <div className="space-y-12">
+          {weeks.map((ws) => (
+            <div 
+              key={formatIsoDate(ws)}
+              data-week-start={ws.toISOString()}
+              ref={(el) => {
+                if (el) {
+                  weekRefs.current.set(formatIsoDate(ws), el);
+                } else {
+                  weekRefs.current.delete(formatIsoDate(ws));
+                }
+              }}
+              className="animate-in fade-in slide-in-from-bottom-8 duration-700"
+            >
+              <div className="mb-4 flex items-center gap-4">
+                <div className="h-px flex-1 bg-border-hairline opacity-50" />
+                <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.4em] opacity-40">
+                  {formatWeekLabel(ws)}
+                </h4>
+                <div className="h-px flex-1 bg-border-hairline opacity-50" />
+              </div>
+              <PlannerGrid
+                weekDays={getWeekDays(ws)}
+                sessions={PLANNER_SESSIONS}
+                getTask={getTask}
+                subjectsById={subjectsById}
+                onEditCell={openEditor}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Load Next Week Button */}
+        {!reachedFutureLimit && (
+          <div className="flex justify-center pb-12">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={loadNextWeek}
+              className="gap-2 group"
+            >
+              <span className="material-symbols-outlined text-lg group-hover:translate-y-1 transition-transform">keyboard_double_arrow_down</span>
+              Load Next Week
+            </Button>
+          </div>
+        )}
+
+        {reachedFutureLimit && (
+          <div className="text-center py-8 opacity-20 text-[10px] font-black uppercase tracking-[0.3em]">
+            Timeline End Reached
+          </div>
+        )}
+      </div>
 
       <Modal
         isOpen={!!activeCell}

@@ -15,9 +15,9 @@ export function PastPaperTable({
 }: PastPaperTableProps) {
   if (attempts.length === 0) {
     return (
-      <div className="rounded-zen border border-dashed border-border-hairline bg-white/40 p-20 text-center">
+      <div className="rounded-zen border border-dashed border-border-hairline bg-surface/40 p-20 text-center">
         <span className="material-symbols-outlined text-muted-foreground/20 text-6xl mb-4">description</span>
-        <h3 className="text-xl font-light text-foreground mb-1 leading-tight">Your history is a blank page</h3>
+        <h3 className="text-xl font-light text-primary mb-1 leading-tight">Your history is a blank page</h3>
         <p className="text-sm text-muted-foreground font-light">Add your first past paper to start the journey.</p>
       </div>
     );
@@ -35,7 +35,7 @@ export function PastPaperTable({
         return (
           <div 
             key={attempt.id} 
-            className="group zen-shadow bg-white rounded-zen p-8 flex flex-col md:flex-row items-center justify-between gap-8 transition-all hover:scale-[1.005] relative overflow-hidden"
+            className="group zen-shadow bg-surface rounded-zen p-8 flex flex-col md:flex-row items-center justify-between gap-8 transition-all hover:scale-[1.005] relative overflow-hidden"
           >
             {/* Subject Indicator Bar */}
             <div 
@@ -46,7 +46,7 @@ export function PastPaperTable({
             <div className="flex items-center gap-10 flex-1 w-full md:w-auto">
               <div className="text-center min-w-[80px]">
                 <p className="text-[10px] text-muted-foreground font-black tracking-widest uppercase opacity-40">{month} {day}</p>
-                <p className="text-xl font-light text-foreground">{year}</p>
+                <p className="text-xl font-light text-primary">{year}</p>
               </div>
               <div className="w-px h-10 bg-border-hairline hidden md:block" />
               <div className="flex-1">
@@ -56,7 +56,7 @@ export function PastPaperTable({
                 >
                   {subject?.name || "Unknown"}
                 </div>
-                <h5 className="text-lg font-medium leading-tight text-foreground tracking-tight">
+                <h5 className="text-lg font-medium leading-tight text-primary tracking-tight">
                   DSE {attempt.examYear} · {attempt.paperLabel}
                 </h5>
                 {attempt.tag && (
@@ -70,7 +70,7 @@ export function PastPaperTable({
             <div className="flex flex-wrap items-center justify-between md:justify-end gap-10 w-full md:w-auto pt-6 md:pt-0 border-t md:border-t-0 border-border-hairline">
               <div className="text-left md:text-right flex-1 md:flex-none">
                 <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1 opacity-40">Score</p>
-                <p className="text-3xl font-light text-foreground leading-none tabular-nums">
+                <p className="text-3xl font-light text-primary leading-none tabular-nums">
                   {attempt.score}<span className="text-sm text-muted-foreground ml-1">/ {attempt.total}</span>
                 </p>
               </div>

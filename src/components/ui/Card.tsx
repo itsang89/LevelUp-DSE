@@ -15,10 +15,10 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     };
     
     const variants = {
-      default: "bg-white border border-border-hairline shadow-soft rounded-3xl",
+      default: "bg-surface border border-border-hairline shadow-soft rounded-3xl",
       glass: "glass-card hairline-border rounded-3xl",
-      zen: "bg-white zen-shadow rounded-zen border-0",
-      hairline: "bg-white/50 border border-border-hairline hairline-border rounded-3xl",
+      zen: "bg-surface zen-shadow rounded-zen border-0",
+      hairline: "bg-surface/50 border border-border-hairline hairline-border rounded-3xl",
     };
 
     return (

@@ -31,7 +31,7 @@ export function Modal({ isOpen, onClose, title, children, description }: ModalPr
       />
       <div className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] bg-white shadow-2xl animate-in fade-in zoom-in slide-in-from-bottom-8 duration-500 hairline-border">
         <div className="p-10 pb-0">
-          <h3 className="text-2xl font-light text-foreground tracking-tight leading-none mb-3">{title}</h3>
+          <h3 className="text-2xl font-light text-primary tracking-tight leading-none mb-3">{title}</h3>
           {description && (
             <p className="text-sm font-light text-muted-foreground leading-relaxed">{description}</p>
           )}
