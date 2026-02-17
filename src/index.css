@@ -1,22 +1,90 @@
 @import "tailwindcss";
 
-:root {
-  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color: #0f172a;
-  background-color: #f8fafc;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme {
+  --color-primary: #2D3436;
+  --color-accent: #636E72;
+  --color-background: #FDFDFD;
+  --color-surface: rgba(255, 255, 255, 0.7);
+  --color-foreground: #2D3436;
+  
+  --color-muted: #F8F9FA;
+  --color-muted-foreground: #B2BEC3;
+  --color-border-hairline: #EAEAEA;
+  
+  --color-success: #10b981;
+  --color-success-foreground: #ffffff;
+
+  --color-dot-blue: #74B9FF;
+  --color-dot-red: #FF7675;
+  --color-dot-green: #55EFC4;
+  --color-dot-purple: #A29BFE;
+  --color-dot-yellow: #FFE135;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Lexend", sans-serif;
+
+  --radius-zen: 1.25rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+
+  --shadow-zen: 0 10px 40px -10px rgba(0, 0, 0, 0.04);
+  --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.03), 0 2px 4px -2px rgb(0 0 0 / 0.03);
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  :root {
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    font-weight: 400;
+    color: var(--color-foreground);
+    background-color: var(--color-background);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    box-sizing: border-box;
+    border-color: var(--color-border-hairline);
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    @apply bg-background text-foreground antialiased selection:bg-gray-100;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  background-color: #f8fafc;
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .hairline-border {
+    border-width: 0.5px;
+  }
+
+  .zen-shadow {
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #EAEAEA;
+    border-radius: 10px;
+  }
 }

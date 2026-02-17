@@ -1,6 +1,9 @@
 import { type FormEvent, useState } from "react";
 import type { PastPaperAttempt, Subject } from "../types";
 import { formatIsoDate } from "../utils/dateHelpers";
+import { Button } from "./ui/Button";
+import { Input } from "./ui/Input";
+import { Select } from "./ui/Select";
 
 export interface PastPaperFormValues {
   subjectId: string;
@@ -73,12 +76,13 @@ export function PastPaperForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="text-sm text-slate-700">
-          Subject *
-          <select
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid gap-5 md:grid-cols-2">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
+            Subject *
+          </label>
+          <Select
             value={values.subjectId}
             onChange={(event) => handleChange("subjectId", event.target.value)}
           >
@@ -88,99 +92,116 @@ export function PastPaperForm({
                 {subject.name} ({subject.shortCode})
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </div>
 
-        <label className="text-sm text-slate-700">
-          Exam year *
-          <input
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
+            Exam year *
+          </label>
+          <Input
             type="number"
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+            placeholder="e.g. 2024"
             value={values.examYear}
             onChange={(event) => handleChange("examYear", event.target.value)}
           />
-        </label>
+        </div>
 
-        <label className="text-sm text-slate-700">
-          Paper label *
-          <input
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
+            Paper label *
+          </label>
+          <Input
             type="text"
-            placeholder="Paper 1, Paper 2, Mock"
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+            placeholder="e.g. Paper 1, Paper 2, Mock"
             value={values.paperLabel}
             onChange={(event) => handleChange("paperLabel", event.target.value)}
           />
-        </label>
+        </div>
 
-        <label className="text-sm text-slate-700">
-          Date attempted *
-          <input
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
+            Date attempted *
+          </label>
+          <Input
             type="date"
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
             value={values.date}
             onChange={(event) => handleChange("date", event.target.value)}
           />
-        </label>
+        </div>
 
-        <label className="text-sm text-slate-700">
-          Score *
-          <input
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
+            Score *
+          </label>
+          <Input
             type="number"
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+            placeholder="Marks obtained"
             value={values.score}
             onChange={(event) => handleChange("score", event.target.value)}
           />
-        </label>
+        </div>
 
-        <label className="text-sm text-slate-700">
-          Total marks *
-          <input
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
+            Total marks *
+          </label>
+          <Input
             type="number"
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+            placeholder="Maximum marks"
             value={values.total}
             onChange={(event) => handleChange("total", event.target.value)}
           />
-        </label>
+        </div>
 
-        <label className="text-sm text-slate-700 md:col-span-2">
-          Tag
-          <input
+        <div className="space-y-2 md:col-span-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
+            Tag
+          </label>
+          <Input
             type="text"
-            placeholder="Official, School Mock, Set Paper"
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+            placeholder="e.g. Official, School Mock, Set Paper"
             value={values.tag}
             onChange={(event) => handleChange("tag", event.target.value)}
           />
-        </label>
+        </div>
 
-        <label className="text-sm text-slate-700 md:col-span-2">
-          Notes
+        <div className="space-y-2 md:col-span-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
+            Notes
+          </label>
           <textarea
-            className="mt-1 h-24 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+            className="flex min-h-[100px] w-full rounded-xl border border-input bg-surface px-4 py-3 text-base transition-all placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50"
+            placeholder="What did you learn from this attempt? Areas for improvement?"
             value={values.notes}
             onChange={(event) => handleChange("notes", event.target.value)}
           />
-        </label>
+        </div>
       </div>
 
-      {error ? <p className="text-sm font-medium text-rose-600">{error}</p> : null}
+      {error && (
+        <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-sm font-bold text-rose-600">
+          {error}
+        </div>
+      )}
 
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
         {onCancel ? (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            className="sm:min-w-[120px]"
             onClick={onCancel}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700"
           >
             Cancel
-          </button>
+          </Button>
         ) : null}
-        <button
+        <Button
           type="submit"
-          className="rounded-lg border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+          className="sm:min-w-[160px]"
         >
           {submitLabel}
-        </button>
+        </Button>
       </div>
     </form>
   );

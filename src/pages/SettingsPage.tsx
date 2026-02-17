@@ -1,6 +1,9 @@
 import { type FormEvent, useState } from "react";
 import type { Subject } from "../types";
 import { getSubjectGradientStyle } from "../utils/subjectStyles";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { Input } from "../components/ui/Input";
 
 interface SettingsPageProps {
   subjects: Subject[];
@@ -110,134 +113,125 @@ export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
   }
 
   return (
-    <section className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-semibold">Settings - Subjects</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Manage the subjects shared by planner and past paper tracking.
+    <section className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div>
+        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Configuration</h3>
+        <p className="text-3xl font-light text-foreground tracking-tight mb-2">Study Preferences</p>
+        <p className="text-muted-foreground text-lg font-light leading-relaxed max-w-2xl">
+          Customize your study environment by managing your subjects and preferences.
         </p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm">
-        <h3 className="mb-3 text-base font-semibold">Subject list</h3>
-        <div className="space-y-3">
-          {subjects.map((subject) => (
-            <div
-              key={subject.id}
-              style={getSubjectGradientStyle(subject)}
-              className="rounded-xl border border-slate-200 p-3"
-            >
-              {editingSubjectId === subject.id ? (
-                <div className="grid gap-2 md:grid-cols-4">
-                  <input
-                    type="text"
-                    className="rounded border border-slate-300 bg-white px-2 py-2 text-sm"
-                    value={editingDraft.name}
-                    onChange={(event) =>
-                      setEditingDraft((prev) => ({ ...prev, name: event.target.value }))
-                    }
-                  />
-                  <input
-                    type="text"
-                    className="rounded border border-slate-300 bg-white px-2 py-2 text-sm"
-                    value={editingDraft.shortCode}
-                    onChange={(event) =>
-                      setEditingDraft((prev) => ({ ...prev, shortCode: event.target.value }))
-                    }
-                  />
+      <div className="grid gap-8">
+        <div className="space-y-6">
+          <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] opacity-40 ml-1">Subject Management</h4>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {subjects.map((subject) => (
+              <Card 
+                key={subject.id} 
+                variant="hairline" 
+                padding="sm"
+                style={getSubjectGradientStyle(subject)}
+                className="group relative transition-all duration-300 hover:bg-white hover:shadow-soft"
+              >
+                {editingSubjectId === subject.id ? (
+                  <div className="space-y-4">
+                    <Input
+                      className="h-9 px-3 text-xs font-bold"
+                      value={editingDraft.name}
+                      onChange={(event) =>
+                        setEditingDraft((prev) => ({ ...prev, name: event.target.value }))
+                      }
+                    />
+                    <Input
+                      className="h-9 px-3 text-xs font-black uppercase tracking-widest"
+                      value={editingDraft.shortCode}
+                      onChange={(event) =>
+                        setEditingDraft((prev) => ({ ...prev, shortCode: event.target.value }))
+                      }
+                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        className="h-9 w-12 rounded-xl border border-border-hairline bg-surface cursor-pointer hairline-border"
+                        value={editingDraft.baseColor}
+                        onChange={(event) =>
+                          setEditingDraft((prev) => ({ ...prev, baseColor: event.target.value }))
+                        }
+                      />
+                      <Button size="sm" className="flex-1 rounded-full text-[9px]" onClick={saveEdit}>Save</Button>
+                      <Button size="sm" variant="outline" className="rounded-full text-[9px]" onClick={() => setEditingSubjectId(null)}>Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col h-full min-h-[140px]">
+                    <div className="flex items-start justify-between mb-6">
+                      <div 
+                        className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-border-hairline"
+                        style={{ color: subject.baseColor, backgroundColor: `${subject.baseColor}10` }}
+                      >
+                        {subject.shortCode}
+                      </div>
+                      <div 
+                        className="h-3 w-3 rounded-full shadow-sm" 
+                        style={{ backgroundColor: subject.baseColor }}
+                      />
+                    </div>
+                    <h4 className="text-lg font-medium text-foreground tracking-tight leading-none mb-1">{subject.name}</h4>
+                    
+                    <div className="mt-auto pt-6 flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => startEdit(subject)}
+                        className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteSubject(subject.id)}
+                        className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-dot-red transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            ))}
+
+            {/* Add New Subject Card */}
+            <Card variant="hairline" padding="sm" className="border-dashed bg-muted/20 flex flex-col items-center justify-center min-h-[180px]">
+              <h4 className="text-[10px] font-black text-muted-foreground mb-6 uppercase tracking-[0.2em] opacity-40">Add New Subject</h4>
+              <form onSubmit={handleAddSubject} className="w-full space-y-4">
+                <Input
+                  placeholder="Subject Name"
+                  className="h-9 px-3 text-xs font-bold"
+                  value={newSubject.name}
+                  onChange={(event) => setNewSubject((prev) => ({ ...prev, name: event.target.value }))}
+                />
+                <Input
+                  placeholder="Short Code (e.g. ENG)"
+                  className="h-9 px-3 text-xs font-black uppercase tracking-widest"
+                  value={newSubject.shortCode}
+                  onChange={(event) =>
+                    setNewSubject((prev) => ({ ...prev, shortCode: event.target.value.toUpperCase() }))
+                  }
+                />
+                <div className="flex gap-2">
                   <input
                     type="color"
-                    className="h-10 w-full rounded border border-slate-300 bg-white px-1 py-1"
-                    value={editingDraft.baseColor}
+                    className="h-9 w-12 rounded-xl border border-border-hairline bg-surface cursor-pointer hairline-border"
+                    value={newSubject.baseColor}
                     onChange={(event) =>
-                      setEditingDraft((prev) => ({ ...prev, baseColor: event.target.value }))
+                      setNewSubject((prev) => ({ ...prev, baseColor: event.target.value }))
                     }
                   />
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className="rounded border border-slate-900 bg-slate-900 px-3 py-2 text-xs font-medium text-white"
-                      onClick={saveEdit}
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded border border-slate-300 bg-white px-3 py-2 text-xs"
-                      onClick={() => setEditingSubjectId(null)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                  <Button type="submit" size="sm" className="flex-1 rounded-full text-[9px] font-black uppercase tracking-widest">Add</Button>
                 </div>
-              ) : (
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">{subject.name}</p>
-                    <p className="text-xs text-slate-600">{subject.shortCode}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="h-5 w-5 rounded-full border border-slate-300"
-                      style={{ backgroundColor: subject.baseColor }}
-                    />
-                    <button
-                      type="button"
-                      className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs"
-                      onClick={() => startEdit(subject)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs text-rose-700"
-                      onClick={() => handleDeleteSubject(subject.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+              </form>
+              {error && <p className="mt-4 text-[9px] font-black text-dot-red uppercase tracking-widest text-center">{error}</p>}
+            </Card>
+          </div>
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h3 className="mb-3 text-base font-semibold">Add new subject</h3>
-        <form onSubmit={handleAddSubject} className="grid gap-3 md:grid-cols-4">
-          <input
-            type="text"
-            placeholder="Name"
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-            value={newSubject.name}
-            onChange={(event) => setNewSubject((prev) => ({ ...prev, name: event.target.value }))}
-          />
-          <input
-            type="text"
-            placeholder="Short code"
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm uppercase"
-            value={newSubject.shortCode}
-            onChange={(event) =>
-              setNewSubject((prev) => ({ ...prev, shortCode: event.target.value.toUpperCase() }))
-            }
-          />
-          <input
-            type="color"
-            className="h-10 w-full rounded-lg border border-slate-300 bg-white px-1 py-1"
-            value={newSubject.baseColor}
-            onChange={(event) =>
-              setNewSubject((prev) => ({ ...prev, baseColor: event.target.value }))
-            }
-          />
-          <button
-            type="submit"
-            className="rounded-lg border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-          >
-            Add Subject
-          </button>
-        </form>
-        {error ? <p className="mt-3 text-sm font-medium text-rose-600">{error}</p> : null}
       </div>
     </section>
   );

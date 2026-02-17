@@ -1,5 +1,4 @@
 import type { PlannerTask, Subject } from "../types";
-import { getSubjectGradientStyle } from "../utils/subjectStyles";
 
 interface PlannerCellProps {
   task: PlannerTask | null;
@@ -13,38 +12,46 @@ export function PlannerCell({ task, subject, onClick }: PlannerCellProps) {
       <button
         type="button"
         onClick={onClick}
-        className="h-24 w-full rounded-xl border border-slate-200 bg-white p-2 text-left text-xs text-slate-500 shadow-sm transition hover:border-slate-300"
+        className="h-full w-full flex items-center gap-2 group transition-opacity cursor-pointer"
       >
-        Add task
+        <div className="w-1 h-1 rounded-full bg-muted-foreground/30 group-hover:bg-primary transition-colors"></div>
+        <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+          Add
+        </span>
       </button>
     );
   }
 
-  const isUnknownSubject = Boolean(task.subjectId) && !subject;
   const title = task.title.trim() || "(Untitled task)";
+  const subjectColor = subject?.baseColor || "var(--color-muted-foreground)";
 
   return (
     <button
       type="button"
       onClick={onClick}
-      style={getSubjectGradientStyle(subject)}
-      className="h-24 w-full rounded-xl border border-slate-200 p-2 text-left shadow-sm transition hover:border-slate-300"
+      className="h-full w-full text-left transition-all duration-200 hover:translate-x-0.5 cursor-pointer flex flex-col"
     >
-      <div className="mb-1 flex items-center gap-2">
-        {task.subjectId ? (
-          <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] font-medium text-slate-700">
-            {isUnknownSubject ? "Unknown Subject" : `${subject?.shortCode ?? ""}`}
+      <div 
+        className="h-full border-l-2 pl-3 py-1 flex flex-col justify-start"
+        style={{ borderColor: subjectColor }}
+      >
+        <p className="text-[11px] font-black text-foreground leading-tight tracking-tight line-clamp-2">
+          {title}
+        </p>
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+            {subject?.shortCode || "Other"}
           </span>
-        ) : (
-          <span className="rounded-full border border-slate-300 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600">
-            Other
-          </span>
-        )}
+          {task.notes && (
+            <>
+              <span className="text-[8px] text-muted-foreground opacity-30">•</span>
+              <span className="text-[9px] text-muted-foreground font-bold truncate opacity-60">
+                Notes
+              </span>
+            </>
+          )}
+        </div>
       </div>
-      <div className="truncate text-sm font-semibold text-slate-900">{title}</div>
-      {task.notes ? (
-        <div className="mt-1 truncate text-xs text-slate-600">{task.notes}</div>
-      ) : null}
     </button>
   );
 }

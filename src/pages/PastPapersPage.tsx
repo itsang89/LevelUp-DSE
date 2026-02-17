@@ -4,7 +4,10 @@ import { PastPaperTable } from "../components/PastPaperTable";
 import { STORAGE_KEYS } from "../constants";
 import { usePersistentState } from "../hooks/usePersistentState";
 import type { CutoffData, PastPaperAttempt, Subject } from "../types";
-import { estimateDseLevel, getGenericCutoffs } from "../utils/dseLevelEstimator";
+import { estimateDseLevel } from "../utils/dseLevelEstimator";
+import { Button } from "../components/ui/Button";
+import { Modal } from "../components/ui/Modal";
+import { Select } from "../components/ui/Select";
 
 interface PastPapersPageProps {
   subjects: Subject[];
@@ -53,6 +56,18 @@ export function PastPapersPage({
 
     return sortDirection === "asc" ? sorted : sorted.reverse();
   }, [attempts, sortDirection, sortKey, subjectFilter]);
+
+  const stats = useMemo(() => {
+    if (filteredAttempts.length === 0) return null;
+    const avgPercentage = filteredAttempts.reduce((acc, curr) => acc + curr.percentage, 0) / filteredAttempts.length;
+    const totalAttempts = filteredAttempts.length;
+    const topLevel = filteredAttempts.reduce((prev, curr) => {
+      const levels = ["2", "3", "4", "5", "5*", "5**"];
+      return levels.indexOf(curr.estimatedLevel) > levels.indexOf(prev) ? curr.estimatedLevel : prev;
+    }, "2");
+
+    return { avgPercentage, totalAttempts, topLevel };
+  }, [filteredAttempts]);
 
   function handleSubmit(values: PastPaperFormValues): void {
     const score = Number(values.score);
@@ -105,7 +120,7 @@ export function PastPapersPage({
   }
 
   function handleDelete(attemptId: string): void {
-    const confirmed = window.confirm("Delete this attempt?");
+    const confirmed = window.confirm("Are you sure you want to delete this attempt?");
     if (!confirmed) {
       return;
     }
@@ -123,104 +138,122 @@ export function PastPapersPage({
   }
 
   return (
-    <section className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">Past Paper Log</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Track attempts, percentages, and estimated DSE levels.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="rounded-lg border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-            onClick={openAddModal}
-          >
-            Add New Attempt
-          </button>
+    <section className="space-y-16 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div>
+          <h1 className="text-4xl font-extralight text-foreground tracking-tight mb-3">Quiet Performance</h1>
+          <p className="text-muted-foreground text-lg font-light">Your progress is a steady stream. Stay focused, stay calm.</p>
         </div>
-
-        {usingGenericFallback ? (
-          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            Using generic cutoffs. Subject-specific data unavailable.
-          </p>
-        ) : null}
-
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <label className="text-sm text-slate-700">
-            Filter by subject
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-              value={subjectFilter}
-              onChange={(event) => setSubjectFilter(event.target.value)}
+        <div className="flex items-center gap-3 bg-muted/50 p-1.5 rounded-full border border-border-hairline shadow-sm">
+          <button 
+            onClick={() => setSubjectFilter("all")}
+            className={`px-6 py-2 rounded-full text-sm transition-all duration-300 ${
+              subjectFilter === "all" ? "bg-success text-white shadow-lg shadow-success/20 font-medium" : "text-muted-foreground font-light hover:bg-white/50"
+            }`}
+          >
+            All Focus
+          </button>
+          {subjects.slice(0, 3).map(s => (
+            <button 
+              key={s.id}
+              onClick={() => setSubjectFilter(s.id)}
+              className={`px-6 py-2 rounded-full text-sm transition-all duration-300 hidden sm:block ${
+                subjectFilter === s.id ? "bg-success text-white shadow-lg shadow-success/20 font-medium" : "text-muted-foreground font-light hover:bg-white/50"
+              }`}
             >
-              <option value="all">All subjects</option>
-              {subjects.map((subject) => (
-                <option key={subject.id} value={subject.id}>
-                  {subject.name} ({subject.shortCode})
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm text-slate-700">
-            Sort by
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-              value={sortKey}
-              onChange={(event) => setSortKey(event.target.value as SortKey)}
-            >
-              <option value="date">Date</option>
-              <option value="examYear">Exam Year</option>
-              <option value="percentage">Percentage</option>
-            </select>
-          </label>
-          <label className="text-sm text-slate-700">
-            Direction
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-              value={sortDirection}
-              onChange={(event) => setSortDirection(event.target.value as SortDirection)}
-            >
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
-            </select>
-          </label>
+              {s.name}
+            </button>
+          ))}
         </div>
       </div>
 
-      <PastPaperTable
-        attempts={filteredAttempts}
-        subjectsById={subjectsById}
-        onEdit={openEditModal}
-        onDelete={handleDelete}
-      />
-
-      {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
-            <h3 className="text-lg font-semibold">
-              {editingAttempt ? "Edit Past Paper Attempt" : "Add Past Paper Attempt"}
-            </h3>
-            <p className="mt-1 text-xs text-slate-500">
-              Generic fallback levels: {getGenericCutoffs().map((row) => `${row.level}>=${row.minimumPercentage}%`).join(", ")}
-            </p>
-            <div className="mt-4">
-              <PastPaperForm
-                key={editingAttempt?.id ?? "new"}
-                subjects={subjects}
-                initialValues={editingAttempt ?? undefined}
-                onSubmit={handleSubmit}
-                submitLabel={editingAttempt ? "Save Changes" : "Add Attempt"}
-                onCancel={() => {
-                  setIsModalOpen(false);
-                  setEditingAttempt(null);
-                }}
-              />
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div className="zen-shadow rounded-zen p-10 bg-white border-0">
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-6 opacity-60">Aggregate Mastery</p>
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-6xl font-extralight text-foreground tracking-tighter">{stats?.topLevel || "—"}</h3>
+            {stats && <span className="text-success text-sm font-light">+1.2%</span>}
           </div>
         </div>
-      ) : null}
+        <div className="zen-shadow rounded-zen p-10 bg-white border-0">
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-6 opacity-60">Completed Journeys</p>
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-6xl font-extralight text-foreground tracking-tighter">{stats?.totalAttempts || 0}</h3>
+            <span className="text-muted-foreground text-sm font-light ml-1">papers</span>
+          </div>
+        </div>
+        <div className="zen-shadow rounded-zen p-10 bg-white border-0">
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-6 opacity-60">Current Velocity</p>
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-6xl font-extralight text-foreground tracking-tighter">
+              {stats?.avgPercentage.toFixed(1) || "0.0"}<span className="text-3xl font-light opacity-40">%</span>
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-10">
+        <div className="flex items-center justify-between px-2">
+          <h4 className="text-2xl font-extralight text-foreground tracking-tight">Past Paper History</h4>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-40">Sort</span>
+              <Select 
+                className="h-8 py-0 px-3 text-xs rounded-full bg-transparent border-border-hairline"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+              >
+                <option value="date">Date</option>
+                <option value="examYear">Year</option>
+                <option value="percentage">Success</option>
+              </Select>
+            </div>
+            <Button 
+              size="sm" 
+              className="rounded-full bg-primary text-white h-9 px-6 text-[10px] font-black uppercase tracking-widest"
+              onClick={openAddModal}
+            >
+              Add Entry
+            </Button>
+          </div>
+        </div>
+
+        {usingGenericFallback && (
+          <div className="flex items-center gap-2 p-4 rounded-zen bg-amber-50/50 border border-amber-100/50 text-xs font-medium text-amber-700 mx-2">
+            <span className="material-symbols-outlined text-lg opacity-60">info</span>
+            Using generic cutoffs. Subject-specific data unavailable.
+          </div>
+        )}
+
+        <PastPaperTable
+          attempts={filteredAttempts}
+          subjectsById={subjectsById}
+          onEdit={openEditModal}
+          onDelete={handleDelete}
+        />
+      </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingAttempt(null);
+        }}
+        title={editingAttempt ? "Edit Journey" : "New Journey"}
+        description={editingAttempt ? "Update your past paper results." : "Log your latest past paper session."}
+      >
+        <PastPaperForm
+          key={editingAttempt?.id ?? "new"}
+          subjects={subjects}
+          initialValues={editingAttempt ?? undefined}
+          onSubmit={handleSubmit}
+          submitLabel={editingAttempt ? "Update Entry" : "Add Journey"}
+          onCancel={() => {
+            setIsModalOpen(false);
+            setEditingAttempt(null);
+          }}
+        />
+      </Modal>
     </section>
   );
 }

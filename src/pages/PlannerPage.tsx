@@ -4,6 +4,10 @@ import { usePersistentState } from "../hooks/usePersistentState";
 import type { PlannerCell as PlannerCellType, PlannerTask, Subject } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday } from "../utils/dateHelpers";
 import { PlannerGrid } from "../components/PlannerGrid";
+import { Button } from "../components/ui/Button";
+import { Modal } from "../components/ui/Modal";
+import { Input } from "../components/ui/Input";
+import { Select } from "../components/ui/Select";
 
 interface PlannerPageProps {
   subjects: Subject[];
@@ -104,37 +108,36 @@ export function PlannerPage({ subjects }: PlannerPageProps) {
   }
 
   return (
-    <section className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-semibold">Weekly Study Planner</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Assign one task per session block and keep the week focused.
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium"
-            onClick={() => setWeekStart((prev) => addWeeks(prev, -1))}
-          >
-            Previous Week
-          </button>
-          <button
-            type="button"
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium"
-            onClick={() => setWeekStart(startOfWeekSunday(new Date()))}
-          >
-            Today
-          </button>
-          <button
-            type="button"
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium"
-            onClick={() => setWeekStart((prev) => addWeeks(prev, 1))}
-          >
-            Next Week
-          </button>
-          <span className="ml-auto rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
-            {weekLabel}
-          </span>
+    <section className="space-y-12">
+      <div className="flex flex-col sm:flex-row justify-between items-end gap-6">
+        <div>
+          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Weekly Focus</h3>
+          <p className="text-3xl font-light text-foreground tracking-tight">Daily Mastery Tracker</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center bg-white/50 backdrop-blur-sm border border-border-hairline rounded-full p-1 shadow-sm">
+            <button 
+              onClick={() => setWeekStart((prev) => addWeeks(prev, -1))}
+              className="p-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg">chevron_left</span>
+            </button>
+            <button 
+              onClick={() => setWeekStart(startOfWeekSunday(new Date()))}
+              className="px-4 text-[10px] font-black uppercase tracking-widest text-primary"
+            >
+              {weekLabel}
+            </button>
+            <button 
+              onClick={() => setWeekStart((prev) => addWeeks(prev, 1))}
+              className="p-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg">chevron_right</span>
+            </button>
+          </div>
+          <Button variant="outline" size="sm" className="rounded-full px-6 text-[10px] font-black uppercase tracking-widest">
+            Export PDF
+          </Button>
         </div>
       </div>
 
@@ -146,79 +149,76 @@ export function PlannerPage({ subjects }: PlannerPageProps) {
         onEditCell={openEditor}
       />
 
-      {activeCell ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
-            <h3 className="text-lg font-semibold">Edit Planner Cell</h3>
-            <p className="mt-1 text-xs text-slate-500">
-              {activeCell.date} - {PLANNER_SESSIONS.find((session) => session.id === activeCell.sessionId)?.label}
-            </p>
+      <Modal
+        isOpen={!!activeCell}
+        onClose={closeEditor}
+        title="Session Details"
+        description={activeCell ? `${activeCell.date} — ${PLANNER_SESSIONS.find((s) => s.id === activeCell.sessionId)?.label}` : ""}
+      >
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
+              Subject
+            </label>
+            <Select
+              value={subjectId}
+              onChange={(e) => setSubjectId(e.target.value)}
+            >
+              <option value="">No subject / Other</option>
+              {subjects.map((subject) => (
+                <option key={subject.id} value={subject.id}>
+                  {subject.name} ({subject.shortCode})
+                </option>
+              ))}
+            </Select>
+          </div>
 
-            <div className="mt-4 space-y-3">
-              <label className="block text-sm text-slate-700">
-                Subject
-                <select
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                  value={subjectId}
-                  onChange={(event) => setSubjectId(event.target.value)}
-                >
-                  <option value="">No subject / Other</option>
-                  {subjects.map((subject) => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.name} ({subject.shortCode})
-                    </option>
-                  ))}
-                </select>
-              </label>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
+              Focus Goal <span className="text-dot-red">*</span>
+            </label>
+            <Input
+              placeholder="What are you mastering today?"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
 
-              <label className="block text-sm text-slate-700">
-                Task title *
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                />
-              </label>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
+              Notes & Reminders
+            </label>
+            <textarea
+              className="flex min-h-[120px] w-full rounded-2xl border border-border-hairline bg-background/50 px-4 py-3 text-sm transition-all placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary/40 disabled:opacity-50 hairline-border"
+              placeholder="Specific topics, page numbers, or areas of focus..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </div>
 
-              <label className="block text-sm text-slate-700">
-                Notes
-                <textarea
-                  className="mt-1 h-24 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                />
-              </label>
+          {error && (
+            <div className="p-3 rounded-xl bg-dot-red/10 border border-dot-red/20 text-[10px] font-black uppercase tracking-widest text-dot-red text-center">
+              {error}
             </div>
+          )}
 
-            {error ? <p className="mt-3 text-sm font-medium text-rose-600">{error}</p> : null}
-
-            <div className="mt-5 flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700"
-                onClick={closeEditor}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700"
-                onClick={handleClear}
-              >
-                Clear
-              </button>
-              <button
-                type="button"
-                className="rounded-lg border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                onClick={handleSave}
-              >
-                Save
-              </button>
-            </div>
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-full text-[10px] font-black uppercase tracking-widest"
+              onClick={handleClear}
+            >
+              Clear
+            </Button>
+            <Button
+              className="flex-[2] rounded-full text-[10px] font-black uppercase tracking-widest"
+              onClick={handleSave}
+            >
+              Confirm Focus
+            </Button>
           </div>
         </div>
-      ) : null}
+      </Modal>
     </section>
   );
 }

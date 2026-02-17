@@ -19,48 +19,68 @@ export function PlannerGrid({
   onEditCell,
 }: PlannerGridProps) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 shadow-sm">
-      <table className="min-w-[980px] w-full border-separate border-spacing-2">
-        <thead>
-          <tr>
-            <th className="w-40 rounded-lg bg-white px-3 py-2 text-left text-sm font-semibold text-slate-700">
-              Session
-            </th>
-            {weekDays.map((date) => (
-              <th
+    <div className="w-full overflow-x-auto custom-scrollbar pb-6">
+      <div className="min-w-[1000px] glass-card rounded-3xl overflow-hidden hairline-border">
+        {/* Header Grid */}
+        <div className="grid grid-cols-[100px_repeat(7,1fr)] border-b border-border-hairline bg-white/40">
+          <div className="p-5 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center border-r border-border-hairline">
+            Time
+          </div>
+          {weekDays.map((date, index) => {
+            const [dayName] = formatDayHeader(date).split(' ');
+            const isToday = formatIsoDate(date) === formatIsoDate(new Date());
+            
+            return (
+              <div
                 key={formatIsoDate(date)}
-                className="rounded-lg bg-white px-3 py-2 text-left text-sm font-semibold text-slate-700"
+                className={`p-5 text-[10px] font-black uppercase tracking-[0.2em] text-center border-l border-border-hairline first:border-l-0 ${
+                  isToday ? "text-foreground bg-white/60" : "text-muted-foreground opacity-60"
+                }`}
               >
-                {formatDayHeader(date)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
+                {dayName}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Body Grid */}
+        <div className="divide-y divide-border-hairline">
           {sessions.map((session) => (
-            <tr key={session.id}>
-              <td className="rounded-lg bg-white px-3 py-2 align-top text-sm text-slate-700">
-                <div className="font-semibold">{session.label}</div>
-                <div className="text-xs text-slate-500">{session.timeRange}</div>
-              </td>
+            <div key={session.id} className="grid grid-cols-[100px_repeat(7,1fr)] min-h-[140px] group">
+              {/* Session Time Header */}
+              <div className="p-5 flex flex-col items-center justify-center bg-white/20 transition-colors group-hover:bg-white/40 border-r border-border-hairline">
+                <span className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none mb-1">{session.label}</span>
+                <span className="text-[9px] font-bold text-muted-foreground tracking-tighter uppercase opacity-70">
+                  {session.timeRange.split(' - ')[0]}
+                </span>
+              </div>
+
+              {/* Day Cells */}
               {weekDays.map((date) => {
                 const isoDate = formatIsoDate(date);
                 const task = getTask(isoDate, session.id);
                 const subject = task?.subjectId ? subjectsById[task.subjectId] : undefined;
+                const isToday = formatIsoDate(date) === formatIsoDate(new Date());
+
                 return (
-                  <td key={`${isoDate}-${session.id}`} className="align-top">
+                  <div 
+                    key={`${isoDate}-${session.id}`} 
+                    className={`p-4 border-l border-border-hairline relative transition-all duration-300 ${
+                      isToday ? "bg-white/30" : "hover:bg-white/10"
+                    }`}
+                  >
                     <PlannerCell
                       task={task}
                       subject={subject}
                       onClick={() => onEditCell(isoDate, session.id)}
                     />
-                  </td>
+                  </div>
                 );
               })}
-            </tr>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
   );
 }

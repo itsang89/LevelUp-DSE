@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+dse-planner-cursor-prompt.md
+assets-reference/
