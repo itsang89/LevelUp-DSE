@@ -21,6 +21,30 @@ export function PlannerCell({ task, subject, onClick }: PlannerCellProps) {
     );
   }
 
+  if (task.isRest) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="h-full w-full text-center transition-all duration-200 hover:translate-x-0.5 cursor-pointer flex flex-col rounded-xl p-3 shadow-soft border border-border-hairline/50 bg-black group/rest"
+      >
+        <div className="h-full py-0.5 flex flex-col items-center justify-center">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-white transition-colors">coffee</span>
+            <p className="text-[12px] font-black text-white uppercase tracking-[0.2em] transition-colors">
+              Rest
+            </p>
+          </div>
+          {task.notes && (
+            <p className="text-[11px] font-bold text-white/60 tracking-tight line-clamp-1 mt-1">
+              {task.notes}
+            </p>
+          )}
+        </div>
+      </button>
+    );
+  }
+
   const title = task.title.trim() || "(Untitled task)";
   const subjectColor = subject?.baseColor || "#666666";
   const bgGradient = subject 

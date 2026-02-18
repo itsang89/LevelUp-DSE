@@ -38,6 +38,7 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
   const [subjectId, setSubjectId] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [isRest, setIsRest] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [dataError, setDataError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
@@ -163,8 +164,9 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
     const existingTask = getTask(dateIso, sessionId);
     setActiveCell({ date: dateIso, sessionId });
     setSubjectId(existingTask?.subjectId ?? "");
-    setTitle(existingTask?.title ?? "");
+    setTitle(existingTask?.title ?? (existingTask?.isRest ? "Rest" : ""));
     setNotes(existingTask?.notes ?? "");
+    setIsRest(existingTask?.isRest ?? false);
     setError(null);
   }
 
@@ -190,7 +192,7 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
       return;
     }
 
-    if (!title.trim()) {
+    if (!isRest && !title.trim()) {
       setError("Task title is required.");
       return;
     }
@@ -198,9 +200,10 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
     const existingTask = getTask(activeCell.date, activeCell.sessionId);
     const task: PlannerTask = {
       id: existingTask?.id ?? createTaskId(),
-      subjectId: subjectId || null,
-      title: title.trim(),
+      subjectId: isRest ? null : (subjectId || null),
+      title: isRest ? "Rest" : title.trim(),
       notes: notes.trim() || undefined,
+      isRest: isRest,
     };
 
     try {
@@ -461,33 +464,68 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
         description={activeCell ? `${activeCell.date} — ${PLANNER_SESSIONS.find((s) => s.id === activeCell.sessionId)?.label}` : ""}
       >
         <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
-              Subject
-            </label>
-            <Select
-              value={subjectId}
-              onChange={(e) => setSubjectId(e.target.value)}
+          <div className="flex p-1 bg-surface border border-border-hairline rounded-2xl">
+            <button
+              type="button"
+              onClick={() => setIsRest(false)}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                !isRest 
+                  ? "bg-background text-primary shadow-sm" 
+                  : "text-muted-foreground opacity-40 hover:opacity-60"
+              }`}
             >
-              <option value="">No subject / Other</option>
-              {subjects.map((subject) => (
-                <option key={subject.id} value={subject.id}>
-                  {subject.name} ({subject.shortCode})
-                </option>
-              ))}
-            </Select>
+              <span className="material-symbols-outlined text-sm">book</span>
+              Study Session
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsRest(true);
+                setTitle("Rest");
+                setSubjectId("");
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                isRest 
+                  ? "bg-background text-primary shadow-sm" 
+                  : "text-muted-foreground opacity-40 hover:opacity-60"
+              }`}
+            >
+              <span className="material-symbols-outlined text-sm">coffee</span>
+              Rest Session
+            </button>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
-              Focus Goal <span className="text-dot-red">*</span>
-            </label>
-            <Input
-              placeholder="What are you mastering today?"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
+          {!isRest && (
+            <>
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
+                  Subject
+                </label>
+                <Select
+                  value={subjectId}
+                  onChange={(e) => setSubjectId(e.target.value)}
+                >
+                  <option value="">No subject / Other</option>
+                  {subjects.map((subject) => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.name} ({subject.shortCode})
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
+                  Focus Goal <span className="text-dot-red">*</span>
+                </label>
+                <Input
+                  placeholder="What are you mastering today?"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+            </>
+          )}
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">

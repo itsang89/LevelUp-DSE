@@ -18,6 +18,7 @@ export interface PlannerTask {
   subjectId: SubjectId | null;
   title: string;
   notes?: string;
+  isRest?: boolean;
 }
 
 export interface PlannerCell {
