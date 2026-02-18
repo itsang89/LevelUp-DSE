@@ -12,7 +12,6 @@ export interface PastPaperFormValues {
   date: string;
   score: string;
   total: string;
-  tag: string;
   notes: string;
 }
 
@@ -32,7 +31,6 @@ function buildInitialValues(initialValues?: Partial<PastPaperAttempt>): PastPape
     date: initialValues?.date ?? formatIsoDate(new Date()),
     score: initialValues?.score !== undefined ? String(initialValues.score) : "",
     total: initialValues?.total !== undefined ? String(initialValues.total) : "",
-    tag: initialValues?.tag ?? "",
     notes: initialValues?.notes ?? "",
   };
 }
@@ -47,8 +45,21 @@ export function PastPaperForm({
   const [values, setValues] = useState<PastPaperFormValues>(() => buildInitialValues(initialValues));
   const [error, setError] = useState<string | null>(null);
 
+  const selectedSubject = subjects.find((s) => s.id === values.subjectId);
+  const paperLabels = selectedSubject?.paperLabels && selectedSubject.paperLabels.length > 0
+    ? selectedSubject.paperLabels
+    : ["Paper 1", "Paper 2"];
+
+  const [isCustomLabel, setIsCustomLabel] = useState(() => {
+    if (!values.paperLabel) return false;
+    return !paperLabels.includes(values.paperLabel);
+  });
+
   function handleChange<K extends keyof PastPaperFormValues>(key: K, value: PastPaperFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
+    if (key === "subjectId") {
+      setIsCustomLabel(false);
+    }
   }
 
   function handleSubmit(event: FormEvent) {
@@ -111,12 +122,45 @@ export function PastPaperForm({
           <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
             Paper label *
           </label>
-          <Input
-            type="text"
-            placeholder="e.g. Paper 1, Paper 2, Mock"
-            value={values.paperLabel}
-            onChange={(event) => handleChange("paperLabel", event.target.value)}
-          />
+          {paperLabels.length > 0 && !isCustomLabel ? (
+            <Select
+              value={values.paperLabel}
+              onChange={(event) => {
+                if (event.target.value === "__custom__") {
+                  setIsCustomLabel(true);
+                  handleChange("paperLabel", "");
+                } else {
+                  handleChange("paperLabel", event.target.value);
+                }
+              }}
+            >
+              <option value="">Select paper</option>
+              {paperLabels.map((label) => (
+                <option key={label} value={label}>
+                  {label}
+                </option>
+              ))}
+              <option value="__custom__">+ Enter custom label...</option>
+            </Select>
+          ) : (
+            <div className="space-y-2">
+              <Input
+                type="text"
+                placeholder="e.g. Paper 1, Paper 2, Mock"
+                value={values.paperLabel}
+                onChange={(event) => handleChange("paperLabel", event.target.value)}
+              />
+              {paperLabels.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsCustomLabel(false)}
+                  className="text-[9px] font-black uppercase tracking-widest text-primary hover:text-primary/70 transition-colors ml-1"
+                >
+                  Choose from list
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -151,18 +195,6 @@ export function PastPaperForm({
             placeholder="Maximum marks"
             value={values.total}
             onChange={(event) => handleChange("total", event.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
-            Tag
-          </label>
-          <Input
-            type="text"
-            placeholder="e.g. Official, School Mock, Set Paper"
-            value={values.tag}
-            onChange={(event) => handleChange("tag", event.target.value)}
           />
         </div>
 

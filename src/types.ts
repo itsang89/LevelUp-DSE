@@ -5,6 +5,7 @@ export interface Subject {
   name: string;
   shortCode: string;
   baseColor: string;
+  paperLabels?: string[];
 }
 
 export interface PlannerSessionTemplate {

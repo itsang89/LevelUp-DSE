@@ -6,6 +6,7 @@ create table if not exists public.subjects (
   name text not null,
   short_code text not null,
   base_color text not null,
+  paper_labels text[] not null default '{}',
   created_at timestamptz not null default timezone('utc', now()),
   primary key (user_id, id)
 );

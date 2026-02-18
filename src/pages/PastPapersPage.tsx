@@ -37,6 +37,7 @@ export function PastPapersPage({
   const [editingAttempt, setEditingAttempt] = useState<PastPaperAttempt | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
+  const [paperFilter, setPaperFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDirection] = useState<SortDirection>("desc");
   const [dataError, setDataError] = useState<string | null>(null);
@@ -68,10 +69,39 @@ export function PastPapersPage({
     [subjects]
   );
 
+  const activeSubject = useMemo(
+    () => subjects.find((s) => s.id === subjectFilter),
+    [subjects, subjectFilter]
+  );
+
+  const availablePaperLabels = useMemo(() => {
+    if (!activeSubject) return [];
+    
+    // Get labels from current attempts for this subject
+    const subjectAttempts = attempts.filter(a => a.subjectId === subjectFilter);
+    const usedLabels = Array.from(new Set(subjectAttempts.map(a => a.paperLabel)));
+    
+    // Get predefined labels
+    const predefinedLabels = activeSubject.paperLabels && activeSubject.paperLabels.length > 0
+      ? activeSubject.paperLabels
+      : ["Paper 1", "Paper 2"];
+      
+    // Combine and deduplicate
+    return Array.from(new Set([...predefinedLabels, ...usedLabels])).sort();
+  }, [activeSubject, attempts, subjectFilter]);
+
+  useEffect(() => {
+    setPaperFilter("all");
+  }, [subjectFilter]);
+
   const filteredAttempts = useMemo(() => {
-    const list = subjectFilter === "all"
+    let list = subjectFilter === "all"
       ? attempts
       : attempts.filter((attempt) => attempt.subjectId === subjectFilter);
+
+    if (paperFilter !== "all") {
+      list = list.filter((attempt) => attempt.paperLabel === paperFilter);
+    }
 
     const sorted = [...list].sort((a, b) => {
       if (sortKey === "date") {
@@ -108,7 +138,6 @@ export function PastPapersPage({
           total,
           percentage,
           estimatedLevel,
-          tag: values.tag.trim() || undefined,
           notes: values.notes.trim() || undefined,
         };
         await updatePastPaperAttempt(userId, updatedAttempt);
@@ -126,7 +155,6 @@ export function PastPapersPage({
           total,
           percentage,
           estimatedLevel,
-          tag: values.tag.trim() || undefined,
           notes: values.notes.trim() || undefined,
         };
         await createPastPaperAttempt(userId, newAttempt);
@@ -190,7 +218,7 @@ export function PastPapersPage({
             >
               <option value="date">Date</option>
               <option value="examYear">Year</option>
-              <option value="percentage">Success</option>
+              <option value="percentage">Percentage</option>
             </Select>
           </div>
           <Button 
@@ -236,6 +264,34 @@ export function PastPapersPage({
               </button>
             ))}
           </div>
+
+          {availablePaperLabels.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-500">
+              <button
+                onClick={() => setPaperFilter("all")}
+                className={`px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${
+                  paperFilter === "all"
+                    ? "bg-primary/10 text-primary border border-primary/20"
+                    : "bg-transparent text-muted-foreground/60 border border-transparent hover:text-muted-foreground"
+                }`}
+              >
+                All Papers
+              </button>
+              {availablePaperLabels.map((label) => (
+                <button
+                  key={label}
+                  onClick={() => setPaperFilter(label)}
+                  className={`px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${
+                    paperFilter === label
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "bg-transparent text-muted-foreground/60 border border-transparent hover:text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {usingGenericFallback && (

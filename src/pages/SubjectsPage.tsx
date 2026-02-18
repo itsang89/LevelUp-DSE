@@ -5,6 +5,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
+import { TagInput } from "../components/ui/TagInput";
 import { createSubject, deleteSubject, updateSubject } from "../lib/api/subjectsApi";
 
 interface SubjectsPageProps {
@@ -17,6 +18,7 @@ interface SubjectDraft {
   name: string;
   shortCode: string;
   baseColor: string;
+  paperLabels: string[];
 }
 
 function createSubjectId(shortCode: string): string {
@@ -42,12 +44,14 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
     name: "",
     shortCode: "",
     baseColor: "#3b82f6",
+    paperLabels: ["Paper 1", "Paper 2"],
   });
   const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
   const [editingDraft, setEditingDraft] = useState<SubjectDraft>({
     name: "",
     shortCode: "",
     baseColor: "#3b82f6",
+    paperLabels: [],
   });
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -79,13 +83,14 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
       name: newSubject.name.trim(),
       shortCode,
       baseColor: newSubject.baseColor,
+      paperLabels: newSubject.paperLabels,
     };
 
     try {
       setIsSaving(true);
       await createSubject(userId, newItem);
       setSubjects((prev) => [...prev, newItem]);
-      setNewSubject({ name: "", shortCode: "", baseColor: "#3b82f6" });
+      setNewSubject({ name: "", shortCode: "", baseColor: "#3b82f6", paperLabels: ["Paper 1", "Paper 2"] });
       setIsAddModalOpen(false);
       setError(null);
     } catch (requestError) {
@@ -101,6 +106,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
       name: subject.name,
       shortCode: subject.shortCode,
       baseColor: subject.baseColor,
+      paperLabels: subject.paperLabels || [],
     });
     setError(null);
   }
@@ -123,6 +129,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
       name: editingDraft.name.trim(),
       shortCode: editingDraft.shortCode.trim().toUpperCase(),
       baseColor: editingDraft.baseColor,
+      paperLabels: editingDraft.paperLabels,
     };
 
     try {
@@ -201,6 +208,16 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
                         setEditingDraft((prev) => ({ ...prev, shortCode: event.target.value }))
                       }
                     />
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground ml-1">Paper Labels</label>
+                      <TagInput
+                        tags={editingDraft.paperLabels}
+                        onChange={(tags) =>
+                          setEditingDraft((prev) => ({ ...prev, paperLabels: tags }))
+                        }
+                        placeholder="e.g. Paper 1, Enter"
+                      />
+                    </div>
                     <div className="space-y-4">
                       <div className="flex flex-wrap gap-2">
                         {PRESET_COLORS.map((color) => (
@@ -236,6 +253,19 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
                       />
                     </div>
                     <h4 className="text-lg font-medium text-foreground tracking-tight leading-none mb-1">{subject.name}</h4>
+                    
+                    {subject.paperLabels && subject.paperLabels.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {subject.paperLabels.map((label) => (
+                          <div 
+                            key={label}
+                            className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-white/50 border border-border-hairline text-muted-foreground shadow-sm"
+                          >
+                            {label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     
                     <div className="mt-auto pt-6 flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
@@ -284,6 +314,16 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
                 value={newSubject.shortCode}
                 onChange={(event) =>
                   setNewSubject((prev) => ({ ...prev, shortCode: event.target.value.toUpperCase() }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Paper Labels (Type & Enter)</label>
+              <TagInput
+                placeholder="e.g. Paper 1, Paper 2"
+                tags={newSubject.paperLabels}
+                onChange={(tags) =>
+                  setNewSubject((prev) => ({ ...prev, paperLabels: tags }))
                 }
               />
             </div>

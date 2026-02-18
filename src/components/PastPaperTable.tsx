@@ -44,9 +44,9 @@ export function PastPaperTable({
             />
 
             <div className="flex items-center gap-10 flex-1 w-full md:w-auto">
-              <div className="text-center min-w-[80px]">
-                <p className="text-[10px] text-muted-foreground font-black tracking-widest uppercase opacity-40">{month} {day}</p>
-                <p className="text-xl font-light text-primary">{year}</p>
+              <div className="text-center min-w-[100px]">
+                <p className="text-[10px] text-muted-foreground font-black tracking-widest uppercase opacity-40">DSE</p>
+                <p className="text-3xl font-light text-primary tracking-tighter">{attempt.examYear}</p>
               </div>
               <div className="w-px h-10 bg-border-hairline hidden md:block" />
               <div className="flex-1">
@@ -60,11 +60,14 @@ export function PastPaperTable({
                   {subject?.name || "Unknown"}
                 </div>
                 <h5 className="text-lg font-medium leading-tight text-primary tracking-tight">
-                  DSE {attempt.examYear} · {attempt.paperLabel}
+                  {attempt.paperLabel}
                 </h5>
-                {attempt.tag && (
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 opacity-60">
-                    {attempt.tag}
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 opacity-60">
+                  Attempted on {month} {day}, {year}
+                </p>
+                {attempt.notes && (
+                  <p className="text-[11px] text-muted-foreground font-medium mt-2.5 line-clamp-2 max-w-md">
+                    {attempt.notes}
                   </p>
                 )}
               </div>
@@ -79,7 +82,7 @@ export function PastPaperTable({
               </div>
               
               <div className="text-left md:text-right flex-1 md:flex-none">
-                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1 opacity-40">Success</p>
+                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1 opacity-40">Percentage</p>
                 <p className="text-3xl font-light text-success leading-none tabular-nums">
                   {attempt.percentage.toFixed(1)}%
                 </p>

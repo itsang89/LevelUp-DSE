@@ -7,10 +7,10 @@ export const STORAGE_KEYS = {
 } as const;
 
 export const DEFAULT_SUBJECTS: Subject[] = [
-  { id: "chi", name: "Chinese", shortCode: "CHI", baseColor: "#ef4444" },
-  { id: "eng", name: "English", shortCode: "ENG", baseColor: "#3b82f6" },
-  { id: "math", name: "Mathematics", shortCode: "MATH", baseColor: "#10b981" },
-  { id: "csd", name: "Citizenship and Social Development", shortCode: "C&SD", baseColor: "#f59e0b" },
+  { id: "chi", name: "Chinese", shortCode: "CHI", baseColor: "#ef4444", paperLabels: ["Paper 1", "Paper 2"] },
+  { id: "eng", name: "English", shortCode: "ENG", baseColor: "#3b82f6", paperLabels: ["Paper 1", "Paper 2", "Paper 3", "Paper 4"] },
+  { id: "math", name: "Mathematics", shortCode: "MATH", baseColor: "#10b981", paperLabels: ["Paper 1", "Paper 2"] },
+  { id: "csd", name: "Citizenship and Social Development", shortCode: "C&SD", baseColor: "#f59e0b", paperLabels: ["Paper 1"] },
 ];
 
 export const PLANNER_SESSIONS: PlannerSessionTemplate[] = [
