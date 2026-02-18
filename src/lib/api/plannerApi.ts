@@ -8,6 +8,7 @@ interface PlannerCellRow {
   subject_id: string | null;
   title: string;
   notes: string | null;
+  is_rest: boolean;
 }
 
 function toPlannerCell(row: PlannerCellRow): PlannerCell {
@@ -16,6 +17,7 @@ function toPlannerCell(row: PlannerCellRow): PlannerCell {
     subjectId: row.subject_id,
     title: row.title,
     notes: row.notes ?? undefined,
+    isRest: row.is_rest,
   };
 
   return {
@@ -29,7 +31,7 @@ export async function listPlannerCells(userId: string): Promise<PlannerCell[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("planner_cells")
-    .select("date,session_id,task_id,subject_id,title,notes")
+    .select("date,session_id,task_id,subject_id,title,notes,is_rest")
     .eq("user_id", userId);
 
   if (error) {
@@ -55,6 +57,7 @@ export async function upsertPlannerCell(
       subject_id: task.subjectId,
       title: task.title,
       notes: task.notes ?? null,
+      is_rest: task.isRest ?? false,
     },
     { onConflict: "user_id,date,session_id" }
   );
