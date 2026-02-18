@@ -114,7 +114,7 @@ export function PastPapersPage({
     });
 
     return sortDirection === "asc" ? sorted : sorted.reverse();
-  }, [attempts, sortDirection, sortKey, subjectFilter]);
+  }, [attempts, sortDirection, sortKey, subjectFilter, paperFilter]);
 
   async function handleSubmit(values: PastPaperFormValues): Promise<void> {
     const score = Number(values.score);
