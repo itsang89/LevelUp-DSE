@@ -1,15 +1,20 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PastPaperForm, type PastPaperFormValues } from "../components/PastPaperForm";
 import { PastPaperTable } from "../components/PastPaperTable";
-import { STORAGE_KEYS } from "../constants";
-import { usePersistentState } from "../hooks/usePersistentState";
 import type { CutoffData, PastPaperAttempt, Subject } from "../types";
 import { estimateDseLevel } from "../utils/dseLevelEstimator";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Select } from "../components/ui/Select";
+import {
+  createPastPaperAttempt,
+  deletePastPaperAttempt,
+  listPastPaperAttempts,
+  updatePastPaperAttempt,
+} from "../lib/api/pastPapersApi";
 
 interface PastPapersPageProps {
+  userId: string;
   subjects: Subject[];
   cutoffData: CutoffData;
   usingGenericFallback: boolean;
@@ -23,16 +28,40 @@ function createAttemptId(): string {
 }
 
 export function PastPapersPage({
+  userId,
   subjects,
   cutoffData,
   usingGenericFallback,
 }: PastPapersPageProps) {
-  const [attempts, setAttempts] = usePersistentState<PastPaperAttempt[]>(STORAGE_KEYS.pastPapers, []);
+  const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [editingAttempt, setEditingAttempt] = useState<PastPaperAttempt | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDirection] = useState<SortDirection>("desc");
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [isPersisting, setIsPersisting] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    listPastPaperAttempts(userId)
+      .then((rows) => {
+        if (isMounted) {
+          setAttempts(rows);
+        }
+      })
+      .catch((requestError) => {
+        if (isMounted) {
+          setDataError(
+            requestError instanceof Error ? requestError.message : "Failed to load past paper history."
+          );
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   const subjectsById = useMemo(
     () => Object.fromEntries(subjects.map((subject) => [subject.id, subject])),
@@ -69,7 +98,7 @@ export function PastPapersPage({
     return { avgPercentage, totalAttempts, topLevel };
   }, [filteredAttempts]);
 
-  function handleSubmit(values: PastPaperFormValues): void {
+  async function handleSubmit(values: PastPaperFormValues): Promise<void> {
     const score = Number(values.score);
     const total = Number(values.total);
     const percentage = (score / total) * 100;
@@ -78,53 +107,72 @@ export function PastPapersPage({
     const subjectKey = subject?.shortCode ?? values.subjectId;
     const estimatedLevel = estimateDseLevel(subjectKey, percentage, cutoffData);
 
-    if (editingAttempt) {
-      setAttempts((prev) =>
-        prev.map((attempt) =>
-          attempt.id === editingAttempt.id
-            ? {
-                ...attempt,
-                subjectId: values.subjectId,
-                examYear: Number(values.examYear),
-                paperLabel: values.paperLabel.trim(),
-                date: values.date,
-                score,
-                total,
-                percentage,
-                estimatedLevel,
-                tag: values.tag.trim() || undefined,
-                notes: values.notes.trim() || undefined,
-              }
-            : attempt
-        )
+    try {
+      setIsPersisting(true);
+      if (editingAttempt) {
+        const updatedAttempt: PastPaperAttempt = {
+          ...editingAttempt,
+          subjectId: values.subjectId,
+          examYear: Number(values.examYear),
+          paperLabel: values.paperLabel.trim(),
+          date: values.date,
+          score,
+          total,
+          percentage,
+          estimatedLevel,
+          tag: values.tag.trim() || undefined,
+          notes: values.notes.trim() || undefined,
+        };
+        await updatePastPaperAttempt(userId, updatedAttempt);
+        setAttempts((prev) =>
+          prev.map((attempt) => (attempt.id === editingAttempt.id ? updatedAttempt : attempt))
+        );
+      } else {
+        const newAttempt: PastPaperAttempt = {
+          id: createAttemptId(),
+          subjectId: values.subjectId,
+          examYear: Number(values.examYear),
+          paperLabel: values.paperLabel.trim(),
+          date: values.date,
+          score,
+          total,
+          percentage,
+          estimatedLevel,
+          tag: values.tag.trim() || undefined,
+          notes: values.notes.trim() || undefined,
+        };
+        await createPastPaperAttempt(userId, newAttempt);
+        setAttempts((prev) => [...prev, newAttempt]);
+      }
+      setDataError(null);
+      setEditingAttempt(null);
+      setIsModalOpen(false);
+    } catch (requestError) {
+      setDataError(
+        requestError instanceof Error ? requestError.message : "Failed to save past paper attempt."
       );
-    } else {
-      const newAttempt: PastPaperAttempt = {
-        id: createAttemptId(),
-        subjectId: values.subjectId,
-        examYear: Number(values.examYear),
-        paperLabel: values.paperLabel.trim(),
-        date: values.date,
-        score,
-        total,
-        percentage,
-        estimatedLevel,
-        tag: values.tag.trim() || undefined,
-        notes: values.notes.trim() || undefined,
-      };
-      setAttempts((prev) => [...prev, newAttempt]);
+    } finally {
+      setIsPersisting(false);
     }
-
-    setEditingAttempt(null);
-    setIsModalOpen(false);
   }
 
-  function handleDelete(attemptId: string): void {
+  async function handleDelete(attemptId: string): Promise<void> {
     const confirmed = window.confirm("Are you sure you want to delete this attempt?");
     if (!confirmed) {
       return;
     }
-    setAttempts((prev) => prev.filter((attempt) => attempt.id !== attemptId));
+    try {
+      setIsPersisting(true);
+      await deletePastPaperAttempt(userId, attemptId);
+      setAttempts((prev) => prev.filter((attempt) => attempt.id !== attemptId));
+      setDataError(null);
+    } catch (requestError) {
+      setDataError(
+        requestError instanceof Error ? requestError.message : "Failed to delete past paper attempt."
+      );
+    } finally {
+      setIsPersisting(false);
+    }
   }
 
   function openAddModal(): void {
@@ -235,6 +283,13 @@ export function PastPapersPage({
           </div>
         )}
 
+        {dataError && (
+          <div className="flex items-center gap-2 p-4 rounded-zen bg-rose-50/50 border border-rose-100/50 text-xs font-medium text-rose-700 mx-2">
+            <span className="material-symbols-outlined text-lg opacity-60">error</span>
+            {dataError}
+          </div>
+        )}
+
         <PastPaperTable
           attempts={filteredAttempts}
           subjectsById={subjectsById}
@@ -257,7 +312,7 @@ export function PastPapersPage({
           subjects={subjects}
           initialValues={editingAttempt ?? undefined}
           onSubmit={handleSubmit}
-          submitLabel={editingAttempt ? "Update Entry" : "Add Journey"}
+          submitLabel={isPersisting ? "Saving..." : editingAttempt ? "Update Entry" : "Add Journey"}
           onCancel={() => {
             setIsModalOpen(false);
             setEditingAttempt(null);

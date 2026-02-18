@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useRef } from "react";
+import { getSupabaseClient } from "../lib/supabase";
 
 function navLinkClassName(isActive: boolean): string {
   return [
@@ -11,6 +12,7 @@ function navLinkClassName(isActive: boolean): string {
 }
 
 export function Layout() {
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -29,12 +31,17 @@ export function Layout() {
     };
   }, [isUserPopoverOpen]);
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     const confirmed = window.confirm("Are you sure you want to sign out?");
     if (confirmed) {
-      // Logic for signing out would go here
-      console.log("Signing out...");
       setIsUserPopoverOpen(false);
+      try {
+        const supabase = getSupabaseClient();
+        await supabase.auth.signOut();
+      } catch (error) {
+        console.error("Failed to sign out from Supabase.", error);
+      }
+      navigate("/login");
     }
   };
 

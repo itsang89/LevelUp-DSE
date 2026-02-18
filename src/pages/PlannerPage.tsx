@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect, useRef, useLayoutEffect } from "react";
-import { PLANNER_SESSIONS, STORAGE_KEYS } from "../constants";
-import { usePersistentState } from "../hooks/usePersistentState";
+import { PLANNER_SESSIONS } from "../constants";
 import type { PlannerCell as PlannerCellType, PlannerTask, Subject } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
 import { PlannerGrid } from "../components/PlannerGrid";
@@ -8,8 +7,10 @@ import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import { deletePlannerCell, listPlannerCells, upsertPlannerCell } from "../lib/api/plannerApi";
 
 interface PlannerPageProps {
+  userId: string;
   subjects: Subject[];
 }
 
@@ -24,19 +25,22 @@ function createTaskId(): string {
 
 const LOAD_LIMIT = 12; // Maximum weeks in each direction before "Load More" button
 
-export function PlannerPage({ subjects }: PlannerPageProps) {
+export function PlannerPage({ userId, subjects }: PlannerPageProps) {
   const initialWeek = useMemo(() => startOfWeekSunday(new Date()), []);
   const [weeks, setWeeks] = useState<Date[]>([initialWeek]);
   const [currentWeekLabel, setCurrentWeekLabel] = useState<string>(formatWeekLabel(initialWeek));
   const weekRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const hasScrolledToCurrentWeekRef = useRef(false);
   const scrollAdjustmentRef = useRef<{ oldScrollHeight: number; oldScrollTop: number } | null>(null);
 
-  const [cells, setCells] = usePersistentState<PlannerCellType[]>(STORAGE_KEYS.plannerCells, []);
+  const [cells, setCells] = useState<PlannerCellType[]>([]);
   const [activeCell, setActiveCell] = useState<CellEditorState | null>(null);
   const [subjectId, setSubjectId] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [isPersisting, setIsPersisting] = useState(false);
 
   // Load initial surrounding weeks
   useEffect(() => {
@@ -49,14 +53,39 @@ export function PlannerPage({ subjects }: PlannerPageProps) {
     setWeeks(initialWeeks);
   }, [initialWeek]);
 
+  useEffect(() => {
+    let isMounted = true;
+    listPlannerCells(userId)
+      .then((rows) => {
+        if (isMounted) {
+          setCells(rows);
+        }
+      })
+      .catch((requestError) => {
+        if (isMounted) {
+          setDataError(
+            requestError instanceof Error ? requestError.message : "Failed to load planner data."
+          );
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
+
   // Scroll to current week on initial load
   useEffect(() => {
+    if (hasScrolledToCurrentWeekRef.current || weeks.length < 4) {
+      return;
+    }
     const currentWeekKey = formatIsoDate(initialWeek);
     const element = weekRefs.current.get(currentWeekKey);
     if (element) {
       element.scrollIntoView({ block: "start" });
+      hasScrolledToCurrentWeekRef.current = true;
     }
-  }, [weeks.length === 4]); // Only run when initial weeks are loaded
+  }, [initialWeek, weeks]);
 
   // Intersection Observer for updating week label
   useEffect(() => {
@@ -142,7 +171,7 @@ export function PlannerPage({ subjects }: PlannerPageProps) {
     });
   }
 
-  function handleSave(): void {
+  async function handleSave(): Promise<void> {
     if (!activeCell) {
       return;
     }
@@ -160,16 +189,32 @@ export function PlannerPage({ subjects }: PlannerPageProps) {
       notes: notes.trim() || undefined,
     };
 
-    upsertCell(activeCell.date, activeCell.sessionId, task);
-    closeEditor();
+    try {
+      setIsPersisting(true);
+      await upsertPlannerCell(userId, activeCell.date, activeCell.sessionId, task);
+      upsertCell(activeCell.date, activeCell.sessionId, task);
+      closeEditor();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Failed to save planner task.");
+    } finally {
+      setIsPersisting(false);
+    }
   }
 
-  function handleClear(): void {
+  async function handleClear(): Promise<void> {
     if (!activeCell) {
       return;
     }
-    upsertCell(activeCell.date, activeCell.sessionId, null);
-    closeEditor();
+    try {
+      setIsPersisting(true);
+      await deletePlannerCell(userId, activeCell.date, activeCell.sessionId);
+      upsertCell(activeCell.date, activeCell.sessionId, null);
+      closeEditor();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Failed to clear planner task.");
+    } finally {
+      setIsPersisting(false);
+    }
   }
 
   function loadPreviousWeek(): void {
@@ -318,6 +363,11 @@ export function PlannerPage({ subjects }: PlannerPageProps) {
       </div>
 
       <div className="space-y-12">
+        {dataError && (
+          <div className="p-3 rounded-xl bg-dot-red/10 border border-dot-red/20 text-[10px] font-black uppercase tracking-widest text-dot-red text-center">
+            {dataError}
+          </div>
+        )}
         {/* Load Previous Week Button */}
         {!reachedPastLimit && (
           <div className="flex justify-center pt-4">
@@ -451,12 +501,14 @@ export function PlannerPage({ subjects }: PlannerPageProps) {
               variant="outline"
               className="flex-1 rounded-full text-[10px] font-black uppercase tracking-widest"
               onClick={handleClear}
+              disabled={isPersisting}
             >
               Clear
             </Button>
             <Button
               className="flex-[2] rounded-full text-[10px] font-black uppercase tracking-widest"
               onClick={handleSave}
+              disabled={isPersisting}
             >
               Confirm Focus
             </Button>

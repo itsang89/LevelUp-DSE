@@ -52,7 +52,10 @@ export function PastPaperTable({
               <div className="flex-1">
                 <div 
                   className="inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 border border-border-hairline"
-                  style={{ color: subject?.baseColor || 'inherit', backgroundColor: `${subject?.baseColor}10` || 'transparent' }}
+                  style={{
+                    color: subject?.baseColor || "inherit",
+                    backgroundColor: subject?.baseColor ? `${subject.baseColor}10` : "transparent",
+                  }}
                 >
                   {subject?.name || "Unknown"}
                 </div>

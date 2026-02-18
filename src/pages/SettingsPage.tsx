@@ -5,8 +5,10 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
+import { createSubject, deleteSubject, updateSubject } from "../lib/api/subjectsApi";
 
 interface SettingsPageProps {
+  userId: string;
   subjects: Subject[];
   setSubjects: (value: Subject[] | ((prev: Subject[]) => Subject[])) => void;
 }
@@ -21,7 +23,7 @@ function createSubjectId(shortCode: string): string {
   return shortCode.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
-export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
+export function SettingsPage({ userId, subjects, setSubjects }: SettingsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newSubject, setNewSubject] = useState<SubjectDraft>({
     name: "",
@@ -35,6 +37,7 @@ export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
     baseColor: "#3b82f6",
   });
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   function validateDraft(draft: SubjectDraft): string | null {
     if (!draft.name.trim() || !draft.shortCode.trim()) {
@@ -46,8 +49,11 @@ export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
     return null;
   }
 
-  function handleAddSubject(event: FormEvent): void {
+  async function handleAddSubject(event: FormEvent): Promise<void> {
     event.preventDefault();
+    if (isSaving) {
+      return;
+    }
     const validationError = validateDraft(newSubject);
     if (validationError) {
       setError(validationError);
@@ -62,10 +68,18 @@ export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
       baseColor: newSubject.baseColor,
     };
 
-    setSubjects((prev) => [...prev, newItem]);
-    setNewSubject({ name: "", shortCode: "", baseColor: "#3b82f6" });
-    setIsAddModalOpen(false);
-    setError(null);
+    try {
+      setIsSaving(true);
+      await createSubject(userId, newItem);
+      setSubjects((prev) => [...prev, newItem]);
+      setNewSubject({ name: "", shortCode: "", baseColor: "#3b82f6" });
+      setIsAddModalOpen(false);
+      setError(null);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Failed to add subject.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function startEdit(subject: Subject): void {
@@ -78,8 +92,11 @@ export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
     setError(null);
   }
 
-  function saveEdit(): void {
+  async function saveEdit(): Promise<void> {
     if (!editingSubjectId) {
+      return;
+    }
+    if (isSaving) {
       return;
     }
     const validationError = validateDraft(editingDraft);
@@ -88,31 +105,44 @@ export function SettingsPage({ subjects, setSubjects }: SettingsPageProps) {
       return;
     }
 
-    setSubjects((prev) =>
-      prev.map((subject) =>
-        subject.id === editingSubjectId
-          ? {
-              ...subject,
-              name: editingDraft.name.trim(),
-              shortCode: editingDraft.shortCode.trim().toUpperCase(),
-              baseColor: editingDraft.baseColor,
-            }
-          : subject
-      )
-    );
+    const nextSubject: Subject = {
+      id: editingSubjectId,
+      name: editingDraft.name.trim(),
+      shortCode: editingDraft.shortCode.trim().toUpperCase(),
+      baseColor: editingDraft.baseColor,
+    };
 
-    setEditingSubjectId(null);
-    setError(null);
+    try {
+      setIsSaving(true);
+      await updateSubject(userId, editingSubjectId, nextSubject);
+      setSubjects((prev) =>
+        prev.map((subject) => (subject.id === editingSubjectId ? nextSubject : subject))
+      );
+      setEditingSubjectId(null);
+      setError(null);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Failed to update subject.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  function handleDeleteSubject(subjectId: string): void {
+  async function handleDeleteSubject(subjectId: string): Promise<void> {
     const confirmed = window.confirm(
       "Delete this subject? Existing planner and log entries will show as Unknown Subject."
     );
-    if (!confirmed) {
+    if (!confirmed || isSaving) {
       return;
     }
-    setSubjects((prev) => prev.filter((subject) => subject.id !== subjectId));
+    try {
+      setIsSaving(true);
+      await deleteSubject(userId, subjectId);
+      setSubjects((prev) => prev.filter((subject) => subject.id !== subjectId));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Failed to delete subject.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (

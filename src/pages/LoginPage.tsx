@@ -3,21 +3,55 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
+import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSupabaseConfigured) {
+      setError("Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate login
-    setTimeout(() => {
+    setError(null);
+    setNotice(null);
+
+    try {
+      const supabase = getSupabaseClient();
+
+      if (isSignUp) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+        });
+        if (signUpError) {
+          throw signUpError;
+        }
+        setNotice("Account created. If email confirmation is enabled, check your inbox.");
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (signInError) {
+          throw signInError;
+        }
+        navigate("/planner");
+      }
+    } catch (authError) {
+      setError(authError instanceof Error ? authError.message : "Authentication failed.");
+    } finally {
       setIsLoading(false);
-      navigate("/planner");
-    }, 1000);
+    }
   };
 
   return (
@@ -32,7 +66,7 @@ export function LoginPage() {
         <div className="text-center mb-10 space-y-3">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-primary text-white mb-4 zen-shadow animate-in zoom-in duration-700 delay-300">
             <span className="material-symbols-outlined text-3xl font-light">
-              auto_awesome
+              circle_notifications
             </span>
           </div>
           <h1 className="text-4xl font-light tracking-tight text-primary font-display">
@@ -64,8 +98,8 @@ export function LoginPage() {
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">
                   Access Key
                 </label>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors opacity-40 hover:opacity-100"
                 >
                   Forgot Key?
@@ -82,21 +116,28 @@ export function LoginPage() {
             </div>
 
             <div className="pt-2">
-              <Button 
-                type="submit" 
-                className="w-full h-14 text-xs tracking-[0.2em]" 
+              <Button
+                type="submit"
+                className="w-full h-14 text-xs tracking-[0.2em]"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Authenticating
+                    {isSignUp ? "Creating Account" : "Authenticating"}
                   </div>
                 ) : (
-                  "Begin Journey"
+                  isSignUp ? "Create Account" : "Begin Journey"
                 )}
               </Button>
             </div>
+
+            {error && (
+              <p className="text-xs text-dot-red font-bold text-center">{error}</p>
+            )}
+            {notice && (
+              <p className="text-xs text-dot-green font-bold text-center">{notice}</p>
+            )}
           </form>
 
           <div className="relative">
@@ -110,11 +151,17 @@ export function LoginPage() {
             </div>
           </div>
 
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full h-12 text-[10px] tracking-[0.15em] border-dashed"
+            type="button"
+            onClick={() => {
+              setError(null);
+              setNotice(null);
+              setIsSignUp((prev) => !prev);
+            }}
           >
-            Create Free Account
+            {isSignUp ? "Back To Sign In" : "Create Free Account"}
           </Button>
         </Card>
 

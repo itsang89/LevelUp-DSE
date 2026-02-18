@@ -25,3 +25,4 @@ dist-ssr
 
 dse-planner-cursor-prompt.md
 assets-reference/
+.env
