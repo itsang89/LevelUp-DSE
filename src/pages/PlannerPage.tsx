@@ -82,10 +82,24 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
     const currentWeekKey = formatIsoDate(initialWeek);
     const element = weekRefs.current.get(currentWeekKey);
     if (element) {
-      element.scrollIntoView({ block: "start" });
+      const grid = element.querySelector('.planner-grid-container');
+      if (grid) {
+        grid.scrollIntoView({ block: "start" });
+      } else {
+        element.scrollIntoView({ block: "start" });
+      }
       hasScrolledToCurrentWeekRef.current = true;
     }
   }, [initialWeek, weeks]);
+
+  // Listen for scroll-to-today events from sidebar
+  useEffect(() => {
+    const handleScroll = () => {
+      scrollToToday();
+    };
+    window.addEventListener('scroll-to-today', handleScroll);
+    return () => window.removeEventListener('scroll-to-today', handleScroll);
+  }, [weeks, initialWeek]); // Keep dependencies updated if needed
 
   // Intersection Observer for updating week label
   useEffect(() => {
@@ -259,7 +273,7 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
       if (grid) {
         grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
   }
@@ -356,9 +370,6 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
               <span className="material-symbols-outlined text-lg">keyboard_arrow_down</span>
             </button>
           </div>
-          <Button variant="outline" size="sm" className="rounded-full px-6 text-[10px] font-black uppercase tracking-widest">
-            Export PDF
-          </Button>
         </div>
       </div>
 

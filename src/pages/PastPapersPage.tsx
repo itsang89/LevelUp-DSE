@@ -86,18 +86,6 @@ export function PastPapersPage({
     return sortDirection === "asc" ? sorted : sorted.reverse();
   }, [attempts, sortDirection, sortKey, subjectFilter]);
 
-  const stats = useMemo(() => {
-    if (filteredAttempts.length === 0) return null;
-    const avgPercentage = filteredAttempts.reduce((acc, curr) => acc + curr.percentage, 0) / filteredAttempts.length;
-    const totalAttempts = filteredAttempts.length;
-    const topLevel = filteredAttempts.reduce((prev, curr) => {
-      const levels = ["2", "3", "4", "5", "5*", "5**"];
-      return levels.indexOf(curr.estimatedLevel) > levels.indexOf(prev) ? curr.estimatedLevel : prev;
-    }, "2");
-
-    return { avgPercentage, totalAttempts, topLevel };
-  }, [filteredAttempts]);
-
   async function handleSubmit(values: PastPaperFormValues): Promise<void> {
     const score = Number(values.score);
     const total = Number(values.total);
@@ -187,62 +175,36 @@ export function PastPapersPage({
 
   return (
     <section className="space-y-16 pt-6 lg:pt-12 pb-20">
-      <div>
-        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Mastery</h3>
-        <p className="text-3xl font-light text-primary tracking-tight">Zen Analytics</p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-        <div className="zen-shadow rounded-zen p-10 bg-surface border-0">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-6 opacity-60">Aggregate Mastery</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-6xl font-extralight text-primary tracking-tighter">{stats?.topLevel || "—"}</h3>
-            {stats && <span className="text-success text-sm font-light">+1.2%</span>}
-          </div>
+      <div className="flex flex-col sm:flex-row justify-between items-end gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
+        <div>
+          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Mastery</h3>
+          <p className="text-3xl font-light text-primary tracking-tight">Past Paper History</p>
         </div>
-        <div className="zen-shadow rounded-zen p-10 bg-surface border-0">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-6 opacity-60">Completed Journeys</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-6xl font-extralight text-primary tracking-tighter">{stats?.totalAttempts || 0}</h3>
-            <span className="text-muted-foreground text-sm font-light ml-1">papers</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-40">Sort</span>
+            <Select 
+              className="h-8 py-0 px-3 text-xs rounded-full bg-transparent border-border-hairline"
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
+            >
+              <option value="date">Date</option>
+              <option value="examYear">Year</option>
+              <option value="percentage">Success</option>
+            </Select>
           </div>
-        </div>
-        <div className="zen-shadow rounded-zen p-10 bg-surface border-0">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-6 opacity-60">Current Velocity</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-6xl font-extralight text-primary tracking-tighter">
-              {stats?.avgPercentage.toFixed(1) || "0.0"}<span className="text-3xl font-light opacity-40">%</span>
-            </h3>
-          </div>
+          <Button 
+            size="sm" 
+            className="rounded-full bg-primary text-white h-9 px-6 text-[10px] font-black uppercase tracking-widest"
+            onClick={openAddModal}
+          >
+            Add Entry
+          </Button>
         </div>
       </div>
 
       <div className="space-y-10">
         <div className="flex flex-col gap-8 px-2">
-          <div className="flex items-center justify-between">
-            <h4 className="text-2xl font-extralight text-primary tracking-tight">Past Paper History</h4>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-40">Sort</span>
-                <Select 
-                  className="h-8 py-0 px-3 text-xs rounded-full bg-transparent border-border-hairline"
-                  value={sortKey}
-                  onChange={(e) => setSortKey(e.target.value as SortKey)}
-                >
-                  <option value="date">Date</option>
-                  <option value="examYear">Year</option>
-                  <option value="percentage">Success</option>
-                </Select>
-              </div>
-              <Button 
-                size="sm" 
-                className="rounded-full bg-primary text-white h-9 px-6 text-[10px] font-black uppercase tracking-widest"
-                onClick={openAddModal}
-              >
-                Add Entry
-              </Button>
-            </div>
-          </div>
-
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setSubjectFilter("all")}

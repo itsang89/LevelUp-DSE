@@ -24,8 +24,8 @@ export function PlannerCell({ task, subject, onClick }: PlannerCellProps) {
   const title = task.title.trim() || "(Untitled task)";
   const subjectColor = subject?.baseColor || "#666666";
   const bgGradient = subject 
-    ? `linear-gradient(135deg, ${subjectColor}15 0%, ${subjectColor}05 100%)`
-    : `linear-gradient(135deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.02) 100%)`;
+    ? `linear-gradient(135deg, ${subjectColor}30 0%, ${subjectColor}15 100%)`
+    : `linear-gradient(135deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.05) 100%)`;
 
   return (
     <button

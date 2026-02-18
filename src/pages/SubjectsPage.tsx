@@ -7,7 +7,7 @@ import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
 import { createSubject, deleteSubject, updateSubject } from "../lib/api/subjectsApi";
 
-interface SettingsPageProps {
+interface SubjectsPageProps {
   userId: string;
   subjects: Subject[];
   setSubjects: (value: Subject[] | ((prev: Subject[]) => Subject[])) => void;
@@ -23,7 +23,20 @@ function createSubjectId(shortCode: string): string {
   return shortCode.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
-export function SettingsPage({ userId, subjects, setSubjects }: SettingsPageProps) {
+const PRESET_COLORS = [
+  "#ef4444", // Rose/Red
+  "#f59e0b", // Amber/Orange
+  "#10b981", // Emerald/Green
+  "#14b8a6", // Teal
+  "#3b82f6", // Blue
+  "#6366f1", // Indigo
+  "#8b5cf6", // Violet
+  "#ec4899", // Pink
+  "#64748b", // Slate/Gray
+  "#0ea5e9", // Cyan
+];
+
+export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newSubject, setNewSubject] = useState<SubjectDraft>({
     name: "",
@@ -149,7 +162,8 @@ export function SettingsPage({ userId, subjects, setSubjects }: SettingsPageProp
     <section className="space-y-16 pt-6 lg:pt-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-6">
         <div>
-          <p className="text-3xl font-light text-primary tracking-tight">Study Preferences</p>
+          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Subjects</h3>
+          <p className="text-3xl font-light text-primary tracking-tight">Manage Curriculum</p>
         </div>
         <Button 
           onClick={() => setIsAddModalOpen(true)}
@@ -187,17 +201,24 @@ export function SettingsPage({ userId, subjects, setSubjects }: SettingsPageProp
                         setEditingDraft((prev) => ({ ...prev, shortCode: event.target.value }))
                       }
                     />
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        className="h-9 w-12 rounded-xl border border-border-hairline bg-surface cursor-pointer hairline-border"
-                        value={editingDraft.baseColor}
-                        onChange={(event) =>
-                          setEditingDraft((prev) => ({ ...prev, baseColor: event.target.value }))
-                        }
-                      />
-                      <Button size="sm" className="flex-1 rounded-full text-[9px]" onClick={saveEdit}>Save</Button>
-                      <Button size="sm" variant="outline" className="rounded-full text-[9px]" onClick={() => setEditingSubjectId(null)}>Cancel</Button>
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap gap-2">
+                        {PRESET_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setEditingDraft((prev) => ({ ...prev, baseColor: color }))}
+                            className={`h-6 w-6 rounded-full border-2 transition-all ${
+                              editingDraft.baseColor === color ? "border-primary scale-110 shadow-sm" : "border-transparent"
+                            }`}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1 rounded-full text-[9px]" onClick={saveEdit}>Save</Button>
+                        <Button size="sm" variant="outline" className="rounded-full text-[9px]" onClick={() => setEditingSubjectId(null)}>Cancel</Button>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -205,7 +226,7 @@ export function SettingsPage({ userId, subjects, setSubjects }: SettingsPageProp
                     <div className="flex items-start justify-between mb-6">
                       <div 
                         className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-border-hairline"
-                        style={{ color: subject.baseColor, backgroundColor: `${subject.baseColor}10` }}
+                        style={{ color: subject.baseColor, backgroundColor: `${subject.baseColor}30` }}
                       >
                         {subject.shortCode}
                       </div>
@@ -266,24 +287,23 @@ export function SettingsPage({ userId, subjects, setSubjects }: SettingsPageProp
                 }
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-4">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Color Theme</label>
-              <div className="flex gap-4 items-center">
-                <input
-                  type="color"
-                  className="h-12 w-20 rounded-2xl border border-border-hairline bg-surface cursor-pointer hairline-border"
-                  value={newSubject.baseColor}
-                  onChange={(event) =>
-                    setNewSubject((prev) => ({ ...prev, baseColor: event.target.value }))
-                  }
-                />
-                <div className="flex-1 p-4 rounded-2xl border border-border-hairline bg-muted/5 flex items-center gap-3">
-                   <div 
-                    className="h-3 w-3 rounded-full" 
-                    style={{ backgroundColor: newSubject.baseColor }}
+              <div className="flex flex-wrap gap-3">
+                {PRESET_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setNewSubject((prev) => ({ ...prev, baseColor: color }))}
+                    className={`h-10 w-10 rounded-2xl border-2 transition-all duration-200 ${
+                      newSubject.baseColor === color 
+                        ? "border-primary scale-110 shadow-soft" 
+                        : "border-transparent hover:scale-105"
+                    }`}
+                    style={{ backgroundColor: color }}
+                    title={color}
                   />
-                  <span className="text-xs font-bold text-muted-foreground tracking-tight">Theme Color</span>
-                </div>
+                ))}
               </div>
             </div>
           </div>

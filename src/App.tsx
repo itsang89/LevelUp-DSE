@@ -5,7 +5,7 @@ import { Layout } from "./components/Layout";
 import { DEFAULT_SUBJECTS } from "./constants";
 import { PastPapersPage } from "./pages/PastPapersPage";
 import { PlannerPage } from "./pages/PlannerPage";
-import { SettingsPage } from "./pages/SettingsPage";
+import { SubjectsPage } from "./pages/SubjectsPage";
 import { LoginPage } from "./pages/LoginPage";
 import type { CutoffData } from "./types";
 import { loadCutoffData } from "./utils/dseLevelEstimator";
@@ -181,10 +181,10 @@ function App() {
           }
         />
         <Route
-          path="/settings"
+          path="/subjects"
           element={
             userId ? (
-              <SettingsPage
+              <SubjectsPage
                 userId={userId}
                 subjects={subjects}
                 setSubjects={setSubjects}

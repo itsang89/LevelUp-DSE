@@ -8,6 +8,7 @@ import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,9 +30,17 @@ export function LoginPage() {
       const supabase = getSupabaseClient();
 
       if (isSignUp) {
+        if (!fullName.trim()) {
+          throw new Error("Full name is required for registration.");
+        }
         const { error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
+          options: {
+            data: {
+              full_name: fullName.trim(),
+            },
+          },
         });
         if (signUpError) {
           throw signUpError;
@@ -79,6 +88,22 @@ export function LoginPage() {
 
         <Card variant="zen" padding="lg" className="space-y-8 backdrop-blur-sm bg-surface/80 border border-white/40">
           <form onSubmit={handleLogin} className="space-y-6">
+            {isSignUp && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-500">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
+                  Full Name
+                </label>
+                <Input
+                  type="text"
+                  placeholder="e.g. Isaac Newton"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required={isSignUp}
+                  className="bg-background/50 focus:bg-white transition-colors duration-300"
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
                 Academic ID

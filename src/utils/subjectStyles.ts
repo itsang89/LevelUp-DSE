@@ -17,12 +17,12 @@ function hexToRgb(hex: string): [number, number, number] {
 export function getSubjectGradientStyle(subject?: Subject | null): CSSProperties {
   if (!subject) {
     return {
-      background: "linear-gradient(135deg, rgba(15,23,42,0.04), #ffffff)",
+      background: "linear-gradient(135deg, rgba(15,23,42,0.08), rgba(15,23,42,0.02))",
     };
   }
 
   const [r, g, b] = hexToRgb(subject.baseColor);
   return {
-    background: `linear-gradient(135deg, rgba(${r}, ${g}, ${b}, 0.11), #ffffff)`,
+    background: `linear-gradient(135deg, rgba(${r}, ${g}, ${b}, 0.22), rgba(${r}, ${g}, ${b}, 0.12))`,
   };
 }

@@ -1,6 +1,9 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { getSupabaseClient } from "../lib/supabase";
+import { Modal } from "./ui/Modal";
+import { Input } from "./ui/Input";
+import { Button } from "./ui/Button";
 
 function navLinkClassName(isActive: boolean): string {
   return [
@@ -15,7 +18,22 @@ export function Layout() {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
+  const [isNameModalOpen, setIsNameModalOpen] = useState(false);
+  const [userName, setUserName] = useState("Student User");
+  const [newName, setNewName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function getUserData() {
+      const supabase = getSupabaseClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.user_metadata?.full_name) {
+        setUserName(user.user_metadata.full_name);
+      }
+    }
+    getUserData();
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -45,6 +63,25 @@ export function Layout() {
     }
   };
 
+  const handleUpdateName = async () => {
+    if (!newName.trim()) return;
+    setIsSavingName(true);
+    try {
+      const supabase = getSupabaseClient();
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: newName.trim() }
+      });
+      if (error) throw error;
+      setUserName(newName.trim());
+      setIsNameModalOpen(false);
+    } catch (error) {
+      console.error("Failed to update name.", error);
+      alert("Failed to update name. Please try again.");
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
   const daysToDSE = useMemo(() => {
     const targetDate = new Date('2026-04-09T00:00:00');
     const today = new Date();
@@ -68,7 +105,15 @@ export function Layout() {
           <div className="space-y-6">
             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-2 opacity-60">Planner</p>
             <div className="space-y-4">
-              <NavLink to="/planner" className={({ isActive }) => navLinkClassName(isActive)}>
+              <NavLink 
+                to="/planner" 
+                className={({ isActive }) => navLinkClassName(isActive)}
+                onClick={() => {
+                  if (window.location.pathname === "/planner") {
+                    window.dispatchEvent(new CustomEvent("scroll-to-today"));
+                  }
+                }}
+              >
                 <span className="material-symbols-outlined text-xl">grid_view</span>
                 <span className="text-sm font-bold tracking-tight">Dashboard</span>
               </NavLink>
@@ -80,11 +125,11 @@ export function Layout() {
           </div>
 
           <div className="space-y-6">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-2 opacity-60">Analysis</p>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-2 opacity-60">Curriculum</p>
             <div className="space-y-4">
-              <NavLink to="/settings" className={({ isActive }) => navLinkClassName(isActive)}>
-                <span className="material-symbols-outlined text-xl">settings</span>
-                <span className="text-sm font-bold tracking-tight">Settings</span>
+              <NavLink to="/subjects" className={({ isActive }) => navLinkClassName(isActive)}>
+                <span className="material-symbols-outlined text-xl">library_books</span>
+                <span className="text-sm font-bold tracking-tight">Subjects</span>
               </NavLink>
             </div>
           </div>
@@ -112,7 +157,7 @@ export function Layout() {
                   <span className="material-symbols-outlined text-muted-foreground text-xl">person</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-bold text-primary tracking-tight">Student User</span>
+                  <span className="text-sm font-bold text-primary tracking-tight">{userName}</span>
                   <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">Candidate 2026</span>
                 </div>
               </div>
@@ -126,7 +171,18 @@ export function Layout() {
                 </button>
                 
                 {isUserPopoverOpen && (
-                  <div className="absolute bottom-0 left-full ml-4 w-40 p-2 bg-surface border border-border-hairline rounded-2xl shadow-xl animate-in fade-in slide-in-from-left-2 duration-300 z-[100]">
+                  <div className="absolute bottom-0 left-full ml-4 w-48 p-2 bg-surface border border-border-hairline rounded-2xl shadow-xl animate-in fade-in slide-in-from-left-2 duration-300 z-[100]">
+                    <button 
+                      onClick={() => {
+                        setIsUserPopoverOpen(false);
+                        setNewName(userName);
+                        setIsNameModalOpen(true);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all group mb-1"
+                    >
+                      <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">edit</span>
+                      <span className="text-[11px] font-black uppercase tracking-widest">Change Name</span>
+                    </button>
                     <button 
                       onClick={handleSignOut}
                       className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground hover:text-dot-red hover:bg-dot-red/5 transition-all group"
@@ -171,7 +227,16 @@ export function Layout() {
             <div className="space-y-6">
               <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em]">Planner</p>
               <div className="space-y-6">
-                <NavLink to="/planner" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive) + " text-2xl"}>
+                <NavLink 
+                  to="/planner" 
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    if (window.location.pathname === "/planner") {
+                      window.dispatchEvent(new CustomEvent("scroll-to-today"));
+                    }
+                  }} 
+                  className={({ isActive }) => navLinkClassName(isActive) + " text-2xl"}
+                >
                   <span className="material-symbols-outlined text-3xl">grid_view</span>
                   <span className="font-bold">Dashboard</span>
                 </NavLink>
@@ -182,11 +247,11 @@ export function Layout() {
               </div>
             </div>
             <div className="space-y-6">
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em]">Analysis</p>
+              <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em]">Curriculum</p>
               <div className="space-y-6">
-                <NavLink to="/settings" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive) + " text-2xl"}>
-                  <span className="material-symbols-outlined text-3xl">settings</span>
-                  <span className="font-bold">Settings</span>
+                <NavLink to="/subjects" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive) + " text-2xl"}>
+                  <span className="material-symbols-outlined text-3xl">library_books</span>
+                  <span className="font-bold">Subjects</span>
                 </NavLink>
               </div>
             </div>
@@ -196,12 +261,49 @@ export function Layout() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden w-full">
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 lg:px-12 pt-0 pb-24 lg:pb-12">
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 lg:px-12 pt-16 lg:pt-0 pb-24 lg:pb-12">
           <div className="max-w-6xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Outlet />
           </div>
         </div>
       </main>
+
+      <Modal
+        isOpen={isNameModalOpen}
+        onClose={() => setIsNameModalOpen(false)}
+        title="Update Profile"
+        description="Change how your name appears in the dashboard."
+      >
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
+              Display Name
+            </label>
+            <Input
+              placeholder="Enter your name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-full text-[10px] font-black uppercase tracking-widest"
+              onClick={() => setIsNameModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-[2] rounded-full text-[10px] font-black uppercase tracking-widest"
+              onClick={handleUpdateName}
+              disabled={isSavingName || !newName.trim()}
+            >
+              {isSavingName ? "Updating..." : "Save Name"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
