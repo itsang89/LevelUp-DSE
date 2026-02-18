@@ -1,73 +1,81 @@
-# React + TypeScript + Vite
+# LevelUp DSE Planner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A study planning web app for HKDSE candidates.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19 + TypeScript
+- Vite 7
+- React Router 7
+- Tailwind CSS 4
+- Supabase (Auth + Postgres + RLS)
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Email/password authentication via Supabase
+- Weekly planner with session-level tasks and rest slots
+- Past paper attempt tracking with estimated DSE levels
+- Subject management (name, short code, color, paper labels)
+- Subject-specific cutoff parsing from markdown with generic fallback
 
-## Expanding the ESLint configuration
+## Project Structure
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- `src/App.tsx`: App bootstrap, auth/session handling, route guards, initial data loading
+- `src/pages/PlannerPage.tsx`: Weekly planner timeline and task editor modal
+- `src/pages/PastPapersPage.tsx`: Past paper CRUD, filter/sort, modal form integration
+- `src/pages/SubjectsPage.tsx`: Subject CRUD and preset color/paper-label management
+- `src/pages/LoginPage.tsx`: Sign in/sign up flow
+- `src/components/`: Layout, page components, and reusable UI primitives
+- `src/lib/api/`: Supabase data-access layer (`subjects`, `planner_cells`, `past_paper_attempts`)
+- `src/lib/supabase.ts`: Singleton Supabase client and environment checks
+- `src/utils/`: Date helpers, subject styles, DSE level estimation + markdown parser
+- `supabase/schema.sql`: Database tables, indexes, constraints, and RLS policies
+- `public/dse-cutoffs.md`: In-app cutoff source file loaded at runtime
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Environment Setup
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Create `.env` in `dse-planner/`:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+If these variables are missing, the app shows a setup-required screen and blocks auth/data requests.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Install and Run
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
+
+Useful scripts:
+
+- `npm run dev`: Start dev server
+- `npm run build`: Type-check and create production build
+- `npm run preview`: Preview production build locally
+- `npm run lint`: Run ESLint
+
+## Supabase Setup
+
+1. Create a Supabase project.
+2. In SQL editor, run `supabase/schema.sql`.
+3. Enable Email auth provider.
+4. Copy project URL and anon key into `.env`.
+
+## DSE Cutoff Data
+
+Runtime cutoff data is loaded from `public/dse-cutoffs.md`.
+
+- Parsed by `parseCutoffMarkdown` in `src/utils/dseLevelEstimator.ts`
+- Expected heading format: `## Subject Name (CODE)`
+- Expected row format: `| 5** | 90 |`
+- If parsing fails or file is unavailable, estimation falls back to generic cutoffs
+
+## Additional Documentation
+
+- `docs/ARCHITECTURE.md`: Component and state-flow overview
+- `docs/API.md`: Frontend data-access API contract
+- `docs/DATABASE.md`: Schema and RLS policy reference
+- `docs/DEVELOPMENT.md`: Onboarding, workflows, and troubleshooting
