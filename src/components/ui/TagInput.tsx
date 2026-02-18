@@ -1,5 +1,4 @@
-import { useState, KeyboardEvent } from "react";
-import { Input } from "./Input";
+import { useState, type KeyboardEvent } from "react";
 
 interface TagInputProps {
   tags: string[];
