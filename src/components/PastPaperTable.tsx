@@ -45,7 +45,7 @@ export function PastPaperTable({
 
             <div className="flex items-center gap-10 flex-1 w-full md:w-auto">
               <div className="text-center min-w-[100px]">
-                <p className="text-[10px] text-muted-foreground font-black tracking-widest uppercase opacity-40">DSE</p>
+                <p className="text-[10px] text-muted-foreground font-black tracking-widest uppercase opacity-40">{attempt.isDse === false ? "Mock" : "DSE"}</p>
                 <p className="text-3xl font-light text-primary tracking-tighter">{attempt.examYear}</p>
               </div>
               <div className="w-px h-10 bg-border-hairline hidden md:block" />
