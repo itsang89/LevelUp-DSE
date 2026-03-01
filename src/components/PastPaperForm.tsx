@@ -1,9 +1,12 @@
-import { type FormEvent, useState } from "react";
-import type { PastPaperAttempt, Subject } from "../types";
+import { type FormEvent, useMemo, useState } from "react";
+import type { CutoffData, PastPaperAttempt, Subject } from "../types";
 import { formatIsoDate } from "../utils/dateHelpers";
+import { estimateDseLevel, hasSubjectCutoffData } from "../utils/dseLevelEstimator";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
+
+const GRADE_OPTIONS = ["5**", "5*", "5", "4", "3", "2", "1", "U"] as const;
 
 export interface PastPaperFormValues {
   subjectId: string;
@@ -12,11 +15,14 @@ export interface PastPaperFormValues {
   date: string;
   score: string;
   total: string;
+  isDse: boolean;
+  manualGrade: string;
   notes: string;
 }
 
 interface PastPaperFormProps {
   subjects: Subject[];
+  cutoffData: CutoffData;
   initialValues?: Partial<PastPaperAttempt>;
   onSubmit: (values: PastPaperFormValues) => void;
   submitLabel: string;
@@ -31,12 +37,15 @@ function buildInitialValues(initialValues?: Partial<PastPaperAttempt>): PastPape
     date: initialValues?.date ?? formatIsoDate(new Date()),
     score: initialValues?.score !== undefined ? String(initialValues.score) : "",
     total: initialValues?.total !== undefined ? String(initialValues.total) : "",
+    isDse: true,
+    manualGrade: initialValues?.estimatedLevel ?? "5",
     notes: initialValues?.notes ?? "",
   };
 }
 
 export function PastPaperForm({
   subjects,
+  cutoffData,
   initialValues,
   onSubmit,
   submitLabel,
@@ -49,6 +58,24 @@ export function PastPaperForm({
   const paperLabels = selectedSubject?.paperLabels && selectedSubject.paperLabels.length > 0
     ? selectedSubject.paperLabels
     : ["Paper 1", "Paper 2"];
+
+  const subjectKey = selectedSubject?.shortCode ?? values.subjectId;
+  const examYear = Number(values.examYear);
+
+  const hasCutoffData = useMemo(
+    () => hasSubjectCutoffData(cutoffData, subjectKey, examYear),
+    [cutoffData, subjectKey, examYear]
+  );
+
+  const predictedGrade = useMemo(() => {
+    const score = Number(values.score);
+    const total = Number(values.total);
+    if (!Number.isFinite(score) || !Number.isFinite(total) || total <= 0) return null;
+    const percentage = (score / total) * 100;
+    return estimateDseLevel(subjectKey, percentage, cutoffData, examYear);
+  }, [values.score, values.total, subjectKey, examYear, cutoffData]);
+
+  const showManualGrade = !values.isDse || !hasCutoffData;
 
   const [isCustomLabel, setIsCustomLabel] = useState(() => {
     if (!values.paperLabel) return false;
@@ -68,6 +95,10 @@ export function PastPaperForm({
       !values.subjectId || !values.examYear || !values.paperLabel.trim() || !values.score || !values.total;
     if (requiredMissing) {
       setError("Please fill all required fields.");
+      return;
+    }
+    if (showManualGrade && !values.manualGrade.trim()) {
+      setError("Please select a grade.");
       return;
     }
 
@@ -197,6 +228,75 @@ export function PastPaperForm({
             onChange={(event) => handleChange("total", event.target.value)}
           />
         </div>
+
+        <div className="space-y-3 md:col-span-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1 block">
+            Paper type
+          </label>
+          <div className="flex p-1 bg-surface border border-border-hairline rounded-2xl w-fit">
+            <button
+              type="button"
+              onClick={() => handleChange("isDse", true)}
+              className={`flex-1 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                values.isDse
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-muted-foreground hover:bg-muted/50"
+              }`}
+            >
+              DSE past paper
+            </button>
+            <button
+              type="button"
+              onClick={() => handleChange("isDse", false)}
+              className={`flex-1 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                !values.isDse
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-muted-foreground hover:bg-muted/50"
+              }`}
+            >
+              Other / mock
+            </button>
+          </div>
+        </div>
+
+        {showManualGrade ? (
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
+              Grade *
+            </label>
+            <Select
+              value={values.manualGrade}
+              onChange={(event) => handleChange("manualGrade", event.target.value)}
+            >
+              {GRADE_OPTIONS.map((grade) => (
+                <option key={grade} value={grade}>
+                  {grade}
+                </option>
+              ))}
+            </Select>
+            {values.isDse && !hasCutoffData && (
+              <p className="text-xs text-muted-foreground mt-1">
+                No cutoff data for this subject or year. Enter your grade manually.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
+              Predicted grade
+            </label>
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-primary/5 border border-primary/10">
+              <span className="text-2xl font-black text-primary size-12 flex items-center justify-center rounded-xl bg-primary/10">
+                {predictedGrade ?? "—"}
+              </span>
+              <p className="text-sm text-muted-foreground">
+                {predictedGrade
+                  ? "Based on HKDSE cutoff data for this year and subject."
+                  : "Enter score and total to see predicted grade."}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2 md:col-span-2">
           <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">

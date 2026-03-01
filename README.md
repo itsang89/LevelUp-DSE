@@ -66,11 +66,13 @@ Useful scripts:
 
 ## DSE Cutoff Data
 
-Runtime cutoff data is loaded from `public/dse-cutoffs.md`.
+Runtime cutoff data is loaded from `public/dse-cutoffs.md` (core subjects) and `public/dse-cutoffs-electives.md` (electives).
 
-- Parsed by `parseCutoffMarkdown` in `src/utils/dseLevelEstimator.ts`
-- Expected heading format: `## Subject Name (CODE)`
-- Expected row format: `| 5** | 90 |`
+- Parsed by `parseHkdseCutoffMarkdown` and `parseHkdseElectiveCutoffMarkdown` in `src/utils/dseLevelEstimator.ts`
+- Uses year-specific cutoffs: past paper exam year is matched to that year’s cutoffs
+- **Core subjects:** Chinese (CHI), English (ENG), Mathematics (MATH), Chemistry (CHEM), Biology (BIO)
+- **Electives:** Physics (PHY), Economics (ECON), BAFS, Chinese History (CHIST), History (HIST), Chinese Literature (CHILIT), Geography (GEOG), ICT, M1, M2
+- Add subjects in Settings with these short codes for grade prediction to work
 - If parsing fails or file is unavailable, estimation falls back to generic cutoffs
 
 ## Additional Documentation

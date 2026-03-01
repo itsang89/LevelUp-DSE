@@ -74,8 +74,8 @@ Key properties:
 ## DSE Estimation Pipeline
 
 1. App loads markdown from `/dse-cutoffs.md`
-2. `parseCutoffMarkdown` builds `CutoffData` by subject short code
-3. `estimateDseLevel(subjectKey, percentage, cutoffData)` returns best matching level
+2. `parseHkdseCutoffMarkdown` parses year-based tables from HKDSE historical data
+3. `estimateDseLevel(subjectKey, percentage, cutoffData, examYear)` uses year-specific cutoffs to predict grade
 4. If subject data is unavailable, generic cutoffs are used
 
 ## Design Tokens

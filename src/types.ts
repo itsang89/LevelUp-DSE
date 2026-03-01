@@ -49,4 +49,17 @@ export interface CutoffRow {
   minimumPercentage: number;
 }
 
-export type CutoffData = Record<string, CutoffRow[]>;
+/** Subject -> Year -> CutoffRows. Year-specific cutoffs from HKDSE historical data. */
+export type CutoffDataByYear = Record<string, Record<number, CutoffRow[]>>;
+
+/** @deprecated Legacy format: subject -> cutoffs (no year). Kept for fallback. */
+export type CutoffDataLegacy = Record<string, CutoffRow[]>;
+
+export type CutoffData = CutoffDataByYear | CutoffDataLegacy;
+
+export function isCutoffDataByYear(data: CutoffData): data is CutoffDataByYear {
+  if (Object.keys(data).length === 0) return false;
+  const firstKey = Object.keys(data)[0];
+  const val = (data as Record<string, unknown>)[firstKey];
+  return Array.isArray(val) ? false : typeof val === "object" && val !== null;
+}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PastPaperForm, type PastPaperFormValues } from "../components/PastPaperForm";
 import { PastPaperTable } from "../components/PastPaperTable";
 import type { CutoffData, PastPaperAttempt, Subject } from "../types";
-import { estimateDseLevel } from "../utils/dseLevelEstimator";
+import { estimateDseLevel, hasSubjectCutoffData } from "../utils/dseLevelEstimator";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Select } from "../components/ui/Select";
@@ -121,9 +121,13 @@ export function PastPapersPage({
     const total = Number(values.total);
     const percentage = (score / total) * 100;
 
-    const subject = subjectsById[values.subjectId];
-    const subjectKey = subject?.shortCode ?? values.subjectId;
-    const estimatedLevel = estimateDseLevel(subjectKey, percentage, cutoffData);
+    const subjectKey = subjectsById[values.subjectId]?.shortCode ?? values.subjectId;
+    const examYear = Number(values.examYear);
+    const hasCutoff = hasSubjectCutoffData(cutoffData, subjectKey, examYear);
+    const estimatedLevel =
+      values.isDse && hasCutoff
+        ? estimateDseLevel(subjectKey, percentage, cutoffData, examYear)
+        : values.manualGrade.trim();
 
     try {
       setIsPersisting(true);
@@ -328,6 +332,7 @@ export function PastPapersPage({
         <PastPaperForm
           key={editingAttempt?.id ?? "new"}
           subjects={subjects}
+          cutoffData={cutoffData}
           initialValues={editingAttempt ?? undefined}
           onSubmit={handleSubmit}
           submitLabel={isPersisting ? "Saving..." : editingAttempt ? "Update Entry" : "Add Journey"}
