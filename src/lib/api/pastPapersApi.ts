@@ -11,6 +11,7 @@ interface PastPaperAttemptRow {
   total: number;
   percentage: number;
   estimated_level: string;
+  is_dse: boolean | null;
   tag: string | null;
   notes: string | null;
 }
@@ -26,6 +27,7 @@ function toPastPaperAttempt(row: PastPaperAttemptRow): PastPaperAttempt {
     total: row.total,
     percentage: row.percentage,
     estimatedLevel: row.estimated_level,
+    isDse: row.is_dse ?? true,
     tag: row.tag ?? undefined,
     notes: row.notes ?? undefined,
   };
@@ -35,7 +37,7 @@ export async function listPastPaperAttempts(userId: string): Promise<PastPaperAt
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("past_paper_attempts")
-    .select("id,subject_id,exam_year,paper_label,date,score,total,percentage,estimated_level,tag,notes")
+    .select("id,subject_id,exam_year,paper_label,date,score,total,percentage,estimated_level,is_dse,tag,notes")
     .eq("user_id", userId)
     .order("date", { ascending: false });
 
@@ -59,6 +61,7 @@ export async function createPastPaperAttempt(userId: string, attempt: PastPaperA
     total: attempt.total,
     percentage: attempt.percentage,
     estimated_level: attempt.estimatedLevel,
+    is_dse: attempt.isDse ?? true,
     tag: attempt.tag ?? null,
     notes: attempt.notes ?? null,
   });
@@ -81,6 +84,7 @@ export async function updatePastPaperAttempt(userId: string, attempt: PastPaperA
       total: attempt.total,
       percentage: attempt.percentage,
       estimated_level: attempt.estimatedLevel,
+      is_dse: attempt.isDse ?? true,
       tag: attempt.tag ?? null,
       notes: attempt.notes ?? null,
     })

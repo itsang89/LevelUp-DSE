@@ -41,6 +41,7 @@ create table if not exists public.past_paper_attempts (
   total numeric not null,
   percentage numeric not null,
   estimated_level text not null,
+  is_dse boolean not null default true,
   tag text null,
   notes text null,
   created_at timestamptz not null default timezone('utc', now()),

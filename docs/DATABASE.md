@@ -2,6 +2,8 @@
 
 Schema file: `supabase/schema.sql`
 
+**Migrations:** If your database was created before the paper-type feature, run `supabase/migrations/20250301_add_is_dse_to_past_paper_attempts.sql` in the Supabase SQL Editor.
+
 ## Extensions
 
 - `pgcrypto` (for `gen_random_uuid()`)
@@ -71,6 +73,7 @@ Columns:
 - `total numeric`
 - `percentage numeric`
 - `estimated_level text`
+- `is_dse boolean` (default true; true = DSE past paper, false = Other/mock)
 - `tag text null`
 - `notes text null`
 - `created_at timestamptz` (UTC now)

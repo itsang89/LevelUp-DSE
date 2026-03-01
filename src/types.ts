@@ -38,6 +38,7 @@ export interface PastPaperAttempt {
   total: number;
   percentage: number;
   estimatedLevel: string;
+  isDse?: boolean;
   tag?: string;
   notes?: string;
 }

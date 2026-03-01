@@ -37,7 +37,7 @@ function buildInitialValues(initialValues?: Partial<PastPaperAttempt>): PastPape
     date: initialValues?.date ?? formatIsoDate(new Date()),
     score: initialValues?.score !== undefined ? String(initialValues.score) : "",
     total: initialValues?.total !== undefined ? String(initialValues.total) : "",
-    isDse: true,
+    isDse: initialValues?.isDse ?? true,
     manualGrade: initialValues?.estimatedLevel ?? "5",
     notes: initialValues?.notes ?? "",
   };

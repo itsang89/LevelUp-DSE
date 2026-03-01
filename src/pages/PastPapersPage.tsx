@@ -142,6 +142,7 @@ export function PastPapersPage({
           total,
           percentage,
           estimatedLevel,
+          isDse: values.isDse,
           notes: values.notes.trim() || undefined,
         };
         await updatePastPaperAttempt(userId, updatedAttempt);
@@ -159,6 +160,7 @@ export function PastPapersPage({
           total,
           percentage,
           estimatedLevel,
+          isDse: values.isDse,
           notes: values.notes.trim() || undefined,
         };
         await createPastPaperAttempt(userId, newAttempt);
