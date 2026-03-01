@@ -548,11 +548,11 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
           <div className="flex gap-3 pt-4">
             <Button
               variant="outline"
-              className="flex-1 rounded-full text-[10px] font-black uppercase tracking-widest"
+              className="flex-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-dot-red/25 text-dot-red border-2 border-dot-red/60 hover:bg-dot-red/35 hover:border-dot-red"
               onClick={handleClear}
               disabled={isPersisting}
             >
-              Clear
+              Delete
             </Button>
             <Button
               className="flex-[2] rounded-full text-[10px] font-black uppercase tracking-widest"

@@ -36,7 +36,7 @@ export function PlannerCell({ task, subject, onClick }: PlannerCellProps) {
             </p>
           </div>
           {task.notes && (
-            <p className="text-[11px] font-bold text-white/60 tracking-tight line-clamp-1 mt-1">
+            <p className="text-[11px] font-bold text-white/60 tracking-tight break-words whitespace-pre-wrap mt-1">
               {task.notes}
             </p>
           )}
@@ -59,20 +59,20 @@ export function PlannerCell({ task, subject, onClick }: PlannerCellProps) {
       style={{ background: bgGradient }}
     >
       <div 
-        className="h-full border-l-2 pl-3 py-0.5 flex flex-col justify-start"
+        className="h-full min-h-0 border-l-2 pl-3 py-0.5 flex flex-col justify-start overflow-y-auto"
         style={{ borderColor: subjectColor }}
       >
-        <p className="text-[15px] font-black text-primary uppercase tracking-widest leading-none mb-2">
+        <p className="text-[15px] font-black text-primary uppercase tracking-widest leading-none mb-2 flex-shrink-0">
           {subject?.shortCode || "Other"}
         </p>
-        <div className="flex items-center gap-1.5">
-          <p className="text-[12px] font-bold text-muted-foreground tracking-tight line-clamp-1">
+        <div className="flex items-start gap-1.5 flex-1 min-w-0">
+          <p className="text-[12px] font-bold text-muted-foreground tracking-tight break-words whitespace-pre-wrap">
             {title}
           </p>
           {task.notes && (
             <>
-              <span className="text-[11px] text-muted-foreground opacity-30">•</span>
-              <span className="text-[12px] text-muted-foreground font-bold truncate opacity-60">
+              <span className="text-[11px] text-muted-foreground opacity-30 flex-shrink-0">•</span>
+              <span className="text-[12px] text-muted-foreground font-bold flex-shrink-0 opacity-60">
                 Notes
               </span>
             </>
