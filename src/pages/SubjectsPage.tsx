@@ -267,7 +267,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
                       </div>
                     )}
                     
-                    <div className="mt-auto pt-6 flex gap-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <div className="mt-auto pt-6 flex gap-4">
                       <button 
                         onClick={() => startEdit(subject)}
                         className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
