@@ -73,7 +73,7 @@ export function LoginPage() {
 
       <div className="w-full max-w-[440px] px-6 z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
         <div className="text-center mb-10 space-y-3">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-primary text-white mb-4 zen-shadow animate-in zoom-in duration-700 delay-300">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-primary text-primary-foreground mb-4 zen-shadow animate-in zoom-in duration-700 delay-300">
             <span className="material-symbols-outlined text-3xl font-light">
               circle_notifications
             </span>
@@ -86,7 +86,7 @@ export function LoginPage() {
           </p>
         </div>
 
-        <Card variant="zen" padding="lg" className="space-y-8 backdrop-blur-sm bg-surface/80 border border-white/40">
+        <Card variant="zen" padding="lg" className="space-y-8 backdrop-blur-sm bg-surface/80 border border-border-hairline">
           <form onSubmit={handleLogin} className="space-y-6">
             {isSignUp && (
               <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-500">
@@ -99,7 +99,7 @@ export function LoginPage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required={isSignUp}
-                  className="bg-background/50 focus:bg-white transition-colors duration-300"
+                  className="bg-background/50 focus:bg-surface transition-colors duration-300"
                 />
               </div>
             )}
@@ -114,7 +114,7 @@ export function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-background/50 focus:bg-white transition-colors duration-300"
+                className="bg-background/50 focus:bg-surface transition-colors duration-300"
               />
             </div>
 
@@ -136,7 +136,7 @@ export function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-background/50 focus:bg-white transition-colors duration-300"
+                className="bg-background/50 focus:bg-surface transition-colors duration-300"
               />
             </div>
 

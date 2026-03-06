@@ -29,14 +29,21 @@ export function Modal({ isOpen, onClose, title, children, description }: ModalPr
         className="fixed inset-0 bg-primary/10 backdrop-blur-md transition-opacity duration-500" 
         onClick={onClose} 
       />
-      <div className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] bg-white shadow-2xl animate-in fade-in zoom-in slide-in-from-bottom-8 duration-500 hairline-border">
-        <div className="p-10 pb-0">
-          <h3 className="text-2xl font-light text-primary tracking-tight leading-none mb-3">{title}</h3>
+      <div className="relative w-full max-w-lg flex flex-col overflow-hidden rounded-[2.5rem] bg-surface shadow-2xl animate-in fade-in zoom-in slide-in-from-bottom-8 duration-500 hairline-border max-h-[90vh]">
+        <button
+          onClick={onClose}
+          className="absolute top-8 right-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors z-10 bg-surface/80 backdrop-blur-sm py-1 px-3 rounded-full border border-border-hairline hover:bg-muted/50"
+          title="Cancel"
+        >
+          Cancel
+        </button>
+        <div className="p-10 pb-0 shrink-0">
+          <h3 className="text-2xl font-light text-primary tracking-tight leading-none mb-3 pr-8">{title}</h3>
           {description && (
-            <p className="text-sm font-light text-muted-foreground leading-relaxed">{description}</p>
+            <p className="text-sm font-light text-muted-foreground leading-relaxed pr-4">{description}</p>
           )}
         </div>
-        <div className="p-10 pt-8">{children}</div>
+        <div className="p-10 pt-8 overflow-y-auto custom-scrollbar">{children}</div>
       </div>
     </div>,
     document.body

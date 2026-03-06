@@ -6,6 +6,7 @@ import { DEFAULT_SUBJECTS } from "./constants";
 import { PastPapersPage } from "./pages/PastPapersPage";
 import { PlannerPage } from "./pages/PlannerPage";
 import { SubjectsPage } from "./pages/SubjectsPage";
+import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { LoginPage } from "./pages/LoginPage";
 import type { CutoffData } from "./types";
 import { loadCutoffData } from "./utils/dseLevelEstimator";
@@ -170,6 +171,21 @@ function App() {
           element={
             userId ? (
               <PastPapersPage
+                userId={userId}
+                subjects={subjects}
+                cutoffData={cutoffData}
+                usingGenericFallback={usingGenericFallback}
+              />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            userId ? (
+              <AnalyticsPage
                 userId={userId}
                 subjects={subjects}
                 cutoffData={cutoffData}

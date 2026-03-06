@@ -2,18 +2,19 @@
 
 @theme {
   /* Layers of backgrounds */
-  --color-background: #FAFAFA;
-  --color-sidebar: #F2F4F7;
-  --color-surface: #FFFFFF;
-  --color-muted: #F8F9FA;
+  --color-background: var(--theme-background);
+  --color-sidebar: var(--theme-sidebar);
+  --color-surface: var(--theme-surface);
+  --color-muted: var(--theme-muted);
   
   /* Text variants */
-  --color-primary: #111111;
-  --color-foreground: #333333;
-  --color-muted-foreground: #666666;
+  --color-primary: var(--theme-primary);
+  --color-primary-foreground: var(--theme-primary-foreground);
+  --color-foreground: var(--theme-foreground);
+  --color-muted-foreground: var(--theme-muted-foreground);
   
   /* Strokes */
-  --color-border-hairline: #D9D9D9;
+  --color-border-hairline: var(--theme-border-hairline);
   
   --color-accent: #636E72;
   --color-success: #10b981;
@@ -39,6 +40,18 @@
 
 @layer base {
   :root {
+    --theme-background: #FAFAFA;
+    --theme-sidebar: #F2F4F7;
+    --theme-surface: #FFFFFF;
+    --theme-muted: #F8F9FA;
+    
+    --theme-primary: #111111;
+    --theme-primary-foreground: #FFFFFF;
+    --theme-foreground: #333333;
+    --theme-muted-foreground: #666666;
+    
+    --theme-border-hairline: #D9D9D9;
+
     font-family: var(--font-sans);
     line-height: 1.6;
     font-weight: 400;
@@ -49,6 +62,24 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  :root.dark {
+    --theme-background: #0F0F0F;
+    --theme-sidebar: #161618;
+    --theme-surface: #1C1C1E;
+    --theme-muted: #2C2C2E;
+    
+    --theme-primary: #F5F5F5;
+    --theme-primary-foreground: #111111;
+    --theme-foreground: #E5E5E5;
+    --theme-muted-foreground: #A0A0A0;
+    
+    --theme-border-hairline: #333333;
+    
+    /* Slightly more visible shadows in dark mode */
+    --shadow-zen: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  }
+
   * {
     box-sizing: border-box;
     border-color: var(--color-border-hairline);
@@ -57,7 +88,15 @@
   body {
     margin: 0;
     min-width: 320px;
-    @apply bg-background text-foreground antialiased selection:bg-gray-100;
+    @apply bg-background text-foreground antialiased;
+  }
+  
+  :root:not(.dark) body {
+    @apply selection:bg-gray-200;
+  }
+  
+  :root.dark body {
+    @apply selection:bg-gray-800;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -74,12 +113,21 @@
     border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
+  :root.dark .glass-card {
+    background: rgba(28, 28, 30, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
   .hairline-border {
     border-width: 0.5px;
   }
 
   .zen-shadow {
     box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04);
+  }
+  
+  :root.dark .zen-shadow {
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -91,5 +139,9 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #EAEAEA;
     border-radius: 10px;
+  }
+  
+  :root.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #333333;
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PastPaperForm, type PastPaperFormValues } from "../components/PastPaperForm";
 import { PastPaperTable } from "../components/PastPaperTable";
+import { PaperMatrix } from "../components/PaperMatrix";
 import type { CutoffData, PastPaperAttempt, Subject } from "../types";
 import { estimateDseLevel, hasSubjectCutoffData } from "../utils/dseLevelEstimator";
 import { Button } from "../components/ui/Button";
@@ -38,8 +39,9 @@ export function PastPapersPage({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [paperFilter, setPaperFilter] = useState<string>("all");
+  const [isMatrixOpen, setIsMatrixOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("date");
-  const [sortDirection] = useState<SortDirection>("desc");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [dataError, setDataError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
 
@@ -211,7 +213,7 @@ export function PastPapersPage({
     <section className="space-y-16 pt-6 lg:pt-12 pb-20">
       <div className="flex flex-col sm:flex-row justify-between items-end gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
         <div>
-          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Mastery</h3>
+          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Evaluation</h3>
           <p className="text-3xl font-light text-primary tracking-tight">Past Paper History</p>
         </div>
         <div className="flex items-center gap-4">
@@ -226,10 +228,21 @@ export function PastPapersPage({
               <option value="examYear">Year</option>
               <option value="percentage">Percentage</option>
             </Select>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 rounded-full hover:bg-muted/50"
+              onClick={() => setSortDirection(sortDirection === "desc" ? "asc" : "desc")}
+              title={`Sort ${sortDirection === "desc" ? "descending" : "ascending"}`}
+            >
+              <span className="material-symbols-outlined text-xs">
+                {sortDirection === "desc" ? "arrow_downward" : "arrow_upward"}
+              </span>
+            </Button>
           </div>
           <Button 
             size="sm" 
-            className="rounded-full bg-primary text-white h-9 px-6 text-[10px] font-black uppercase tracking-widest"
+            className="rounded-full bg-primary text-primary-foreground h-9 px-6 text-[10px] font-black uppercase tracking-widest"
             onClick={openAddModal}
           >
             Add Entry
@@ -244,7 +257,7 @@ export function PastPapersPage({
               onClick={() => setSubjectFilter("all")}
               className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
                 subjectFilter === "all"
-                  ? "bg-primary text-white shadow-soft"
+                  ? "bg-primary text-primary-foreground shadow-soft"
                   : "bg-surface text-muted-foreground border border-border-hairline hover:bg-muted/50"
               }`}
             >
@@ -256,14 +269,14 @@ export function PastPapersPage({
                 onClick={() => setSubjectFilter(subject.id)}
                 className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
                   subjectFilter === subject.id
-                    ? "bg-primary text-white shadow-soft"
+                    ? "bg-primary text-primary-foreground shadow-soft"
                     : "bg-surface text-muted-foreground border border-border-hairline hover:bg-muted/50"
                 }`}
               >
                 <div 
                   className="w-1.5 h-1.5 rounded-full" 
                   style={{ 
-                    backgroundColor: subjectFilter === subject.id ? "white" : subject.baseColor 
+                    backgroundColor: subjectFilter === subject.id ? "var(--theme-primary-foreground)" : subject.baseColor 
                   }} 
                 />
                 {subject.shortCode}
@@ -296,9 +309,34 @@ export function PastPapersPage({
                   {label}
                 </button>
               ))}
+              
+              <div className="w-px h-4 bg-border-hairline mx-2" />
+              
+              <button
+                onClick={() => setIsMatrixOpen(!isMatrixOpen)}
+                className={`px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-1.5 ${
+                  isMatrixOpen
+                    ? "bg-primary text-primary-foreground shadow-soft"
+                    : "bg-transparent text-muted-foreground/60 border border-border-hairline hover:text-muted-foreground hover:bg-muted/50"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[12px]">grid_view</span>
+                Completion Grid
+              </button>
             </div>
           )}
         </div>
+
+        {activeSubject && isMatrixOpen && (
+          <div className="px-2">
+            <PaperMatrix
+              subject={activeSubject}
+              attempts={attempts}
+              availablePaperLabels={availablePaperLabels}
+              cutoffData={cutoffData}
+            />
+          </div>
+        )}
 
         {usingGenericFallback && (
           <div className="flex items-center gap-2 p-4 rounded-zen bg-amber-50/50 border border-amber-100/50 text-xs font-medium text-amber-700 mx-2">
@@ -317,6 +355,7 @@ export function PastPapersPage({
         <PastPaperTable
           attempts={filteredAttempts}
           subjectsById={subjectsById}
+          cutoffData={cutoffData}
           onEdit={openEditModal}
           onDelete={handleDelete}
         />
@@ -328,7 +367,7 @@ export function PastPapersPage({
           setIsModalOpen(false);
           setEditingAttempt(null);
         }}
-        title={editingAttempt ? "Edit Journey" : "New Journey"}
+        title={editingAttempt ? "Edit Past Paper" : "Add Past Paper"}
         description={editingAttempt ? "Update your past paper results." : "Log your latest past paper session."}
       >
         <PastPaperForm
@@ -337,7 +376,7 @@ export function PastPapersPage({
           cutoffData={cutoffData}
           initialValues={editingAttempt ?? undefined}
           onSubmit={handleSubmit}
-          submitLabel={isPersisting ? "Saving..." : editingAttempt ? "Update Entry" : "Add Journey"}
+          submitLabel={isPersisting ? "Saving..." : editingAttempt ? "Update Entry" : "Add Entry"}
           onCancel={() => {
             setIsModalOpen(false);
             setEditingAttempt(null);

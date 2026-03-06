@@ -1,7 +1,7 @@
 import { type FormEvent, useMemo, useState } from "react";
 import type { CutoffData, PastPaperAttempt, Subject } from "../types";
 import { formatIsoDate } from "../utils/dateHelpers";
-import { estimateDseLevel, hasSubjectCutoffData } from "../utils/dseLevelEstimator";
+import { estimateDseLevel, hasSubjectCutoffData, getMarksToNextLevel } from "../utils/dseLevelEstimator";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
@@ -73,6 +73,14 @@ export function PastPaperForm({
     if (!Number.isFinite(score) || !Number.isFinite(total) || total <= 0) return null;
     const percentage = (score / total) * 100;
     return estimateDseLevel(subjectKey, percentage, cutoffData, examYear);
+  }, [values.score, values.total, subjectKey, examYear, cutoffData]);
+
+  const marksGapInfo = useMemo(() => {
+    const score = Number(values.score);
+    const total = Number(values.total);
+    if (!Number.isFinite(score) || !Number.isFinite(total) || total <= 0) return null;
+    const percentage = (score / total) * 100;
+    return getMarksToNextLevel(subjectKey, percentage, cutoffData, examYear, total);
   }, [values.score, values.total, subjectKey, examYear, cutoffData]);
 
   const showManualGrade = !values.isDse || !hasCutoffData;
@@ -239,7 +247,7 @@ export function PastPaperForm({
               onClick={() => handleChange("isDse", true)}
               className={`flex-1 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                 values.isDse
-                  ? "bg-primary text-white shadow-sm"
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-muted/50"
               }`}
             >
@@ -250,7 +258,7 @@ export function PastPaperForm({
               onClick={() => handleChange("isDse", false)}
               className={`flex-1 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                 !values.isDse
-                  ? "bg-primary text-white shadow-sm"
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-muted/50"
               }`}
             >
@@ -286,9 +294,16 @@ export function PastPaperForm({
               Predicted grade
             </label>
             <div className="flex items-center gap-3 p-4 rounded-2xl bg-primary/5 border border-primary/10">
-              <span className="text-2xl font-black text-primary size-12 flex items-center justify-center rounded-xl bg-primary/10">
-                {predictedGrade ?? "—"}
-              </span>
+              <div className="flex flex-col items-center justify-center">
+                <span className="text-2xl font-black text-primary size-12 flex items-center justify-center rounded-xl bg-primary/10">
+                  {predictedGrade ?? "—"}
+                </span>
+                {marksGapInfo && (
+                  <span className="text-[10px] font-bold text-primary/60 mt-1 whitespace-nowrap">
+                    {marksGapInfo.percentageGap.toFixed(1)}% to {marksGapInfo.nextLevel}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground">
                 {predictedGrade
                   ? "Based on HKDSE cutoff data for this year and subject."

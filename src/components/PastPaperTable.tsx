@@ -1,8 +1,10 @@
-import type { PastPaperAttempt, Subject } from "../types";
+import type { CutoffData, PastPaperAttempt, Subject } from "../types";
+import { getMarksToNextLevel } from "../utils/dseLevelEstimator";
 
 interface PastPaperTableProps {
   attempts: PastPaperAttempt[];
   subjectsById: Record<string, Subject>;
+  cutoffData?: CutoffData;
   onEdit: (attempt: PastPaperAttempt) => void;
   onDelete: (attemptId: string) => void;
 }
@@ -10,6 +12,7 @@ interface PastPaperTableProps {
 export function PastPaperTable({
   attempts,
   subjectsById,
+  cutoffData,
   onEdit,
   onDelete,
 }: PastPaperTableProps) {
@@ -90,9 +93,21 @@ export function PastPaperTable({
 
               <div className="flex flex-col items-center min-w-[60px]">
                 <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1 opacity-40">Level</p>
-                <span className="text-2xl font-black text-white bg-primary size-12 flex items-center justify-center rounded-2xl shadow-lg shadow-primary/10">
+                <span className="text-2xl font-black text-primary-foreground bg-primary size-12 flex items-center justify-center rounded-2xl shadow-lg shadow-primary/10">
                   {attempt.estimatedLevel}
                 </span>
+                {cutoffData && attempt.isDse !== false && (() => {
+                  const subjectKey = subject?.shortCode || attempt.subjectId;
+                  const gap = getMarksToNextLevel(subjectKey, attempt.percentage, cutoffData, attempt.examYear, attempt.total);
+                  if (gap) {
+                    return (
+                      <p className="text-[10px] font-bold text-muted-foreground mt-2 whitespace-nowrap">
+                        {gap.percentageGap.toFixed(1)}% to {gap.nextLevel}
+                      </p>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               <div className="flex md:flex-col gap-2 md:opacity-0 group-hover:opacity-100 transition-all duration-300 w-full md:w-auto justify-end">

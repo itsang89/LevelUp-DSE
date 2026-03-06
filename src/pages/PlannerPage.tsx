@@ -93,6 +93,20 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
     }
   }, [initialWeek, weeks]);
 
+  const scrollToToday = useMemo(() => {
+    return () => {
+      const element = weekRefs.current.get(formatIsoDate(initialWeek));
+      if (element) {
+        const grid = element.querySelector('.planner-grid-container');
+        if (grid) {
+          grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    };
+  }, [initialWeek]);
+
   // Listen for scroll-to-today events from sidebar
   useEffect(() => {
     const handleScroll = () => {
@@ -100,7 +114,7 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
     };
     window.addEventListener('scroll-to-today', handleScroll);
     return () => window.removeEventListener('scroll-to-today', handleScroll);
-  }, [weeks, initialWeek]); // Keep dependencies updated if needed
+  }, [scrollToToday]); // Keep dependencies updated if needed
 
   // Intersection Observer for updating week label
   useEffect(() => {
@@ -268,18 +282,6 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
     const diff = (weeks[weeks.length - 1].getTime() - initialWeek.getTime()) / (1000 * 60 * 60 * 24 * 7);
     return diff >= LOAD_LIMIT;
   }, [weeks, initialWeek]);
-
-  function scrollToToday(): void {
-    const element = weekRefs.current.get(formatIsoDate(initialWeek));
-    if (element) {
-      const grid = element.querySelector('.planner-grid-container');
-      if (grid) {
-        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  }
 
   function getActiveWeekIndex(): number {
     return weeks.findIndex(w => formatWeekLabel(w) === currentWeekLabel);
@@ -460,7 +462,7 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
       <Modal
         isOpen={!!activeCell}
         onClose={closeEditor}
-        title="Session Details"
+        title={getTask(activeCell?.date || "", activeCell?.sessionId || "") ? "Edit Session" : "Plan Session"}
         description={activeCell ? `${activeCell.date} — ${PLANNER_SESSIONS.find((s) => s.id === activeCell.sessionId)?.label}` : ""}
       >
         <div className="space-y-6">
@@ -546,14 +548,16 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
           )}
 
           <div className="flex gap-3 pt-4">
-            <Button
-              variant="outline"
-              className="flex-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-dot-red/25 text-dot-red border-2 border-dot-red/60 hover:bg-dot-red/35 hover:border-dot-red"
-              onClick={handleClear}
-              disabled={isPersisting}
-            >
-              Delete
-            </Button>
+            {getTask(activeCell?.date || "", activeCell?.sessionId || "") ? (
+              <Button
+                variant="outline"
+                className="flex-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-dot-red/25 text-dot-red border-2 border-dot-red/60 hover:bg-dot-red/35 hover:border-dot-red"
+                onClick={handleClear}
+                disabled={isPersisting}
+              >
+                Clear Session
+              </Button>
+            ) : null}
             <Button
               className="flex-[2] rounded-full text-[10px] font-black uppercase tracking-widest"
               onClick={handleSave}

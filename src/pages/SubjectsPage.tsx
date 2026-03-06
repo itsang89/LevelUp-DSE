@@ -190,7 +190,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
                 variant="hairline" 
                 padding="sm"
                 style={getSubjectGradientStyle(subject)}
-                className="group relative transition-all duration-300 hover:bg-white hover:shadow-soft"
+                className="group relative transition-all duration-300 hover:bg-surface hover:shadow-soft"
               >
                 {editingSubjectId === subject.id ? (
                   <div className="space-y-4">
@@ -259,7 +259,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
                         {subject.paperLabels.map((label) => (
                           <div 
                             key={label}
-                            className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-white/50 border border-border-hairline text-muted-foreground shadow-sm"
+                            className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-surface/50 border border-border-hairline text-muted-foreground shadow-sm"
                           >
                             {label}
                           </div>

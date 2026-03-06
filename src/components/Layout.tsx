@@ -22,7 +22,20 @@ export function Layout() {
   const [userName, setUserName] = useState("Student User");
   const [newName, setNewName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     async function getUserData() {
@@ -96,7 +109,7 @@ export function Layout() {
       <aside className="hidden lg:flex w-64 border-r border-border-hairline flex-col py-8 px-8 bg-sidebar z-50">
         <div className="flex items-center gap-3 mb-16 px-2">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-sm">
-            <span className="material-symbols-outlined text-white text-lg">circle_notifications</span>
+            <span className="material-symbols-outlined text-primary-foreground text-lg">circle_notifications</span>
           </div>
           <h2 className="text-sm font-bold tracking-tight uppercase">LevelUp</h2>
         </div>
@@ -119,7 +132,11 @@ export function Layout() {
               </NavLink>
               <NavLink to="/past-papers" className={({ isActive }) => navLinkClassName(isActive)}>
                 <span className="material-symbols-outlined text-xl">analytics</span>
-                <span className="text-sm font-bold tracking-tight">Mastery</span>
+                <span className="text-sm font-bold tracking-tight">Past Papers</span>
+              </NavLink>
+              <NavLink to="/analytics" className={({ isActive }) => navLinkClassName(isActive)}>
+                <span className="material-symbols-outlined text-xl">insights</span>
+                <span className="text-sm font-bold tracking-tight">Insights</span>
               </NavLink>
             </div>
           </div>
@@ -174,6 +191,20 @@ export function Layout() {
                   <div className="absolute bottom-0 left-full ml-4 w-48 p-2 bg-surface border border-border-hairline rounded-2xl shadow-xl animate-in fade-in slide-in-from-left-2 duration-300 z-[100]">
                     <button 
                       onClick={() => {
+                        setIsDarkMode(!isDarkMode);
+                        setIsUserPopoverOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all group mb-1"
+                    >
+                      <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">
+                        {isDarkMode ? 'light_mode' : 'dark_mode'}
+                      </span>
+                      <span className="text-[11px] font-black uppercase tracking-widest">
+                        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                      </span>
+                    </button>
+                    <button 
+                      onClick={() => {
                         setIsUserPopoverOpen(false);
                         setNewName(userName);
                         setIsNameModalOpen(true);
@@ -202,7 +233,7 @@ export function Layout() {
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b border-border-hairline bg-sidebar/80 backdrop-blur-md z-40 flex items-center justify-between px-6">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
-            <span className="material-symbols-outlined text-white text-base">circle_notifications</span>
+            <span className="material-symbols-outlined text-primary-foreground text-base">circle_notifications</span>
           </div>
           <h2 className="text-sm font-bold tracking-tight uppercase">LevelUp</h2>
         </div>
@@ -242,7 +273,11 @@ export function Layout() {
                 </NavLink>
                 <NavLink to="/past-papers" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive) + " text-2xl"}>
                   <span className="material-symbols-outlined text-3xl">analytics</span>
-                  <span className="font-bold">Mastery</span>
+                  <span className="font-bold">Past Papers</span>
+                </NavLink>
+                <NavLink to="/analytics" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive) + " text-2xl"}>
+                  <span className="material-symbols-outlined text-3xl">insights</span>
+                  <span className="font-bold">Insights</span>
                 </NavLink>
               </div>
             </div>

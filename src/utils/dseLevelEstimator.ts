@@ -358,3 +358,53 @@ export function estimateDseLevel(
 export function getGenericCutoffs(): CutoffRow[] {
   return GENERIC_CUTOFFS;
 }
+
+/**
+ * Calculates the gap to the next level.
+ * Returns null if already at 5** or if cutoff data is unavailable.
+ */
+export function getMarksToNextLevel(
+  subjectKey: string,
+  percentage: number,
+  cutoffData: CutoffData,
+  examYear: number,
+  totalMarks: number
+): { nextLevel: DseLevel; percentageGap: number; marksGap: number } | null {
+  const normalizedKey = subjectKey.trim().toUpperCase();
+  
+  let cutoffs: CutoffRow[] | null = null;
+  if (isCutoffDataByYear(cutoffData)) {
+    cutoffs = getCutoffRowsForYear(normalizedKey, examYear, cutoffData);
+  } else {
+    cutoffs = (cutoffData as Record<string, CutoffRow[]>)[normalizedKey];
+  }
+  
+  if (!cutoffs) return null;
+
+  // Find the current level index
+  let currentLevelIdx = cutoffs.length; // defaults to 'U'
+  for (let i = 0; i < cutoffs.length; i++) {
+    if (percentage >= cutoffs[i].minimumPercentage) {
+      currentLevelIdx = i;
+      break;
+    }
+  }
+
+  // If already at the top level (5**), or somehow beyond
+  if (currentLevelIdx === 0) return null;
+
+  // The next level is the one immediately above the current level
+  const nextLevelRow = cutoffs[currentLevelIdx - 1];
+  if (!nextLevelRow) return null;
+
+  const percentageGap = nextLevelRow.minimumPercentage - percentage;
+  if (percentageGap <= 0) return null;
+
+  const marksGap = (percentageGap / 100) * totalMarks;
+
+  return {
+    nextLevel: nextLevelRow.level,
+    percentageGap,
+    marksGap,
+  };
+}
