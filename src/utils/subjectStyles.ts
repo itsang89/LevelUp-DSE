@@ -17,7 +17,7 @@ function hexToRgb(hex: string): [number, number, number] {
 export function getSubjectGradientStyle(subject?: Subject | null): CSSProperties {
   if (!subject) {
     return {
-      background: "linear-gradient(135deg, rgba(15,23,42,0.08), rgba(15,23,42,0.02))",
+      background: "linear-gradient(135deg, rgba(100,116,139,0.15), rgba(100,116,139,0.06))",
     };
   }
 

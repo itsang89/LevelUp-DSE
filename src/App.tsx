@@ -10,10 +10,11 @@ import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { ExamTimetablePage } from "./pages/ExamTimetablePage";
-import type { CutoffData } from "./types";
+import type { CutoffData, PlannerCell } from "./types";
 import { loadCutoffData } from "./utils/dseLevelEstimator";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase";
 import { listSubjects, seedDefaultSubjects } from "./lib/api/subjectsApi";
+import { listPlannerCells } from "./lib/api/plannerApi";
 import type { Subject } from "./types";
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
   const [appError, setAppError] = useState<string | null>(null);
   const [cutoffData, setCutoffData] = useState<CutoffData>({});
   const [usingGenericFallback, setUsingGenericFallback] = useState<boolean>(false);
+  const [cells, setCells] = useState<PlannerCell[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -113,6 +115,28 @@ function App() {
     };
   }, [session]);
 
+  useEffect(() => {
+    if (!session) {
+      setCells([]);
+      return;
+    }
+
+    const userId = session.user.id;
+    let isMounted = true;
+
+    listPlannerCells(userId)
+      .then((rows) => {
+        if (isMounted) setCells(rows);
+      })
+      .catch(() => {
+        if (isMounted) setCells([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session]);
+
   if (authLoading || (session && subjectsLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
@@ -158,12 +182,12 @@ function App() {
         element={session ? <Navigate to="/planner" replace /> : <LoginPage />}
       />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route element={session ? <Layout subjects={subjects} /> : <Navigate to="/login" replace />}>
+      <Route element={session ? <Layout subjects={subjects} cells={cells} /> : <Navigate to="/login" replace />}>
         <Route
           path="/planner"
           element={
             userId ? (
-              <PlannerPage subjects={subjects} userId={userId} />
+              <PlannerPage subjects={subjects} userId={userId} cells={cells} setCells={setCells} />
             ) : (
               <Navigate to="/login" replace />
             )

@@ -4,7 +4,8 @@ import { getSupabaseClient } from "../lib/supabase";
 import { Modal } from "./ui/Modal";
 import { Input } from "./ui/Input";
 import { Button } from "./ui/Button";
-import type { Subject } from "../types";
+import type { PlannerCell, Subject } from "../types";
+import { startOfWeekSunday, formatWeekLabel, isDateInWeek } from "../utils/dateHelpers";
 import { DSE_TIMETABLE_2026 } from "../constants";
 
 function navLinkClassName(isActive: boolean): string {
@@ -18,9 +19,10 @@ function navLinkClassName(isActive: boolean): string {
 
 interface LayoutProps {
   subjects?: Subject[];
+  cells?: PlannerCell[];
 }
 
-export function Layout({ subjects = [] }: LayoutProps) {
+export function Layout({ subjects = [], cells = [] }: LayoutProps) {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
@@ -128,16 +130,51 @@ export function Layout({ subjects = [] }: LayoutProps) {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }, [nextExam]);
 
+  const weeklyProgress = useMemo(() => {
+    const weekStart = startOfWeekSunday(new Date());
+    const studyCells = cells.filter(
+      (c) => c.task && !c.task.isRest && isDateInWeek(c.date, weekStart)
+    );
+    const total = studyCells.length;
+    const done = studyCells.filter((c) => c.task?.isDone).length;
+    return { total, done, weekStart };
+  }, [cells]);
+
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden font-sans">
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex w-64 border-r border-border-hairline flex-col py-8 px-8 bg-sidebar z-50">
-        <div className="flex items-center gap-3 mb-16 px-2">
+        <div className="flex items-center gap-3 mb-6 px-2">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-sm">
             <span className="material-symbols-outlined text-primary-foreground text-lg">circle_notifications</span>
           </div>
           <h2 className="text-sm font-bold tracking-tight uppercase">LevelUp</h2>
         </div>
+
+        {weeklyProgress.total > 0 && (
+          <div
+            onClick={() => navigate("/planner")}
+            className="mb-6 px-3 py-3 rounded-2xl bg-surface/50 border border-border-hairline shadow-soft cursor-pointer hover:bg-muted/30 transition-colors group"
+          >
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider opacity-70">
+                This week
+              </span>
+              <span className="text-[11px] font-bold text-primary tabular-nums">
+                {weeklyProgress.done} / {weeklyProgress.total}
+              </span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-success transition-all duration-300"
+                style={{ width: `${weeklyProgress.total ? (weeklyProgress.done / weeklyProgress.total) * 100 : 0}%` }}
+              />
+            </div>
+            <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mt-1.5 opacity-60">
+              {formatWeekLabel(weeklyProgress.weekStart)}
+            </p>
+          </div>
+        )}
 
         <nav className="flex-1 w-full space-y-1">
           <NavLink 
@@ -282,6 +319,33 @@ export function Layout({ subjects = [] }: LayoutProps) {
           >
             <span className="material-symbols-outlined text-3xl">close</span>
           </button>
+          {weeklyProgress.total > 0 && (
+            <div
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                navigate("/planner");
+              }}
+              className="mb-6 p-4 rounded-2xl bg-surface/50 border border-border-hairline shadow-soft cursor-pointer hover:bg-muted/30 transition-colors"
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-xs font-black text-muted-foreground uppercase tracking-wider opacity-70">
+                  This week
+                </span>
+                <span className="text-sm font-bold text-primary tabular-nums">
+                  {weeklyProgress.done} / {weeklyProgress.total}
+                </span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-success transition-all duration-300"
+                  style={{ width: `${weeklyProgress.total ? (weeklyProgress.done / weeklyProgress.total) * 100 : 0}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-2 opacity-60">
+                {formatWeekLabel(weeklyProgress.weekStart)}
+              </p>
+            </div>
+          )}
           <nav className="space-y-1">
             <NavLink 
               to="/planner" 

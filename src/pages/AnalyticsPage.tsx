@@ -243,7 +243,7 @@ export function AnalyticsPage({
                 <div 
                   className="w-1.5 h-1.5 rounded-full" 
                   style={{ 
-                    backgroundColor: subjectFilter === subject.id ? "var(--theme-primary-foreground)" : subject.baseColor 
+                    backgroundColor: subject.baseColor 
                   }} 
                 />
                 {subject.shortCode}

@@ -9,6 +9,7 @@ interface PlannerGridProps {
   getTask: (dateIso: string, sessionId: string) => PlannerTask | null;
   subjectsById: Record<string, Subject>;
   onEditCell: (dateIso: string, sessionId: string) => void;
+  onToggleDone?: (dateIso: string, sessionId: string) => void;
 }
 
 export function PlannerGrid({
@@ -17,6 +18,7 @@ export function PlannerGrid({
   getTask,
   subjectsById,
   onEditCell,
+  onToggleDone,
 }: PlannerGridProps) {
   return (
     <div className="w-full overflow-x-auto custom-scrollbar pb-6 planner-grid-container scroll-mt-24">
@@ -85,6 +87,7 @@ export function PlannerGrid({
                       task={task}
                       subject={subject}
                       onClick={() => onEditCell(isoDate, session.id)}
+                      onToggleDone={task && !task.isRest ? () => onToggleDone?.(isoDate, session.id) : undefined}
                     />
                   </div>
                 );

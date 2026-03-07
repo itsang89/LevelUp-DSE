@@ -8,7 +8,7 @@ import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
-import { deletePlannerCell, listPlannerCells, upsertPlannerCell } from "../lib/api/plannerApi";
+import { deletePlannerCell, upsertPlannerCell } from "../lib/api/plannerApi";
 import {
   exportPlannerCsv,
   exportPlannerJson,
@@ -19,6 +19,8 @@ import {
 interface PlannerPageProps {
   userId: string;
   subjects: Subject[];
+  cells: PlannerCellType[];
+  setCells: React.Dispatch<React.SetStateAction<PlannerCellType[]>>;
 }
 
 interface CellEditorState {
@@ -32,7 +34,7 @@ function createTaskId(): string {
 
 const LOAD_LIMIT = 12; // Maximum weeks in each direction before "Load More" button
 
-export function PlannerPage({ userId, subjects }: PlannerPageProps) {
+export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPageProps) {
   const initialWeek = useMemo(() => startOfWeekSunday(new Date()), []);
   const [weeks, setWeeks] = useState<Date[]>([initialWeek]);
   const [currentWeekLabel, setCurrentWeekLabel] = useState<string>(formatWeekLabel(initialWeek));
@@ -40,7 +42,6 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
   const hasScrolledToCurrentWeekRef = useRef(false);
   const scrollAdjustmentRef = useRef<{ oldScrollHeight: number; oldScrollTop: number } | null>(null);
 
-  const [cells, setCells] = useState<PlannerCellType[]>([]);
   const [activeCell, setActiveCell] = useState<CellEditorState | null>(null);
   const [subjectId, setSubjectId] = useState<string>("");
   const [title, setTitle] = useState<string>("");
@@ -60,27 +61,6 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
     ];
     setWeeks(initialWeeks);
   }, [initialWeek]);
-
-  useEffect(() => {
-    let isMounted = true;
-    listPlannerCells(userId)
-      .then((rows) => {
-        if (isMounted) {
-          setCells(rows);
-        }
-      })
-      .catch((requestError) => {
-        if (isMounted) {
-          setDataError(
-            requestError instanceof Error ? requestError.message : "Failed to load planner data."
-          );
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
 
   // Scroll to current week on initial load
   useEffect(() => {
@@ -225,6 +205,7 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
       title: isRest ? "Rest" : title.trim(),
       notes: notes.trim() || undefined,
       isRest: isRest,
+      isDone: existingTask?.isDone ?? false,
     };
 
     try {
@@ -236,6 +217,20 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
       setError(requestError instanceof Error ? requestError.message : "Failed to save planner task.");
     } finally {
       setIsPersisting(false);
+    }
+  }
+
+  async function handleToggleDone(dateIso: string, sessionId: string): Promise<void> {
+    const existingTask = getTask(dateIso, sessionId);
+    if (!existingTask) return;
+
+    const updatedTask: PlannerTask = { ...existingTask, isDone: !existingTask.isDone };
+    upsertCell(dateIso, sessionId, updatedTask);
+    try {
+      await upsertPlannerCell(userId, dateIso, sessionId, updatedTask);
+    } catch (requestError) {
+      upsertCell(dateIso, sessionId, existingTask);
+      setDataError(requestError instanceof Error ? requestError.message : "Failed to update session.");
     }
   }
 
@@ -449,6 +444,7 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
                 getTask={getTask}
                 subjectsById={subjectsById}
                 onEditCell={openEditor}
+                onToggleDone={handleToggleDone}
               />
             </div>
           ))}

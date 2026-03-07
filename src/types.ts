@@ -20,6 +20,7 @@ export interface PlannerTask {
   title: string;
   notes?: string;
   isRest?: boolean;
+  isDone?: boolean;
 }
 
 export interface PlannerCell {

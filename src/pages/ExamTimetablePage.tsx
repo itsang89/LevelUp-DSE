@@ -35,7 +35,7 @@ export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
         daysRemaining,
         status,
         subjectName: subject?.name || exam.subjectCode,
-        subjectColor: subject?.baseColor || "var(--color-primary)",
+        subjectColor: subject?.baseColor || "#64748b",
       };
     }).sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
 
@@ -204,7 +204,7 @@ export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
               No exams found. Add subjects to see your timetable.
             </div>
           ) : (
-            allExams.map((exam, index) => {
+            allExams.map((exam) => {
               const isNext = nextExam?.date === exam.date && nextExam?.subjectCode === exam.subjectCode;
               
               return (

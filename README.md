@@ -1,6 +1,17 @@
 # LevelUp DSE Planner
 
-A study planning web app for HKDSE candidates.
+A study planning web app for HKDSE (Hong Kong Diploma of Secondary Education) candidates.
+
+## Purpose
+
+LevelUp DSE Planner helps students prepare for the HKDSE exams by:
+
+- **Planning study sessions** — Weekly planner with session-level tasks, rest slots, and subject assignments so you can structure revision across the exam period
+- **Tracking past paper attempts** — Log scores, estimate DSE levels from year-specific cutoffs, and see progress over time
+- **Understanding performance** — Analytics with score trends, grade distribution, and marks-to-next-level insights to target weak areas
+- **Managing subjects** — Configure subjects with short codes (e.g. MATH, ENG, CHEM) so grade prediction and exam countdowns work correctly
+
+The app uses official DSE cutoff data to estimate levels from raw scores and supports per-subject exam timetables so you can focus on your next paper.
 
 ## Tech Stack
 
@@ -12,25 +23,34 @@ A study planning web app for HKDSE candidates.
 
 ## Features
 
-- Email/password authentication via Supabase
+- Email/password authentication via Supabase (including password reset flow)
 - Weekly planner with session-level tasks and rest slots
-- Past paper attempt tracking with estimated DSE levels
+- Past paper attempt tracking with estimated DSE levels and sort toggle (newest/oldest first)
 - Subject management (name, short code, color, paper labels)
 - Subject-specific cutoff parsing from markdown with generic fallback
+- Analytics page: score trends, grade distribution, marks-to-next-level insights
+- Paper completion matrix: year × paper grid showing completed/missing papers per subject
+- Per-subject exam countdown and timetable
+- Date-range filtering for past papers (All, Last 30 days, Last 3 months, custom range)
+- CSV / JSON export (PastPapersPage and PlannerPage; respects current filters)
+- Dark mode (toggle in sidebar, persisted in localStorage)
 
 ## Project Structure
 
 - `src/App.tsx`: App bootstrap, auth/session handling, route guards, initial data loading
 - `src/pages/PlannerPage.tsx`: Weekly planner timeline and task editor modal
-- `src/pages/PastPapersPage.tsx`: Past paper CRUD, filter/sort, modal form integration
+- `src/pages/PastPapersPage.tsx`: Past paper CRUD, filter/sort, modal form, paper matrix
+- `src/pages/AnalyticsPage.tsx`: Score trends, grade distribution, summary stats
+- `src/pages/ExamTimetablePage.tsx`: Per-subject exam timetable and countdown
 - `src/pages/SubjectsPage.tsx`: Subject CRUD and preset color/paper-label management
 - `src/pages/LoginPage.tsx`: Sign in/sign up flow
-- `src/components/`: Layout, page components, and reusable UI primitives
-- `src/lib/api/`: Supabase data-access layer (`subjects`, `planner_cells`, `past_paper_attempts`)
+- `src/pages/ResetPasswordPage.tsx`: Password reset via email link
+- `src/components/`: Layout, PlannerGrid, PaperMatrix, ExportDropdown, DateFilterDropdown, SortDropdown, UI primitives
+- `src/lib/api/`: Supabase data-access layer (`subjectsApi`, `plannerApi`, `pastPapersApi`, `goalsApi`)
 - `src/lib/supabase.ts`: Singleton Supabase client and environment checks
-- `src/utils/`: Date helpers, subject styles, DSE level estimation + markdown parser
+- `src/utils/`: Date helpers, subject styles, DSE level estimation + markdown parser, export utilities
 - `supabase/schema.sql`: Database tables, indexes, constraints, and RLS policies
-- `public/dse-cutoffs.md`: In-app cutoff source file loaded at runtime
+- `public/dse-cutoffs.md`, `public/dse-cutoffs-electives.md`: In-app cutoff source files loaded at runtime
 
 ## Environment Setup
 

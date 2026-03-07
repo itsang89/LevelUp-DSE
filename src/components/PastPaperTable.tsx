@@ -43,7 +43,7 @@ export function PastPaperTable({
             {/* Subject Indicator Bar */}
             <div 
               className="absolute left-0 top-0 bottom-0 w-1 opacity-20 group-hover:opacity-100 transition-opacity"
-              style={{ backgroundColor: subject?.baseColor || 'var(--color-primary)' }}
+              style={{ backgroundColor: subject?.baseColor || '#64748b' }}
             />
 
             <div className="flex items-center gap-10 flex-1 w-full md:w-auto">
@@ -56,7 +56,7 @@ export function PastPaperTable({
                 <div 
                   className="inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 border border-border-hairline"
                   style={{
-                    color: subject?.baseColor || "inherit",
+                    color: subject?.baseColor || "#64748b",
                     backgroundColor: subject?.baseColor ? `${subject.baseColor}30` : "transparent",
                   }}
                 >

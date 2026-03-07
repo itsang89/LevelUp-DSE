@@ -52,3 +52,9 @@ export function formatDayHeader(date: Date): string {
   const month = MONTH_NAMES[date.getMonth()];
   return `${dayName} ${day} ${month}`;
 }
+
+export function isDateInWeek(dateIso: string, weekStart: Date): boolean {
+  const weekStartIso = formatIsoDate(weekStart);
+  const weekEndIso = formatIsoDate(addDays(weekStart, 6));
+  return dateIso >= weekStartIso && dateIso <= weekEndIso;
+}

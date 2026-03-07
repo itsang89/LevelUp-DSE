@@ -23,6 +23,7 @@ create table if not exists public.planner_cells (
   title text not null,
   notes text null,
   is_rest boolean not null default false,
+  is_done boolean not null default false,
   created_at timestamptz not null default timezone('utc', now()),
   unique (user_id, date, session_id)
 );
