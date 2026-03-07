@@ -8,6 +8,8 @@ import { PlannerPage } from "./pages/PlannerPage";
 import { SubjectsPage } from "./pages/SubjectsPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { LoginPage } from "./pages/LoginPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
+import { ExamTimetablePage } from "./pages/ExamTimetablePage";
 import type { CutoffData } from "./types";
 import { loadCutoffData } from "./utils/dseLevelEstimator";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase";
@@ -155,7 +157,8 @@ function App() {
         path="/login"
         element={session ? <Navigate to="/planner" replace /> : <LoginPage />}
       />
-      <Route element={session ? <Layout /> : <Navigate to="/login" replace />}>
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route element={session ? <Layout subjects={subjects} /> : <Navigate to="/login" replace />}>
         <Route
           path="/planner"
           element={
@@ -205,6 +208,16 @@ function App() {
                 subjects={subjects}
                 setSubjects={setSubjects}
               />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/exam-timetable"
+          element={
+            userId ? (
+              <ExamTimetablePage subjects={subjects} />
             ) : (
               <Navigate to="/login" replace />
             )

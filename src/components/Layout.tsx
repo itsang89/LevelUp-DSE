@@ -4,17 +4,23 @@ import { getSupabaseClient } from "../lib/supabase";
 import { Modal } from "./ui/Modal";
 import { Input } from "./ui/Input";
 import { Button } from "./ui/Button";
+import type { Subject } from "../types";
+import { DSE_TIMETABLE_2026 } from "../constants";
 
 function navLinkClassName(isActive: boolean): string {
   return [
-    "flex items-center gap-4 transition-all duration-200 group py-1",
+    "flex items-center gap-3 transition-all duration-200 group px-3 py-2 rounded-xl",
     isActive
-      ? "text-primary"
-      : "text-muted-foreground hover:text-primary",
+      ? "text-primary bg-primary/5 shadow-sm"
+      : "text-muted-foreground hover:text-primary hover:bg-muted/30",
   ].join(" ");
 }
 
-export function Layout() {
+interface LayoutProps {
+  subjects?: Subject[];
+}
+
+export function Layout({ subjects = [] }: LayoutProps) {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
@@ -95,13 +101,32 @@ export function Layout() {
     }
   };
 
-  const daysToDSE = useMemo(() => {
-    const targetDate = new Date('2026-04-09T00:00:00');
+  const nextExam = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const diffTime = targetDate.getTime() - today.getTime();
+
+    const userSubjectCodes = subjects.map((s) => s.shortCode);
+    const relevantExams = DSE_TIMETABLE_2026.filter((exam) =>
+      userSubjectCodes.includes(exam.subjectCode)
+    );
+
+    const examsToConsider = relevantExams.length > 0 ? relevantExams : DSE_TIMETABLE_2026;
+
+    const upcoming = examsToConsider
+      .map((exam) => ({ ...exam, parsedDate: new Date(`${exam.date}T00:00:00`) }))
+      .filter((exam) => exam.parsedDate.getTime() >= today.getTime())
+      .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+
+    return upcoming[0] || null;
+  }, [subjects]);
+
+  const daysToNextExam = useMemo(() => {
+    if (!nextExam) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffTime = nextExam.parsedDate.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  }, []);
+  }, [nextExam]);
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden font-sans">
@@ -114,74 +139,88 @@ export function Layout() {
           <h2 className="text-sm font-bold tracking-tight uppercase">LevelUp</h2>
         </div>
 
-        <nav className="flex-1 w-full space-y-10">
-          <div className="space-y-6">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-2 opacity-60">Planner</p>
-            <div className="space-y-4">
-              <NavLink 
-                to="/planner" 
-                className={({ isActive }) => navLinkClassName(isActive)}
-                onClick={() => {
-                  if (window.location.pathname === "/planner") {
-                    window.dispatchEvent(new CustomEvent("scroll-to-today"));
-                  }
-                }}
-              >
-                <span className="material-symbols-outlined text-xl">grid_view</span>
-                <span className="text-sm font-bold tracking-tight">Dashboard</span>
-              </NavLink>
-              <NavLink to="/past-papers" className={({ isActive }) => navLinkClassName(isActive)}>
-                <span className="material-symbols-outlined text-xl">analytics</span>
-                <span className="text-sm font-bold tracking-tight">Past Papers</span>
-              </NavLink>
-              <NavLink to="/analytics" className={({ isActive }) => navLinkClassName(isActive)}>
-                <span className="material-symbols-outlined text-xl">insights</span>
-                <span className="text-sm font-bold tracking-tight">Insights</span>
-              </NavLink>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-2 opacity-60">Curriculum</p>
-            <div className="space-y-4">
-              <NavLink to="/subjects" className={({ isActive }) => navLinkClassName(isActive)}>
-                <span className="material-symbols-outlined text-xl">library_books</span>
-                <span className="text-sm font-bold tracking-tight">Subjects</span>
-              </NavLink>
-            </div>
-          </div>
+        <nav className="flex-1 w-full space-y-1">
+          <NavLink 
+            to="/planner" 
+            className={({ isActive }) => navLinkClassName(isActive)}
+            onClick={() => {
+              if (window.location.pathname === "/planner") {
+                window.dispatchEvent(new CustomEvent("scroll-to-today"));
+              }
+            }}
+          >
+            <span className="material-symbols-outlined text-xl">grid_view</span>
+            <span className="text-sm font-medium tracking-tight">Dashboard</span>
+          </NavLink>
+          <NavLink to="/past-papers" className={({ isActive }) => navLinkClassName(isActive)}>
+            <span className="material-symbols-outlined text-xl">analytics</span>
+            <span className="text-sm font-medium tracking-tight">Past Papers</span>
+          </NavLink>
+          <NavLink to="/analytics" className={({ isActive }) => navLinkClassName(isActive)}>
+            <span className="material-symbols-outlined text-xl">insights</span>
+            <span className="text-sm font-medium tracking-tight">Insights</span>
+          </NavLink>
+          <NavLink to="/subjects" className={({ isActive }) => navLinkClassName(isActive)}>
+            <span className="material-symbols-outlined text-xl">library_books</span>
+            <span className="text-sm font-medium tracking-tight">Subjects</span>
+          </NavLink>
         </nav>
 
-        <div className="mt-auto pt-8 border-t border-border-hairline space-y-8">
-          <div className="space-y-4">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-2 opacity-60">Exam Prep</p>
-            <div className="glass-card rounded-2xl p-5 mb-2 hairline-border shadow-sm">
-              <div className="flex flex-col gap-1">
-                <span className="text-3xl font-light tracking-tighter">D-{daysToDSE}</span>
-                <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Countdown to 2026 DSE</span>
-              </div>
+        <div className="mt-auto space-y-4 pt-6">
+          {/* Compact Countdown */}
+          <div 
+            onClick={() => navigate('/exam-timetable')}
+            className="glass-card rounded-2xl p-4 hairline-border shadow-soft flex items-center justify-between group cursor-pointer hover:bg-muted/30 transition-colors"
+          >
+            <div className="flex flex-col">
+              {nextExam && daysToNextExam !== null ? (
+                <>
+                  <span className="text-xl font-light tracking-tighter">
+                    {daysToNextExam === 0 ? "Today" : `D-${daysToNextExam}`}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1 mt-1">
+                    {nextExam.subjectCode} {nextExam.paper}
+                    <span className="material-symbols-outlined text-[10px] group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-xl font-light tracking-tighter text-muted-foreground">Done</span>
+                  <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1 mt-1">
+                    Exams Complete
+                    <span className="material-symbols-outlined text-[10px] group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+                  </span>
+                </>
+              )}
             </div>
-            <div className="flex items-center gap-2 px-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-dot-green animate-pulse"></div>
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Stay Focused</span>
-            </div>
+            {nextExam && daysToNextExam !== null && daysToNextExam >= 0 && (
+              <div className="w-1.5 h-1.5 rounded-full bg-dot-green animate-pulse shadow-[0_0_8px_rgba(85,239,196,0.6)]"></div>
+            )}
           </div>
 
-          <div className="pt-8 border-t border-border-hairline">
-            <div className="flex items-center justify-between px-2 group">
-              <div className="flex items-center gap-3 cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-surface border border-border-hairline flex items-center justify-center shadow-soft overflow-hidden transition-transform group-hover:scale-105">
-                  <span className="material-symbols-outlined text-muted-foreground text-xl">person</span>
+          {/* Unified User Profile Footer */}
+          <div className="pt-4 border-t border-border-hairline">
+            <div className="flex items-center justify-between group px-1">
+              <div 
+                className="flex items-center gap-3 cursor-pointer overflow-hidden"
+                onClick={() => {
+                  setNewName(userName);
+                  setIsNameModalOpen(true);
+                }}
+              >
+                <div className="w-9 h-9 flex-shrink-0 rounded-full bg-surface border border-border-hairline flex items-center justify-center shadow-soft overflow-hidden transition-transform group-hover:scale-105 group-hover:border-primary/20">
+                  <span className="material-symbols-outlined text-muted-foreground text-lg">person</span>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-primary tracking-tight">{userName}</span>
-                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">Candidate 2026</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-bold text-primary tracking-tight truncate">{userName}</span>
+                  <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">Candidate</span>
                 </div>
               </div>
+
               <div className="relative" ref={popoverRef}>
                 <button 
                   onClick={() => setIsUserPopoverOpen(!isUserPopoverOpen)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary transition-all ${isUserPopoverOpen ? 'bg-muted/50 text-primary rotate-90' : 'hover:bg-muted/30'}`}
+                  className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary transition-all ${isUserPopoverOpen ? 'bg-muted/50 text-primary rotate-90' : 'hover:bg-muted/30'}`}
                   title="Options"
                 >
                   <span className="material-symbols-outlined text-xl transition-transform duration-300">chevron_right</span>
@@ -200,19 +239,8 @@ export function Layout() {
                         {isDarkMode ? 'light_mode' : 'dark_mode'}
                       </span>
                       <span className="text-[11px] font-black uppercase tracking-widest">
-                        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                        {isDarkMode ? 'Light' : 'Dark'}
                       </span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setIsUserPopoverOpen(false);
-                        setNewName(userName);
-                        setIsNameModalOpen(true);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all group mb-1"
-                    >
-                      <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">edit</span>
-                      <span className="text-[11px] font-black uppercase tracking-widest">Change Name</span>
                     </button>
                     <button 
                       onClick={handleSignOut}
@@ -254,43 +282,86 @@ export function Layout() {
           >
             <span className="material-symbols-outlined text-3xl">close</span>
           </button>
-          <nav className="space-y-12">
-            <div className="space-y-6">
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em]">Planner</p>
-              <div className="space-y-6">
-                <NavLink 
-                  to="/planner" 
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    if (window.location.pathname === "/planner") {
-                      window.dispatchEvent(new CustomEvent("scroll-to-today"));
-                    }
-                  }} 
-                  className={({ isActive }) => navLinkClassName(isActive) + " text-2xl"}
-                >
-                  <span className="material-symbols-outlined text-3xl">grid_view</span>
-                  <span className="font-bold">Dashboard</span>
-                </NavLink>
-                <NavLink to="/past-papers" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive) + " text-2xl"}>
-                  <span className="material-symbols-outlined text-3xl">analytics</span>
-                  <span className="font-bold">Past Papers</span>
-                </NavLink>
-                <NavLink to="/analytics" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive) + " text-2xl"}>
-                  <span className="material-symbols-outlined text-3xl">insights</span>
-                  <span className="font-bold">Insights</span>
-                </NavLink>
-              </div>
-            </div>
-            <div className="space-y-6">
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em]">Curriculum</p>
-              <div className="space-y-6">
-                <NavLink to="/subjects" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive) + " text-2xl"}>
-                  <span className="material-symbols-outlined text-3xl">library_books</span>
-                  <span className="font-bold">Subjects</span>
-                </NavLink>
-              </div>
-            </div>
+          <nav className="space-y-1">
+            <NavLink 
+              to="/planner" 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                if (window.location.pathname === "/planner") {
+                  window.dispatchEvent(new CustomEvent("scroll-to-today"));
+                }
+              }} 
+              className={({ isActive }) => navLinkClassName(isActive)}
+            >
+              <span className="material-symbols-outlined text-2xl">grid_view</span>
+              <span className="font-medium">Dashboard</span>
+            </NavLink>
+            <NavLink to="/past-papers" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive)}>
+              <span className="material-symbols-outlined text-2xl">analytics</span>
+              <span className="font-medium">Past Papers</span>
+            </NavLink>
+            <NavLink to="/analytics" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive)}>
+              <span className="material-symbols-outlined text-2xl">insights</span>
+              <span className="font-medium">Insights</span>
+            </NavLink>
+            <NavLink to="/subjects" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive)}>
+              <span className="material-symbols-outlined text-2xl">library_books</span>
+              <span className="font-medium">Subjects</span>
+            </NavLink>
           </nav>
+
+          <div className="mt-auto space-y-6 pb-12">
+            <div 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                navigate('/exam-timetable');
+              }}
+              className="glass-card rounded-2xl p-6 hairline-border shadow-soft flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors"
+            >
+              <div className="flex flex-col">
+                {nextExam && daysToNextExam !== null ? (
+                  <>
+                    <span className="text-3xl font-light tracking-tighter">
+                      {daysToNextExam === 0 ? "Today" : `D-${daysToNextExam}`}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1 flex items-center gap-1">
+                      {nextExam.subjectCode} {nextExam.paper}
+                      <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-3xl font-light tracking-tighter text-muted-foreground">Done</span>
+                    <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1 flex items-center gap-1">
+                      Exams Complete
+                      <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                    </span>
+                  </>
+                )}
+              </div>
+              {nextExam && daysToNextExam !== null && daysToNextExam >= 0 && (
+                <div className="w-2 h-2 rounded-full bg-dot-green animate-pulse shadow-[0_0_10px_rgba(85,239,196,0.6)]"></div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between p-2">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-surface border border-border-hairline flex items-center justify-center shadow-soft">
+                  <span className="material-symbols-outlined text-muted-foreground text-2xl">person</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-primary tracking-tight">{userName}</span>
+                  <span className="text-xs text-muted-foreground font-bold uppercase tracking-widest opacity-60">Candidate</span>
+                </div>
+              </div>
+              <button 
+                onClick={handleSignOut}
+                className="w-10 h-10 flex items-center justify-center rounded-full text-dot-red hover:bg-dot-red/5 transition-all"
+              >
+                <span className="material-symbols-outlined text-2xl">logout</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

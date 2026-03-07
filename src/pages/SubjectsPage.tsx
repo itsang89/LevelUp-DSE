@@ -169,8 +169,8 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
     <section className="space-y-16 pt-6 lg:pt-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-6">
         <div>
-          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Subjects</h3>
-          <p className="text-3xl font-light text-primary tracking-tight">Manage Curriculum</p>
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-1 opacity-50 block">Subjects</span>
+          <h1 className="text-3xl font-light text-primary tracking-tight">Manage Curriculum</h1>
         </div>
         <Button 
           onClick={() => setIsAddModalOpen(true)}

@@ -2,17 +2,26 @@ import { useEffect, useMemo, useState } from "react";
 import { PastPaperForm, type PastPaperFormValues } from "../components/PastPaperForm";
 import { PastPaperTable } from "../components/PastPaperTable";
 import { PaperMatrix } from "../components/PaperMatrix";
+import { ExportDropdown } from "../components/ExportDropdown";
+import { SortDropdown } from "../components/SortDropdown";
+import { DateFilterDropdown } from "../components/DateFilterDropdown";
 import type { CutoffData, PastPaperAttempt, Subject } from "../types";
 import { estimateDseLevel, hasSubjectCutoffData } from "../utils/dseLevelEstimator";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
-import { Select } from "../components/ui/Select";
 import {
   createPastPaperAttempt,
   deletePastPaperAttempt,
   listPastPaperAttempts,
   updatePastPaperAttempt,
 } from "../lib/api/pastPapersApi";
+import { formatIsoDate, subDays } from "../utils/dateHelpers";
+import {
+  exportPastPapersCsv,
+  exportPastPapersJson,
+  downloadBlob,
+  getExportFilename,
+} from "../utils/exportUtils";
 
 interface PastPapersPageProps {
   userId: string;
@@ -23,6 +32,7 @@ interface PastPapersPageProps {
 
 type SortKey = "date" | "examYear" | "percentage";
 type SortDirection = "asc" | "desc";
+type DateRangeFilter = "all" | "last30" | "last3months" | "custom";
 
 function createAttemptId(): string {
   return `attempt-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -42,6 +52,9 @@ export function PastPapersPage({
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRangeFilter>("all");
+  const [customFromDate, setCustomFromDate] = useState<string>("");
+  const [customToDate, setCustomToDate] = useState<string>("");
   const [dataError, setDataError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
 
@@ -105,6 +118,19 @@ export function PastPapersPage({
       list = list.filter((attempt) => attempt.paperLabel === paperFilter);
     }
 
+    if (dateRangeFilter !== "all") {
+      const today = formatIsoDate(new Date());
+      if (dateRangeFilter === "last30") {
+        const cutoff = formatIsoDate(subDays(new Date(), 30));
+        list = list.filter((a) => a.date >= cutoff && a.date <= today);
+      } else if (dateRangeFilter === "last3months") {
+        const cutoff = formatIsoDate(subDays(new Date(), 90));
+        list = list.filter((a) => a.date >= cutoff && a.date <= today);
+      } else if (dateRangeFilter === "custom" && customFromDate && customToDate) {
+        list = list.filter((a) => a.date >= customFromDate && a.date <= customToDate);
+      }
+    }
+
     const sorted = [...list].sort((a, b) => {
       if (sortKey === "date") {
         return a.date.localeCompare(b.date);
@@ -116,7 +142,7 @@ export function PastPapersPage({
     });
 
     return sortDirection === "asc" ? sorted : sorted.reverse();
-  }, [attempts, sortDirection, sortKey, subjectFilter, paperFilter]);
+  }, [attempts, sortDirection, sortKey, subjectFilter, paperFilter, dateRangeFilter, customFromDate, customToDate]);
 
   async function handleSubmit(values: PastPaperFormValues): Promise<void> {
     const score = Number(values.score);
@@ -210,54 +236,57 @@ export function PastPapersPage({
   }
 
   return (
-    <section className="space-y-16 pt-6 lg:pt-12 pb-20">
-      <div className="flex flex-col sm:flex-row justify-between items-end gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
-        <div>
-          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Evaluation</h3>
-          <p className="text-3xl font-light text-primary tracking-tight">Past Paper History</p>
+    <section className="space-y-4 pt-6 lg:pt-12 pb-20">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] opacity-50 mb-1 leading-none">Evaluation</span>
+          <h1 className="text-3xl font-light text-primary tracking-tight leading-none">Past Paper History</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-40">Sort</span>
-            <Select 
-              className="h-8 py-0 px-3 text-xs rounded-full bg-transparent border-border-hairline"
-              value={sortKey}
-              onChange={(e) => setSortKey(e.target.value as SortKey)}
-            >
-              <option value="date">Date</option>
-              <option value="examYear">Year</option>
-              <option value="percentage">Percentage</option>
-            </Select>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0 rounded-full hover:bg-muted/50"
-              onClick={() => setSortDirection(sortDirection === "desc" ? "asc" : "desc")}
-              title={`Sort ${sortDirection === "desc" ? "descending" : "ascending"}`}
-            >
-              <span className="material-symbols-outlined text-xs">
-                {sortDirection === "desc" ? "arrow_downward" : "arrow_upward"}
-              </span>
-            </Button>
-          </div>
+        <div className="flex items-center gap-2">
+          <DateFilterDropdown
+            filter={dateRangeFilter}
+            setFilter={setDateRangeFilter}
+            fromDate={customFromDate}
+            setFromDate={setCustomFromDate}
+            toDate={customToDate}
+            setToDate={setCustomToDate}
+          />
+          <SortDropdown
+            sortKey={sortKey}
+            setSortKey={setSortKey}
+            sortDirection={sortDirection}
+            setSortDirection={setSortDirection}
+          />
+          <ExportDropdown
+            onExportCsv={() => {
+              const csv = exportPastPapersCsv(filteredAttempts, subjectsById);
+              downloadBlob(new Blob([csv], { type: "text/csv" }), getExportFilename("past-papers", "csv"));
+            }}
+            onExportJson={() => {
+              const json = exportPastPapersJson(filteredAttempts);
+              downloadBlob(new Blob([json], { type: "application/json" }), getExportFilename("past-papers", "json"));
+            }}
+          />
+          <div className="w-px h-6 bg-border-hairline mx-2 opacity-50" />
           <Button 
             size="sm" 
-            className="rounded-full bg-primary text-primary-foreground h-9 px-6 text-[10px] font-black uppercase tracking-widest"
+            className="rounded-full bg-primary text-primary-foreground h-10 px-6 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 zen-shadow hover:scale-105 transition-all duration-300 active:scale-95"
             onClick={openAddModal}
           >
+            <span className="material-symbols-outlined text-lg">add</span>
             Add Entry
           </Button>
         </div>
       </div>
 
       <div className="space-y-10">
-        <div className="flex flex-col gap-8 px-2">
+        <div className="flex flex-col gap-6 px-2">
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setSubjectFilter("all")}
               className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
                 subjectFilter === "all"
-                  ? "bg-primary text-primary-foreground shadow-soft"
+                  ? "bg-primary text-primary-foreground shadow-soft hover:scale-105 active:scale-95"
                   : "bg-surface text-muted-foreground border border-border-hairline hover:bg-muted/50"
               }`}
             >
@@ -269,7 +298,7 @@ export function PastPapersPage({
                 onClick={() => setSubjectFilter(subject.id)}
                 className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
                   subjectFilter === subject.id
-                    ? "bg-primary text-primary-foreground shadow-soft"
+                    ? "bg-primary text-primary-foreground shadow-soft hover:scale-105 active:scale-95"
                     : "bg-surface text-muted-foreground border border-border-hairline hover:bg-muted/50"
                 }`}
               >
@@ -285,13 +314,13 @@ export function PastPapersPage({
           </div>
 
           {availablePaperLabels.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-500">
+            <div className="flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-500 bg-muted/20 p-2 rounded-3xl border border-border-hairline/50">
               <button
                 onClick={() => setPaperFilter("all")}
                 className={`px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${
                   paperFilter === "all"
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "bg-transparent text-muted-foreground/60 border border-transparent hover:text-muted-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm hover:scale-105"
+                    : "bg-transparent text-muted-foreground/60 hover:text-muted-foreground"
                 }`}
               >
                 All Papers
@@ -302,26 +331,26 @@ export function PastPapersPage({
                   onClick={() => setPaperFilter(label)}
                   className={`px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${
                     paperFilter === label
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : "bg-transparent text-muted-foreground/60 border border-transparent hover:text-muted-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm hover:scale-105"
+                      : "bg-transparent text-muted-foreground/60 hover:text-muted-foreground"
                   }`}
                 >
                   {label}
                 </button>
               ))}
               
-              <div className="w-px h-4 bg-border-hairline mx-2" />
+              <div className="w-px h-4 bg-border-hairline mx-2 opacity-50" />
               
               <button
                 onClick={() => setIsMatrixOpen(!isMatrixOpen)}
                 className={`px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-1.5 ${
                   isMatrixOpen
-                    ? "bg-primary text-primary-foreground shadow-soft"
+                    ? "bg-primary text-primary-foreground shadow-soft hover:scale-105"
                     : "bg-transparent text-muted-foreground/60 border border-border-hairline hover:text-muted-foreground hover:bg-muted/50"
                 }`}
               >
                 <span className="material-symbols-outlined text-[12px]">grid_view</span>
-                Completion Grid
+                Matrix
               </button>
             </div>
           )}

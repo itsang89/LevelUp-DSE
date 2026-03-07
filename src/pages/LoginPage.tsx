@@ -10,6 +10,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotMode, setIsForgotMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -63,6 +64,95 @@ export function LoginPage() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isSupabaseConfigured) {
+      setError("Supabase is not configured.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const supabase = getSupabaseClient();
+      const redirectTo = `${window.location.origin}/reset-password`;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo,
+      });
+      if (resetError) throw resetError;
+      setNotice("Check your inbox for a reset link. The link expires in 1 hour.");
+      setIsForgotMode(false);
+    } catch (authError) {
+      setError(authError instanceof Error ? authError.message : "Failed to send reset email.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isForgotMode) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden font-sans selection:bg-gray-100">
+        <div className="w-full max-w-[440px] px-6 z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          <div className="text-center mb-10 space-y-3">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-primary text-primary-foreground mb-4 zen-shadow">
+              <span className="material-symbols-outlined text-3xl font-light">lock_reset</span>
+            </div>
+            <h1 className="text-4xl font-light tracking-tight text-primary font-display">
+              Reset Access Key
+            </h1>
+            <p className="text-muted-foreground text-sm font-light max-w-[280px] mx-auto opacity-70">
+              Enter your Academic ID and we&apos;ll send you a reset link.
+            </p>
+          </div>
+
+          <Card variant="zen" padding="lg" className="space-y-6 backdrop-blur-sm bg-surface/80 border border-border-hairline">
+            <form onSubmit={handleForgotPassword} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">
+                  Academic ID
+                </label>
+                <Input
+                  type="email"
+                  placeholder="student@levelup.edu"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-background/50 focus:bg-surface transition-colors duration-300"
+                />
+              </div>
+
+              <Button type="submit" className="w-full h-14 text-xs tracking-[0.2em]" disabled={isLoading}>
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Sending...
+                  </div>
+                ) : (
+                  "Send Reset Link"
+                )}
+              </Button>
+
+              {error && <p className="text-xs text-dot-red font-bold text-center">{error}</p>}
+              {notice && <p className="text-xs text-dot-green font-bold text-center">{notice}</p>}
+            </form>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsForgotMode(false);
+                setError(null);
+                setNotice(null);
+              }}
+              className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+            >
+              ← Back to sign in
+            </button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden font-sans selection:bg-gray-100">
       {/* Decorative Zen Elements */}
@@ -78,7 +168,7 @@ export function LoginPage() {
               circle_notifications
             </span>
           </div>
-          <h1 className="text-4xl font-light tracking-tight text-primary font-display">
+          <h1 className="text-3xl font-light tracking-tight text-primary font-display">
             LevelUp <span className="font-black">DSE</span>
           </h1>
           <p className="text-muted-foreground text-sm font-light tracking-wide max-w-[280px] mx-auto opacity-70">
@@ -125,6 +215,11 @@ export function LoginPage() {
                 </label>
                 <button
                   type="button"
+                  onClick={() => {
+                    setIsForgotMode(true);
+                    setError(null);
+                    setNotice(null);
+                  }}
                   className="text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors opacity-40 hover:opacity-100"
                 >
                   Forgot Key?

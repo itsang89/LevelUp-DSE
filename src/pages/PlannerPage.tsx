@@ -3,11 +3,18 @@ import { PLANNER_SESSIONS } from "../constants";
 import type { PlannerCell as PlannerCellType, PlannerTask, Subject } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
 import { PlannerGrid } from "../components/PlannerGrid";
+import { ExportDropdown } from "../components/ExportDropdown";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { deletePlannerCell, listPlannerCells, upsertPlannerCell } from "../lib/api/plannerApi";
+import {
+  exportPlannerCsv,
+  exportPlannerJson,
+  downloadBlob,
+  getExportFilename,
+} from "../utils/exportUtils";
 
 interface PlannerPageProps {
   userId: string;
@@ -339,10 +346,20 @@ export function PlannerPage({ userId, subjects }: PlannerPageProps) {
     <section className="space-y-12">
       <div className="flex flex-col sm:flex-row justify-between items-end gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
         <div>
-          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">Weekly Focus</h3>
-          <p className="text-3xl font-light text-primary tracking-tight">Daily Mastery Tracker</p>
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-1 opacity-50 block">Weekly Focus</span>
+          <h1 className="text-3xl font-light text-primary tracking-tight">Daily Mastery Tracker</h1>
         </div>
         <div className="flex items-center gap-4">
+          <ExportDropdown
+            onExportCsv={() => {
+              const csv = exportPlannerCsv(cells, subjectsById);
+              downloadBlob(new Blob([csv], { type: "text/csv" }), getExportFilename("planner", "csv"));
+            }}
+            onExportJson={() => {
+              const json = exportPlannerJson(cells);
+              downloadBlob(new Blob([json], { type: "application/json" }), getExportFilename("planner", "json"));
+            }}
+          />
           <Button 
             variant="outline" 
             size="sm" 

@@ -191,15 +191,15 @@ export function AnalyticsPage({
   }, [chartData, subjectFilter]);
 
   return (
-    <section className="space-y-16 pt-6 lg:pt-12 pb-20">
+    <section className="space-y-4 pt-6 lg:pt-12 pb-20">
       <div className="flex flex-col sm:flex-row justify-between items-end gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
         <div>
-          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 opacity-60">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-1 opacity-50 block">
             Performance
-          </h3>
-          <p className="text-3xl font-light text-primary tracking-tight">
+          </span>
+          <h1 className="text-3xl font-light text-primary tracking-tight">
             Score Insights
-          </p>
+          </h1>
         </div>
       </div>
 
