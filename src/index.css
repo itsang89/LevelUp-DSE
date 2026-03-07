@@ -144,4 +144,17 @@
   :root.dark .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #333333;
   }
+
+  /* Rest session: dark background in light mode only */
+  :root:not(.dark) .rest-session-cell {
+    background-color: #27272a !important;
+    border-color: rgba(63, 63, 70, 0.5) !important;
+  }
+  :root:not(.dark) .rest-session-cell .rest-session-icon,
+  :root:not(.dark) .rest-session-cell .rest-session-label {
+    color: #d4d4d8 !important;
+  }
+  :root:not(.dark) .rest-session-cell .rest-session-notes {
+    color: rgba(212, 212, 216, 0.8) !important;
+  }
 }

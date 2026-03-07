@@ -253,7 +253,7 @@ export function PastPapersPage({
           />
           <SortDropdown
             sortKey={sortKey}
-            setSortKey={setSortKey}
+            setSortKey={(key) => setSortKey(key as SortKey)}
             sortDirection={sortDirection}
             setSortDirection={setSortDirection}
           />

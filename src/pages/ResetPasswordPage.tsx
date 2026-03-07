@@ -24,24 +24,29 @@ export function ResetPasswordPage() {
     const supabase = getSupabaseClient();
 
     async function checkSession() {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        setIsReady(true);
-      } else {
-        const hash = window.location.hash;
-        if (hash && hash.includes("type=recovery")) {
-          await new Promise((r) => setTimeout(r, 500));
-          const { data: retry } = await supabase.auth.getSession();
-          if (retry.session) {
-            setIsReady(true);
-          } else {
-            setError("Invalid or expired reset link. Please request a new one.");
-          }
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          setIsReady(true);
         } else {
-          navigate("/login", { replace: true });
+          const hash = window.location.hash;
+          if (hash && hash.includes("type=recovery")) {
+            await new Promise((r) => setTimeout(r, 500));
+            const { data: retry } = await supabase.auth.getSession();
+            if (retry.session) {
+              setIsReady(true);
+            } else {
+              setError("Invalid or expired reset link. Please request a new one.");
+            }
+          } else {
+            navigate("/login", { replace: true });
+          }
         }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to verify session.");
+      } finally {
+        setCheckingSession(false);
       }
-      setCheckingSession(false);
     }
 
     checkSession();

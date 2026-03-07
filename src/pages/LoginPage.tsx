@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
@@ -15,6 +15,8 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (location.state as { from?: string } | null)?.from || "/planner";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +36,7 @@ export function LoginPage() {
         if (!fullName.trim()) {
           throw new Error("Full name is required for registration.");
         }
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
@@ -46,7 +48,12 @@ export function LoginPage() {
         if (signUpError) {
           throw signUpError;
         }
-        setNotice("Account created. If email confirmation is enabled, check your inbox.");
+        // If a session is returned, email confirmation is disabled — redirect immediately
+        if (signUpData.session) {
+          navigate(redirectTo);
+        } else {
+          setNotice("Account created. Check your inbox to confirm your email.");
+        }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -55,7 +62,7 @@ export function LoginPage() {
         if (signInError) {
           throw signInError;
         }
-        navigate("/planner");
+        navigate(redirectTo);
       }
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : "Authentication failed.");

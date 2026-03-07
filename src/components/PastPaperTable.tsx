@@ -1,5 +1,6 @@
 import type { CutoffData, PastPaperAttempt, Subject } from "../types";
 import { getMarksToNextLevel } from "../utils/dseLevelEstimator";
+import { parseIsoDate } from "../utils/dateHelpers";
 
 interface PastPaperTableProps {
   attempts: PastPaperAttempt[];
@@ -30,7 +31,7 @@ export function PastPaperTable({
     <div className="space-y-6">
       {attempts.map((attempt) => {
         const subject = subjectsById[attempt.subjectId];
-        const date = new Date(attempt.date);
+        const date = parseIsoDate(attempt.date);
         const day = date.toLocaleDateString(undefined, { day: '2-digit' });
         const month = date.toLocaleDateString(undefined, { month: 'short' });
         const year = date.getFullYear();

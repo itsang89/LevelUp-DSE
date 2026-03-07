@@ -31,7 +31,7 @@ export function TagInput({ tags, onChange, placeholder, className = "" }: TagInp
     <div className={`flex flex-wrap items-center gap-2 p-1.5 rounded-2xl border border-border-hairline bg-background/50 focus-within:ring-1 focus-within:ring-primary/20 focus-within:border-primary/40 transition-all ${className}`}>
       {tags.map((tag, index) => (
         <div
-          key={index}
+          key={tag}
           className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-black uppercase tracking-widest text-primary animate-in fade-in zoom-in-95 duration-200"
         >
           <span>{tag}</span>

@@ -32,12 +32,13 @@ export function PlannerGrid({
           {weekDays.map((date, index) => {
             const formatted = formatDayHeader(date);
             const [dayName, dayNum, monthName] = formatted.split(' ');
-            const isToday = formatIsoDate(date) === formatIsoDate(new Date());
+            const todayIso = formatIsoDate(new Date());
+            const isToday = formatIsoDate(date) === todayIso;
             
             return (
               <div
                 key={formatIsoDate(date)}
-                className={`flex flex-col items-center justify-center text-sm font-black uppercase tracking-[0.2em] text-center ${
+                className={`relative flex flex-col items-center justify-center text-sm font-black uppercase tracking-[0.2em] text-center ${
                   index !== weekDays.length - 1 ? "border-r border-border-hairline" : ""
                 } ${
                   isToday ? "text-primary" : "text-muted-foreground opacity-60"
@@ -72,7 +73,8 @@ export function PlannerGrid({
                 const isoDate = formatIsoDate(date);
                 const task = getTask(isoDate, session.id);
                 const subject = task?.subjectId ? subjectsById[task.subjectId] : undefined;
-                const isToday = formatIsoDate(date) === formatIsoDate(new Date());
+                const todayIso = formatIsoDate(new Date());
+                const isToday = isoDate === todayIso;
 
                 return (
                   <div 

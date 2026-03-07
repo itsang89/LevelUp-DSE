@@ -6,6 +6,12 @@ export interface StudyGoal {
   weeklyTarget: number;
 }
 
+interface StudyGoalRow {
+  id: string;
+  subject_id: string;
+  weekly_target: number;
+}
+
 export async function listStudyGoals(userId: string): Promise<StudyGoal[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
@@ -17,7 +23,7 @@ export async function listStudyGoals(userId: string): Promise<StudyGoal[]> {
     throw new Error(`Failed to list study goals: ${error.message}`);
   }
 
-  return (data || []).map((row: any) => ({
+  return (data as StudyGoalRow[] || []).map((row) => ({
     id: row.id,
     subjectId: row.subject_id,
     weeklyTarget: row.weekly_target,
@@ -47,9 +53,13 @@ export async function upsertStudyGoal(
     throw new Error(`Failed to upsert study goal: ${error.message}`);
   }
 
+  if (!data) {
+    throw new Error("Failed to upsert study goal: no data returned");
+  }
+
   return {
-    id: data.id,
-    subjectId: data.subject_id,
-    weeklyTarget: data.weekly_target,
+    id: (data as StudyGoalRow).id,
+    subjectId: (data as StudyGoalRow).subject_id,
+    weeklyTarget: (data as StudyGoalRow).weekly_target,
   };
 }

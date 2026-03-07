@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { Session } from "@supabase/supabase-js";
 import { Layout } from "./components/Layout";
 import { DEFAULT_SUBJECTS } from "./constants";
@@ -16,6 +16,11 @@ import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase";
 import { listSubjects, seedDefaultSubjects } from "./lib/api/subjectsApi";
 import { listPlannerCells } from "./lib/api/plannerApi";
 import type { Subject } from "./types";
+
+function RedirectToLogin() {
+  const location = useLocation();
+  return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+}
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -35,6 +40,8 @@ function App() {
       }
       setCutoffData(result.cutoffData);
       setUsingGenericFallback(result.usingGenericFallback);
+    }).catch((err) => {
+      console.error("Failed to load cutoff data:", err);
     });
 
     return () => {
@@ -58,6 +65,7 @@ function App() {
       .then(({ data, error }) => {
         if (error) {
           setAppError(error.message);
+          return;
         }
         setSession(data.session ?? null);
       })
@@ -182,7 +190,7 @@ function App() {
         element={session ? <Navigate to="/planner" replace /> : <LoginPage />}
       />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route element={session ? <Layout subjects={subjects} cells={cells} /> : <Navigate to="/login" replace />}>
+      <Route element={session ? <Layout subjects={subjects} cells={cells} /> : <RedirectToLogin />}>
         <Route
           path="/planner"
           element={

@@ -78,8 +78,12 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
     }
 
     const shortCode = newSubject.shortCode.trim().toUpperCase();
+    let candidateId = createSubjectId(shortCode) || `subject-${Date.now()}`;
+    if (subjects.some((s) => s.id === candidateId)) {
+      candidateId = `${candidateId}-${Date.now()}`;
+    }
     const newItem: Subject = {
-      id: createSubjectId(shortCode) || `subject-${Date.now()}`,
+      id: candidateId,
       name: newSubject.name.trim(),
       shortCode,
       baseColor: newSubject.baseColor,

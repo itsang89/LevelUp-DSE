@@ -50,17 +50,17 @@ export function PlannerCell({ task, subject, onClick, onToggleDone }: PlannerCel
       <button
         type="button"
         onClick={onClick}
-        className="h-full w-full text-center transition-all duration-200 hover:translate-x-0.5 cursor-pointer flex flex-col rounded-xl p-3 shadow-soft border border-border-hairline/50 bg-black group/rest"
+        className="rest-session-cell h-full w-full text-center transition-all duration-200 hover:translate-x-0.5 cursor-pointer flex flex-col rounded-xl p-3 shadow-soft border border-border-hairline/50 bg-muted group/rest"
       >
         <div className="h-full py-0.5 flex flex-col items-center justify-center">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-white transition-colors">coffee</span>
-            <p className="text-[12px] font-black text-white uppercase tracking-[0.2em] transition-colors">
+            <span className="rest-session-icon material-symbols-outlined text-sm text-muted-foreground transition-colors">coffee</span>
+            <p className="rest-session-label text-[12px] font-black text-muted-foreground uppercase tracking-[0.2em] transition-colors">
               Rest
             </p>
           </div>
           {task.notes && (
-            <p className="text-[11px] font-bold text-white/60 tracking-tight break-words whitespace-pre-wrap mt-1">
+            <p className="rest-session-notes text-[11px] font-bold text-muted-foreground/60 tracking-tight break-words whitespace-pre-wrap mt-1">
               {task.notes}
             </p>
           )}
@@ -81,7 +81,7 @@ export function PlannerCell({ task, subject, onClick, onToggleDone }: PlannerCel
       role="button"
       tabIndex={0}
       onClick={onClick}
-      onKeyDown={(e) => e.key === "Enter" && onClick()}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick()}
       className={`h-full w-full text-left transition-all duration-200 hover:translate-x-0.5 cursor-pointer flex flex-col rounded-xl p-3 border border-border-hairline/50 relative ${isDone ? "shadow-none" : "shadow-soft"}`}
       style={{ background: bgGradient }}
     >

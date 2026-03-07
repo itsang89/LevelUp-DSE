@@ -120,6 +120,10 @@ export function PastPaperForm({
       setError("Score cannot be greater than total marks.");
       return;
     }
+    if (score < 0) {
+      setError("Score cannot be negative.");
+      return;
+    }
 
     setError(null);
     onSubmit(values);

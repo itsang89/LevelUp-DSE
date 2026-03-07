@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
 import { PLANNER_SESSIONS } from "../constants";
 import type { PlannerCell as PlannerCellType, PlannerTask, Subject } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
@@ -80,18 +80,16 @@ export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPagePr
     }
   }, [initialWeek, weeks]);
 
-  const scrollToToday = useMemo(() => {
-    return () => {
-      const element = weekRefs.current.get(formatIsoDate(initialWeek));
-      if (element) {
-        const grid = element.querySelector('.planner-grid-container');
-        if (grid) {
-          grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+  const scrollToToday = useCallback(() => {
+    const element = weekRefs.current.get(formatIsoDate(initialWeek));
+    if (element) {
+      const grid = element.querySelector('.planner-grid-container');
+      if (grid) {
+        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    };
+    }
   }, [initialWeek]);
 
   // Listen for scroll-to-today events from sidebar

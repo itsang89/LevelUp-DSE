@@ -3,7 +3,7 @@ import { Button } from "./ui/Button";
 
 interface SortDropdownProps {
   sortKey: string;
-  setSortKey: (key: any) => void;
+  setSortKey: (key: string) => void;
   sortDirection: "asc" | "desc";
   setSortDirection: (dir: "asc" | "desc") => void;
 }

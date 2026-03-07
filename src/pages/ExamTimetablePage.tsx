@@ -1,15 +1,34 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Subject } from "../types";
 import { DSE_TIMETABLE_2026 } from "../constants";
+
+function getTodayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 interface ExamTimetablePageProps {
   subjects: Subject[];
 }
 
 export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
+  const [todayStr, setTodayStr] = useState(getTodayStr);
+
+  // Refresh `today` when the tab regains focus (handles overnight stale date)
+  const checkDate = useCallback(() => {
+    setTodayStr((prev) => {
+      const now = getTodayStr();
+      return now !== prev ? now : prev;
+    });
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("visibilitychange", checkDate);
+    return () => document.removeEventListener("visibilitychange", checkDate);
+  }, [checkDate]);
+
   const { allExams, nextExam, nextExamPerSubject, stats } = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(`${todayStr}T00:00:00`);
 
     const userSubjectCodes = subjects.map((s) => s.shortCode);
     
@@ -72,7 +91,7 @@ export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
         totalDaysRemaining
       }
     };
-  }, [subjects]);
+  }, [subjects, todayStr]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });

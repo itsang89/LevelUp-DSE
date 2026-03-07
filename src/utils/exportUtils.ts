@@ -33,7 +33,7 @@ export function exportPastPapersCsv(
     String(a.total),
     `${a.percentage.toFixed(1)}%`,
     a.estimatedLevel,
-    a.isDse ? "DSE" : "Mock",
+    a.isDse === false ? "Mock" : "DSE",
     a.notes ?? "",
   ]);
   const lines = [headers.map(escapeCsvField).join(","), ...rows.map((r) => r.map(escapeCsvField).join(","))];
@@ -76,7 +76,9 @@ export function downloadBlob(blob: Blob, filename: string): void {
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 

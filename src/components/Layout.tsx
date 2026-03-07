@@ -47,10 +47,14 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
 
   useEffect(() => {
     async function getUserData() {
-      const supabase = getSupabaseClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.user_metadata?.full_name) {
-        setUserName(user.user_metadata.full_name);
+      try {
+        const supabase = getSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.user_metadata?.full_name) {
+          setUserName(user.user_metadata.full_name);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user data:", err);
       }
     }
     getUserData();
@@ -77,10 +81,11 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
       try {
         const supabase = getSupabaseClient();
         await supabase.auth.signOut();
+        navigate("/login");
       } catch (error) {
         console.error("Failed to sign out from Supabase.", error);
+        navigate("/login");
       }
-      navigate("/login");
     }
   };
 
