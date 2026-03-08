@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { PLANNER_SESSIONS } from "../constants";
 import type { PlannerCell as PlannerCellType, PlannerTask, Subject } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
@@ -157,6 +158,69 @@ export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPagePr
 
   function getTask(dateIso: string, sessionId: string): PlannerTask | null {
     return cellMap.get(`${dateIso}__${sessionId}`) ?? null;
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
+
+  async function handleDragEnd(event: DragEndEvent): Promise<void> {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const fromKey = active.id as string;
+    const toKey = over.id as string;
+    const [fromDate, fromSession] = fromKey.split("__");
+    const [toDate, toSession] = toKey.split("__");
+
+    const draggedTask = active.data.current?.task as PlannerTask | undefined;
+    if (!draggedTask) return;
+
+    const targetTask = cellMap.get(toKey) ?? null;
+
+    setCells((prev) => {
+      const next = prev.filter(
+        (c) => !(c.date === fromDate && c.sessionId === fromSession)
+      );
+      const withoutTarget = next.filter(
+        (c) => !(c.date === toDate && c.sessionId === toSession)
+      );
+      const result = [...withoutTarget, { date: toDate, sessionId: toSession, task: draggedTask }];
+      if (targetTask) {
+        result.push({ date: fromDate, sessionId: fromSession, task: targetTask });
+      }
+      return result;
+    });
+
+    try {
+      await upsertPlannerCell(userId, toDate, toSession, draggedTask);
+      await deletePlannerCell(userId, fromDate, fromSession);
+      if (targetTask) {
+        await upsertPlannerCell(userId, fromDate, fromSession, targetTask);
+      }
+    } catch (requestError) {
+      setCells((prev) => {
+        const reverted = prev.filter(
+          (c) =>
+            !(
+              (c.date === fromDate && c.sessionId === fromSession) ||
+              (c.date === toDate && c.sessionId === toSession)
+            )
+        );
+        return [
+          ...reverted,
+          { date: fromDate, sessionId: fromSession, task: draggedTask },
+          ...(targetTask
+            ? [{ date: toDate, sessionId: toSession, task: targetTask }]
+            : []),
+        ];
+      });
+      setDataError(
+        requestError instanceof Error ? requestError.message : "Failed to move session."
+      );
+    }
   }
 
   function openEditor(dateIso: string, sessionId: string): void {
@@ -415,38 +479,40 @@ export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPagePr
           </div>
         )}
 
-        <div className="space-y-12">
-          {weeks.map((ws) => (
-            <div 
-              key={formatIsoDate(ws)}
-              data-week-start={ws.toISOString()}
-              ref={(el) => {
-                if (el) {
-                  weekRefs.current.set(formatIsoDate(ws), el);
-                } else {
-                  weekRefs.current.delete(formatIsoDate(ws));
-                }
-              }}
-              className="animate-in fade-in slide-in-from-bottom-8 duration-700"
-            >
-              <div className="mb-4 flex items-center gap-4">
-                <div className="h-px flex-1 bg-border-hairline opacity-50" />
-                <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.4em] opacity-40">
-                  {formatWeekLabel(ws)}
-                </h4>
-                <div className="h-px flex-1 bg-border-hairline opacity-50" />
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <div className="space-y-12">
+            {weeks.map((ws) => (
+              <div
+                key={formatIsoDate(ws)}
+                data-week-start={ws.toISOString()}
+                ref={(el) => {
+                  if (el) {
+                    weekRefs.current.set(formatIsoDate(ws), el);
+                  } else {
+                    weekRefs.current.delete(formatIsoDate(ws));
+                  }
+                }}
+                className="animate-in fade-in slide-in-from-bottom-8 duration-700"
+              >
+                <div className="mb-4 flex items-center gap-4">
+                  <div className="h-px flex-1 bg-border-hairline opacity-50" />
+                  <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.4em] opacity-40">
+                    {formatWeekLabel(ws)}
+                  </h4>
+                  <div className="h-px flex-1 bg-border-hairline opacity-50" />
+                </div>
+                <PlannerGrid
+                  weekDays={getWeekDays(ws)}
+                  sessions={PLANNER_SESSIONS}
+                  getTask={getTask}
+                  subjectsById={subjectsById}
+                  onEditCell={openEditor}
+                  onToggleDone={handleToggleDone}
+                />
               </div>
-              <PlannerGrid
-                weekDays={getWeekDays(ws)}
-                sessions={PLANNER_SESSIONS}
-                getTask={getTask}
-                subjectsById={subjectsById}
-                onEditCell={openEditor}
-                onToggleDone={handleToggleDone}
-              />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </DndContext>
 
         {/* Load Next Week Button */}
         {!reachedFutureLimit && (

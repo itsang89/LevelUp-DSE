@@ -1,6 +1,9 @@
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import type { PlannerTask, Subject } from "../types";
 
 interface PlannerCellProps {
+  cellKey: string;
   task: PlannerTask | null;
   subject?: Subject;
   onClick: () => void;
@@ -30,27 +33,60 @@ function DoneCheckmark({
   );
 }
 
-export function PlannerCell({ task, subject, onClick, onToggleDone }: PlannerCellProps) {
+export function PlannerCell({ cellKey, task, subject, onClick, onToggleDone }: PlannerCellProps) {
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: cellKey });
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: cellKey,
+    data: { task },
+    disabled: !task,
+  });
+
+  const setRefs = (el: HTMLDivElement | null) => {
+    setDropRef(el);
+    setDragRef(el);
+  };
+
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform) }
+    : undefined;
+
   if (!task) {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        className="h-full w-full flex items-center justify-center transition-opacity cursor-pointer group/cell"
+      <div
+        ref={setDropRef}
+        className={`h-full w-full flex items-center justify-center transition-all rounded-xl border-2 border-dashed min-h-[100px] group/cell ${
+          isOver ? "border-primary/50 bg-primary/5" : "border-transparent"
+        }`}
       >
-        <span className="text-sm font-bold text-muted-foreground/40 uppercase tracking-widest opacity-0 group-hover/cell:opacity-100 transition-opacity">
+        <button
+          type="button"
+          onClick={onClick}
+          className="text-sm font-bold text-muted-foreground/40 uppercase tracking-widest opacity-0 group-hover/cell:opacity-100 hover:opacity-100 transition-opacity cursor-pointer h-full w-full"
+        >
           Add
-        </span>
-      </button>
+        </button>
+      </div>
     );
   }
 
   if (task.isRest) {
     return (
-      <button
-        type="button"
+      <div
+        ref={setRefs}
+        style={style}
+        className={`rest-session-cell h-full w-full text-center transition-all duration-200 flex flex-col rounded-xl p-3 shadow-soft border border-border-hairline/50 bg-muted group/rest min-h-[100px] ${
+          isDragging ? "opacity-50 cursor-grabbing" : "cursor-grab hover:translate-x-0.5"
+        } ${isOver ? "ring-2 ring-primary/50 ring-offset-2 ring-offset-background" : ""}`}
+        {...attributes}
+        {...listeners}
         onClick={onClick}
-        className="rest-session-cell h-full w-full text-center transition-all duration-200 hover:translate-x-0.5 cursor-pointer flex flex-col rounded-xl p-3 shadow-soft border border-border-hairline/50 bg-muted group/rest"
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick()}
       >
         <div className="h-full py-0.5 flex flex-col items-center justify-center">
           <div className="flex items-center gap-2">
@@ -65,7 +101,7 @@ export function PlannerCell({ task, subject, onClick, onToggleDone }: PlannerCel
             </p>
           )}
         </div>
-      </button>
+      </div>
     );
   }
 
@@ -78,12 +114,15 @@ export function PlannerCell({ task, subject, onClick, onToggleDone }: PlannerCel
 
   return (
     <div
-      role="button"
-      tabIndex={0}
+      ref={setRefs}
+      style={{ ...style, background: bgGradient }}
       onClick={onClick}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick()}
-      className={`h-full w-full text-left transition-all duration-200 hover:translate-x-0.5 cursor-pointer flex flex-col rounded-xl p-3 border border-border-hairline/50 relative ${isDone ? "shadow-none" : "shadow-soft"}`}
-      style={{ background: bgGradient }}
+      className={`h-full w-full text-left transition-all duration-200 flex flex-col rounded-xl p-3 border border-border-hairline/50 relative min-h-[100px] ${
+        isDragging ? "opacity-50 cursor-grabbing shadow-lg" : "cursor-grab hover:translate-x-0.5"
+      } ${isDone ? "shadow-none" : "shadow-soft"} ${isOver ? "ring-2 ring-primary/50 ring-offset-2 ring-offset-background" : ""}`}
+      {...attributes}
+      {...listeners}
     >
       {onToggleDone && (
         <DoneCheckmark

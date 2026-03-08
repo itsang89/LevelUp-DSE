@@ -86,6 +86,7 @@ export function PlannerGrid({
                     }`}
                   >
                     <PlannerCell
+                      cellKey={`${isoDate}__${session.id}`}
                       task={task}
                       subject={subject}
                       onClick={() => onEditCell(isoDate, session.id)}
