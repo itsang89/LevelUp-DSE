@@ -13,55 +13,79 @@ export const DEFAULT_SUBJECTS: Subject[] = [
   { id: "csd", name: "Citizenship and Social Development", shortCode: "C&SD", baseColor: "#f59e0b", paperLabels: ["Paper 1"] },
 ];
 
-export const DSE_TIMETABLE_2026 = [
-  { date: '2026-04-08', subjectCode: 'VA', paper: 'Paper 1 & 2', time: '8:30–12:30' },
-  { date: '2026-04-09', subjectCode: 'CHI', paper: 'Paper 1', time: '8:30–10:00' },
-  { date: '2026-04-09', subjectCode: 'CHI', paper: 'Paper 2', time: '10:45–13:00' },
-  { date: '2026-04-10', subjectCode: 'ENG', paper: 'Paper 1', time: '8:30–10:00' },
-  { date: '2026-04-10', subjectCode: 'ENG', paper: 'Paper 2', time: '11:00–13:00' },
-  { date: '2026-04-11', subjectCode: 'ENG', paper: 'Paper 3', time: '9:15–12:10' },
-  { date: '2026-04-13', subjectCode: 'MATH', paper: 'Paper 1', time: '8:30–10:45' },
-  { date: '2026-04-13', subjectCode: 'MATH', paper: 'Paper 2', time: '11:30–12:45' },
-  { date: '2026-04-14', subjectCode: 'C&SD', paper: 'Paper 1', time: '8:30–10:30' },
-  { date: '2026-04-15', subjectCode: 'ERS', paper: 'Paper 1', time: '8:30–10:15' },
-  { date: '2026-04-15', subjectCode: 'ERS', paper: 'Paper 2', time: '11:00–12:45' },
-  { date: '2026-04-16', subjectCode: 'CHEM', paper: 'Paper 1', time: '8:30–11:00' },
-  { date: '2026-04-16', subjectCode: 'CHEM', paper: 'Paper 2', time: '11:45–12:45' },
-  { date: '2026-04-17', subjectCode: 'DAT', paper: 'Paper 1', time: '8:30–10:30' },
-  { date: '2026-04-17', subjectCode: 'DAT', paper: 'Paper 2', time: '11:15–13:15' },
-  { date: '2026-04-17', subjectCode: 'LIT ENG', paper: 'Paper 1', time: '8:30–11:30' },
-  { date: '2026-04-17', subjectCode: 'LIT ENG', paper: 'Paper 2', time: '13:30–15:30' },
-  { date: '2026-04-18', subjectCode: 'HMSC', paper: 'Paper 1', time: '8:30–10:30' },
-  { date: '2026-04-18', subjectCode: 'HMSC', paper: 'Paper 2', time: '11:15–13:00' },
-  { date: '2026-04-20', subjectCode: 'BIO', paper: 'Paper 1', time: '8:30–11:00' },
-  { date: '2026-04-20', subjectCode: 'BIO', paper: 'Paper 2', time: '11:45–12:45' },
-  { date: '2026-04-21', subjectCode: 'CHILIT', paper: 'Paper 1', time: '8:30–10:30' },
-  { date: '2026-04-21', subjectCode: 'CHILIT', paper: 'Paper 2', time: '11:15–13:15' },
-  { date: '2026-04-21', subjectCode: 'TL', paper: 'Paper 1', time: '8:30–10:00' },
-  { date: '2026-04-21', subjectCode: 'TL', paper: 'Paper 2', time: '10:45–12:45' },
-  { date: '2026-04-22', subjectCode: 'PHY', paper: 'Paper 1', time: '8:30–11:00' },
-  { date: '2026-04-22', subjectCode: 'PHY', paper: 'Paper 2', time: '11:45–12:45' },
-  { date: '2026-04-23', subjectCode: 'GEOG', paper: 'Paper 1', time: '8:30–11:15' },
-  { date: '2026-04-23', subjectCode: 'GEOG', paper: 'Paper 2', time: '12:00–13:15' },
-  { date: '2026-04-24', subjectCode: 'ICT', paper: 'Paper 1', time: '8:30–10:30' },
-  { date: '2026-04-24', subjectCode: 'ICT', paper: 'Paper 2', time: '11:15–12:45' },
-  { date: '2026-04-25', subjectCode: 'HIST', paper: 'Paper 1', time: '8:30–10:30' },
-  { date: '2026-04-25', subjectCode: 'HIST', paper: 'Paper 2', time: '11:15–12:45' },
-  { date: '2026-04-27', subjectCode: 'BAFS', paper: 'Paper 1', time: '8:30–9:30' },
-  { date: '2026-04-27', subjectCode: 'BAFS', paper: 'Paper 2', time: '10:15–12:45' },
-  { date: '2026-04-28', subjectCode: 'PE', paper: 'Paper 1', time: '8:30–10:30' },
-  { date: '2026-04-28', subjectCode: 'PE', paper: 'Paper 2', time: '11:15–12:45' },
-  { date: '2026-04-29', subjectCode: 'CHIST', paper: 'Paper 1', time: '8:30–10:45' },
-  { date: '2026-04-29', subjectCode: 'CHIST', paper: 'Paper 2', time: '11:30–12:50' },
-  { date: '2026-04-30', subjectCode: 'M1', paper: 'Module 1', time: '8:30–11:00' },
-  { date: '2026-04-30', subjectCode: 'M2', paper: 'Module 2', time: '8:30–11:00' },
-  { date: '2026-05-02', subjectCode: 'THS', paper: 'Paper 1', time: '8:30–10:00' },
-  { date: '2026-05-02', subjectCode: 'THS', paper: 'Paper 2', time: '10:45–12:30' },
-  { date: '2026-05-04', subjectCode: 'ECON', paper: 'Paper 1', time: '8:30–9:30' },
-  { date: '2026-05-04', subjectCode: 'ECON', paper: 'Paper 2', time: '10:15–12:45' },
-  { date: '2026-05-05', subjectCode: 'MUSIC', paper: 'Paper 1A', time: '8:30–10:00' },
-  { date: '2026-05-05', subjectCode: 'MUSIC', paper: 'Paper 1B', time: '10:45–12:15' },
-];
+/** Single exam entry in the DSE timetable. */
+export interface TimetableEntry {
+  date: string;
+  subjectCode: string;
+  paper: string;
+  time: string;
+}
+
+/** Versioned map: exam year -> timetable entries. Add new years without code changes. */
+export const DSE_TIMETABLES: Record<number, TimetableEntry[]> = {
+  2026: [
+    { date: '2026-04-08', subjectCode: 'VA', paper: 'Paper 1 & 2', time: '8:30–12:30' },
+    { date: '2026-04-09', subjectCode: 'CHI', paper: 'Paper 1', time: '8:30–10:00' },
+    { date: '2026-04-09', subjectCode: 'CHI', paper: 'Paper 2', time: '10:45–13:00' },
+    { date: '2026-04-10', subjectCode: 'ENG', paper: 'Paper 1', time: '8:30–10:00' },
+    { date: '2026-04-10', subjectCode: 'ENG', paper: 'Paper 2', time: '11:00–13:00' },
+    { date: '2026-04-11', subjectCode: 'ENG', paper: 'Paper 3', time: '9:15–12:10' },
+    { date: '2026-04-13', subjectCode: 'MATH', paper: 'Paper 1', time: '8:30–10:45' },
+    { date: '2026-04-13', subjectCode: 'MATH', paper: 'Paper 2', time: '11:30–12:45' },
+    { date: '2026-04-14', subjectCode: 'C&SD', paper: 'Paper 1', time: '8:30–10:30' },
+    { date: '2026-04-15', subjectCode: 'ERS', paper: 'Paper 1', time: '8:30–10:15' },
+    { date: '2026-04-15', subjectCode: 'ERS', paper: 'Paper 2', time: '11:00–12:45' },
+    { date: '2026-04-16', subjectCode: 'CHEM', paper: 'Paper 1', time: '8:30–11:00' },
+    { date: '2026-04-16', subjectCode: 'CHEM', paper: 'Paper 2', time: '11:45–12:45' },
+    { date: '2026-04-17', subjectCode: 'DAT', paper: 'Paper 1', time: '8:30–10:30' },
+    { date: '2026-04-17', subjectCode: 'DAT', paper: 'Paper 2', time: '11:15–13:15' },
+    { date: '2026-04-17', subjectCode: 'LIT ENG', paper: 'Paper 1', time: '8:30–11:30' },
+    { date: '2026-04-17', subjectCode: 'LIT ENG', paper: 'Paper 2', time: '13:30–15:30' },
+    { date: '2026-04-18', subjectCode: 'HMSC', paper: 'Paper 1', time: '8:30–10:30' },
+    { date: '2026-04-18', subjectCode: 'HMSC', paper: 'Paper 2', time: '11:15–13:00' },
+    { date: '2026-04-20', subjectCode: 'BIO', paper: 'Paper 1', time: '8:30–11:00' },
+    { date: '2026-04-20', subjectCode: 'BIO', paper: 'Paper 2', time: '11:45–12:45' },
+    { date: '2026-04-21', subjectCode: 'CHILIT', paper: 'Paper 1', time: '8:30–10:30' },
+    { date: '2026-04-21', subjectCode: 'CHILIT', paper: 'Paper 2', time: '11:15–13:15' },
+    { date: '2026-04-21', subjectCode: 'TL', paper: 'Paper 1', time: '8:30–10:00' },
+    { date: '2026-04-21', subjectCode: 'TL', paper: 'Paper 2', time: '10:45–12:45' },
+    { date: '2026-04-22', subjectCode: 'PHY', paper: 'Paper 1', time: '8:30–11:00' },
+    { date: '2026-04-22', subjectCode: 'PHY', paper: 'Paper 2', time: '11:45–12:45' },
+    { date: '2026-04-23', subjectCode: 'GEOG', paper: 'Paper 1', time: '8:30–11:15' },
+    { date: '2026-04-23', subjectCode: 'GEOG', paper: 'Paper 2', time: '12:00–13:15' },
+    { date: '2026-04-24', subjectCode: 'ICT', paper: 'Paper 1', time: '8:30–10:30' },
+    { date: '2026-04-24', subjectCode: 'ICT', paper: 'Paper 2', time: '11:15–12:45' },
+    { date: '2026-04-25', subjectCode: 'HIST', paper: 'Paper 1', time: '8:30–10:30' },
+    { date: '2026-04-25', subjectCode: 'HIST', paper: 'Paper 2', time: '11:15–12:45' },
+    { date: '2026-04-27', subjectCode: 'BAFS', paper: 'Paper 1', time: '8:30–9:30' },
+    { date: '2026-04-27', subjectCode: 'BAFS', paper: 'Paper 2', time: '10:15–12:45' },
+    { date: '2026-04-28', subjectCode: 'PE', paper: 'Paper 1', time: '8:30–10:30' },
+    { date: '2026-04-28', subjectCode: 'PE', paper: 'Paper 2', time: '11:15–12:45' },
+    { date: '2026-04-29', subjectCode: 'CHIST', paper: 'Paper 1', time: '8:30–10:45' },
+    { date: '2026-04-29', subjectCode: 'CHIST', paper: 'Paper 2', time: '11:30–12:50' },
+    { date: '2026-04-30', subjectCode: 'M1', paper: 'Module 1', time: '8:30–11:00' },
+    { date: '2026-04-30', subjectCode: 'M2', paper: 'Module 2', time: '8:30–11:00' },
+    { date: '2026-05-02', subjectCode: 'THS', paper: 'Paper 1', time: '8:30–10:00' },
+    { date: '2026-05-02', subjectCode: 'THS', paper: 'Paper 2', time: '10:45–12:30' },
+    { date: '2026-05-04', subjectCode: 'ECON', paper: 'Paper 1', time: '8:30–9:30' },
+    { date: '2026-05-04', subjectCode: 'ECON', paper: 'Paper 2', time: '10:15–12:45' },
+    { date: '2026-05-05', subjectCode: 'MUSIC', paper: 'Paper 1A', time: '8:30–10:00' },
+    { date: '2026-05-05', subjectCode: 'MUSIC', paper: 'Paper 1B', time: '10:45–12:15' },
+  ],
+};
+
+/** HKEAA official timetable page — use when current year timetable not yet available. */
+export const HKEAA_TIMETABLE_URL = "https://www.hkeaa.edu.hk/en/hkdse/admin/exam_timetable/";
+
+/** Current exam year based on today's date (DSE exams run April–May). */
+export function getCurrentExamYear(): number {
+  return new Date().getFullYear();
+}
+
+/** Returns timetable for the given year, or null if not available. */
+export function getTimetableForYear(year: number): TimetableEntry[] | null {
+  return DSE_TIMETABLES[year] ?? null;
+}
 
 export const PLANNER_SESSIONS: PlannerSessionTemplate[] = [
   { id: "s1", label: "Session 1", timeRange: "08:30-13:00" },

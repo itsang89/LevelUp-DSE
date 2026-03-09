@@ -6,7 +6,13 @@ import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
 import { TagInput } from "../components/ui/TagInput";
-import { createSubject, deleteSubject, updateSubject } from "../lib/api/subjectsApi";
+import {
+  createSubject,
+  deleteSubjectWithCascade,
+  getSubjectDeletionImpact,
+  updateSubject,
+  type SubjectDeletionImpact,
+} from "../lib/api/subjectsApi";
 
 interface SubjectsPageProps {
   userId: string;
@@ -55,6 +61,8 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
   });
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ subject: Subject; impact: SubjectDeletionImpact } | null>(null);
+  const [loadingImpactForId, setLoadingImpactForId] = useState<string | null>(null);
 
   function validateDraft(draft: SubjectDraft): string | null {
     if (!draft.name.trim() || !draft.shortCode.trim()) {
@@ -151,17 +159,29 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
     }
   }
 
-  async function handleDeleteSubject(subjectId: string): Promise<void> {
-    const confirmed = window.confirm(
-      "Delete this subject? Existing planner and log entries will show as Unknown Subject."
-    );
-    if (!confirmed || isSaving) {
-      return;
+  async function handleDeleteClick(subject: Subject): Promise<void> {
+    if (isSaving || loadingImpactForId) return;
+    setLoadingImpactForId(subject.id);
+    setError(null);
+    try {
+      const impact = await getSubjectDeletionImpact(userId, subject.id);
+      setDeleteTarget({ subject, impact });
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Failed to load deletion impact.");
+    } finally {
+      setLoadingImpactForId(null);
     }
+  }
+
+  async function confirmDeleteSubject(): Promise<void> {
+    if (!deleteTarget || isSaving) return;
+    const { subject } = deleteTarget;
     try {
       setIsSaving(true);
-      await deleteSubject(userId, subjectId);
-      setSubjects((prev) => prev.filter((subject) => subject.id !== subjectId));
+      await deleteSubjectWithCascade(userId, subject.id);
+      setSubjects((prev) => prev.filter((s) => s.id !== subject.id));
+      setDeleteTarget(null);
+      window.dispatchEvent(new CustomEvent("subject-deleted", { detail: { subjectId: subject.id } }));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Failed to delete subject.");
     } finally {
@@ -279,10 +299,11 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
                         Edit
                       </button>
                       <button 
-                        onClick={() => handleDeleteSubject(subject.id)}
-                        className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-dot-red transition-colors"
+                        onClick={() => handleDeleteClick(subject)}
+                        disabled={!!loadingImpactForId}
+                        className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-dot-red transition-colors disabled:opacity-50"
                       >
-                        Delete
+                        {loadingImpactForId === subject.id ? "..." : "Delete"}
                       </button>
                     </div>
                   </div>
@@ -375,6 +396,76 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete Subject"
+        description={
+          deleteTarget
+            ? `Remove "${deleteTarget.subject.name}" and all related data. This cannot be undone.`
+            : ""
+        }
+      >
+        {deleteTarget && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-border-hairline bg-surface/50 p-4 space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">
+                The following will be permanently deleted:
+              </p>
+              <ul className="text-sm font-medium space-y-1">
+                {deleteTarget.impact.plannerCellsCount > 0 && (
+                  <li>
+                    <span className="font-bold text-foreground">{deleteTarget.impact.plannerCellsCount}</span>{" "}
+                    planner session{deleteTarget.impact.plannerCellsCount !== 1 ? "s" : ""}
+                  </li>
+                )}
+                {deleteTarget.impact.pastPaperAttemptsCount > 0 && (
+                  <li>
+                    <span className="font-bold text-foreground">{deleteTarget.impact.pastPaperAttemptsCount}</span>{" "}
+                    past paper attempt{deleteTarget.impact.pastPaperAttemptsCount !== 1 ? "s" : ""}
+                  </li>
+                )}
+                {deleteTarget.impact.studyGoalsCount > 0 && (
+                  <li>
+                    <span className="font-bold text-foreground">{deleteTarget.impact.studyGoalsCount}</span>{" "}
+                    study goal{deleteTarget.impact.studyGoalsCount !== 1 ? "s" : ""}
+                  </li>
+                )}
+                {deleteTarget.impact.plannerCellsCount === 0 &&
+                  deleteTarget.impact.pastPaperAttemptsCount === 0 &&
+                  deleteTarget.impact.studyGoalsCount === 0 && (
+                    <li className="text-muted-foreground">No dependent records</li>
+                  )}
+              </ul>
+            </div>
+
+            {error && (
+              <div className="p-4 rounded-2xl bg-dot-red/10 border border-dot-red/20 text-[10px] font-black uppercase tracking-widest text-dot-red text-center">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1 rounded-full text-[10px] font-black uppercase tracking-widest h-12"
+                onClick={() => setDeleteTarget(null)}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 rounded-full text-[10px] font-black uppercase tracking-widest h-12 bg-dot-red hover:bg-dot-red/90 text-white border-dot-red"
+                onClick={confirmDeleteSubject}
+                disabled={isSaving}
+              >
+                {isSaving ? "Deleting..." : "Delete Permanently"}
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </section>
   );

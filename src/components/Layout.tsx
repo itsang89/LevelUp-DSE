@@ -6,7 +6,7 @@ import { Input } from "./ui/Input";
 import { Button } from "./ui/Button";
 import type { PlannerCell, Subject } from "../types";
 import { startOfWeekSunday, formatWeekLabel, isDateInWeek } from "../utils/dateHelpers";
-import { DSE_TIMETABLE_2026 } from "../constants";
+import { getCurrentExamYear, getTimetableForYear } from "../constants";
 
 function navLinkClassName(isActive: boolean): string {
   return [
@@ -109,15 +109,18 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
   };
 
   const nextExam = useMemo(() => {
+    const timetable = getTimetableForYear(getCurrentExamYear());
+    if (!timetable) return null;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const userSubjectCodes = subjects.map((s) => s.shortCode);
-    const relevantExams = DSE_TIMETABLE_2026.filter((exam) =>
+    const relevantExams = timetable.filter((exam) =>
       userSubjectCodes.includes(exam.subjectCode)
     );
 
-    const examsToConsider = relevantExams.length > 0 ? relevantExams : DSE_TIMETABLE_2026;
+    const examsToConsider = relevantExams.length > 0 ? relevantExams : timetable;
 
     const upcoming = examsToConsider
       .map((exam) => ({ ...exam, parsedDate: new Date(`${exam.date}T00:00:00`) }))

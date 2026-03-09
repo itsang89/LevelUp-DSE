@@ -39,6 +39,7 @@ export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPagePr
   const initialWeek = useMemo(() => startOfWeekSunday(new Date()), []);
   const [weeks, setWeeks] = useState<Date[]>([initialWeek]);
   const [currentWeekLabel, setCurrentWeekLabel] = useState<string>(formatWeekLabel(initialWeek));
+  const [selectedDay, setSelectedDay] = useState(() => new Date().getDay());
   const weekRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const hasScrolledToCurrentWeekRef = useRef(false);
   const scrollAdjustmentRef = useRef<{ oldScrollHeight: number; oldScrollTop: number } | null>(null);
@@ -508,6 +509,8 @@ export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPagePr
                   subjectsById={subjectsById}
                   onEditCell={openEditor}
                   onToggleDone={handleToggleDone}
+                  selectedDay={selectedDay}
+                  onSelectedDayChange={setSelectedDay}
                 />
               </div>
             ))}

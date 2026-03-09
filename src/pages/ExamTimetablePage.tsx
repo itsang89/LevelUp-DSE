@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Subject } from "../types";
-import { DSE_TIMETABLE_2026 } from "../constants";
+import { getCurrentExamYear, getTimetableForYear, HKEAA_TIMETABLE_URL } from "../constants";
 
 function getTodayStr(): string {
   const d = new Date();
@@ -27,13 +27,26 @@ export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
     return () => document.removeEventListener("visibilitychange", checkDate);
   }, [checkDate]);
 
-  const { allExams, nextExam, nextExamPerSubject, stats } = useMemo(() => {
+  const { allExams, nextExam, nextExamPerSubject, stats, timetableYear, hasTimetable } = useMemo(() => {
     const today = new Date(`${todayStr}T00:00:00`);
+    const examYear = getCurrentExamYear();
+    const timetable = getTimetableForYear(examYear);
+
+    if (!timetable) {
+      return {
+        allExams: [],
+        nextExam: null,
+        nextExamPerSubject: subjects.map((s) => ({ subject: s, nextPaper: null })),
+        stats: { remainingSittings: 0, totalDaysRemaining: 0 },
+        timetableYear: examYear,
+        hasTimetable: false,
+      };
+    }
 
     const userSubjectCodes = subjects.map((s) => s.shortCode);
     
     // Filter to only the user's subjects, or all if no subjects selected yet
-    const relevantExams = DSE_TIMETABLE_2026.filter((exam) =>
+    const relevantExams = timetable.filter((exam) =>
       userSubjectCodes.length > 0 ? userSubjectCodes.includes(exam.subjectCode) : true
     );
 
@@ -89,7 +102,9 @@ export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
       stats: {
         remainingSittings,
         totalDaysRemaining
-      }
+      },
+      timetableYear: examYear,
+      hasTimetable: true,
     };
   }, [subjects, todayStr]);
 
@@ -97,12 +112,38 @@ export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
   };
 
+  if (!hasTimetable) {
+    return (
+      <div className="space-y-8 pt-6 lg:pt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
+        <div>
+          <h1 className="text-3xl font-light tracking-tighter">Exam Timetable</h1>
+          <p className="text-sm text-muted-foreground mt-1">Your personalised {timetableYear} DSE schedule</p>
+        </div>
+        <div className="glass-card rounded-3xl p-8 border border-border-hairline shadow-soft text-center">
+          <h2 className="text-xl font-bold tracking-tight mb-2">Timetable not yet available</h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            The {timetableYear} DSE examination timetable has not been published yet. Check the HKEAA website for updates.
+          </p>
+          <a
+            href={HKEAA_TIMETABLE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-primary font-bold text-sm hover:underline"
+          >
+            View timetable on HKEAA
+            <span className="material-symbols-outlined text-lg">open_in_new</span>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 pt-6 lg:pt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-3xl font-light tracking-tighter">Exam Timetable</h1>
-          <p className="text-sm text-muted-foreground mt-1">Your personalised 2026 DSE schedule</p>
+          <p className="text-sm text-muted-foreground mt-1">Your personalised {timetableYear} DSE schedule</p>
         </div>
 
         {stats.remainingSittings > 0 && (

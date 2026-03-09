@@ -89,6 +89,85 @@ export async function updateSubject(userId: string, subjectId: string, subject: 
   }
 }
 
+export interface SubjectDeletionImpact {
+  plannerCellsCount: number;
+  pastPaperAttemptsCount: number;
+  studyGoalsCount: number;
+}
+
+/** Returns counts of dependent records that would be removed when deleting a subject. */
+export async function getSubjectDeletionImpact(
+  userId: string,
+  subjectId: string
+): Promise<SubjectDeletionImpact> {
+  const supabase = getSupabaseClient();
+
+  const [plannerResult, pastPapersResult] = await Promise.all([
+    supabase
+      .from("planner_cells")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("subject_id", subjectId),
+    supabase
+      .from("past_paper_attempts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("subject_id", subjectId),
+  ]);
+
+  let studyGoalsCount = 0;
+  const studyGoalsResult = await supabase
+    .from("study_goals")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("subject_id", subjectId);
+  if (!studyGoalsResult.error) {
+    studyGoalsCount = studyGoalsResult.count ?? 0;
+  }
+
+  return {
+    plannerCellsCount: plannerResult.count ?? 0,
+    pastPaperAttemptsCount: pastPapersResult.count ?? 0,
+    studyGoalsCount,
+  };
+}
+
+/** Deletes a subject and all dependent planner cells, past paper attempts, and study goals. */
+export async function deleteSubjectWithCascade(userId: string, subjectId: string): Promise<void> {
+  const supabase = getSupabaseClient();
+
+  await supabase
+    .from("planner_cells")
+    .delete()
+    .eq("user_id", userId)
+    .eq("subject_id", subjectId);
+
+  await supabase
+    .from("past_paper_attempts")
+    .delete()
+    .eq("user_id", userId)
+    .eq("subject_id", subjectId);
+
+  const goalsResult = await supabase
+    .from("study_goals")
+    .delete()
+    .eq("user_id", userId)
+    .eq("subject_id", subjectId);
+  if (goalsResult.error) {
+    // study_goals table may not exist in all deployments
+  }
+
+  const { error } = await supabase
+    .from("subjects")
+    .delete()
+    .eq("user_id", userId)
+    .eq("id", subjectId);
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function deleteSubject(userId: string, subjectId: string): Promise<void> {
   const supabase = getSupabaseClient();
   const { error } = await supabase.from("subjects").delete().eq("user_id", userId).eq("id", subjectId);

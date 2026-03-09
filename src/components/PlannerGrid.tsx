@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import type { PlannerSessionTemplate } from "../types";
 import { formatDayHeader, formatIsoDate } from "../utils/dateHelpers";
 import { PlannerCell } from "./PlannerCell";
@@ -10,6 +11,14 @@ interface PlannerGridProps {
   subjectsById: Record<string, Subject>;
   onEditCell: (dateIso: string, sessionId: string) => void;
   onToggleDone?: (dateIso: string, sessionId: string) => void;
+  selectedDay?: number;
+  onSelectedDayChange?: (index: number) => void;
+}
+
+function getTodayIndexInWeek(weekDays: Date[]): number {
+  const todayIso = formatIsoDate(new Date());
+  const idx = weekDays.findIndex((d) => formatIsoDate(d) === todayIso);
+  return idx >= 0 ? idx : 0;
 }
 
 export function PlannerGrid({
@@ -19,8 +28,28 @@ export function PlannerGrid({
   subjectsById,
   onEditCell,
   onToggleDone,
+  selectedDay: controlledSelectedDay,
+  onSelectedDayChange,
 }: PlannerGridProps) {
-  return (
+  const [internalSelectedDay, setInternalSelectedDay] = useState(0);
+
+  const isControlled = controlledSelectedDay !== undefined;
+  const selectedDay = isControlled ? controlledSelectedDay : internalSelectedDay;
+  const setSelectedDay = isControlled
+    ? (onSelectedDayChange ?? (() => {}))
+    : setInternalSelectedDay;
+
+  useEffect(() => {
+    if (!isControlled) {
+      setInternalSelectedDay(getTodayIndexInWeek(weekDays));
+    }
+  }, [weekDays, isControlled]);
+
+  const selectedDate = weekDays[selectedDay];
+  const selectedDateIso = selectedDate ? formatIsoDate(selectedDate) : "";
+  const todayIso = formatIsoDate(new Date());
+
+  const desktopGrid = (
     <div className="w-full overflow-x-auto custom-scrollbar pb-6 planner-grid-container scroll-mt-24">
       <div className="w-fit bg-background rounded-3xl overflow-hidden">
         {/* Header Grid */}
@@ -100,5 +129,85 @@ export function PlannerGrid({
         </div>
       </div>
     </div>
+  );
+
+  const mobileView = (
+    <div className="md:hidden space-y-4">
+      {/* Day selector strip — sticky so it stays visible when scrolling weeks */}
+      <div className="sticky top-20 z-20 bg-background/95 backdrop-blur-sm py-2 -mx-1 px-1 -mt-2 pt-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+        {weekDays.map((date, index) => {
+          const iso = formatIsoDate(date);
+          const isToday = iso === todayIso;
+          const isSelected = index === selectedDay;
+          const [dayName, dayNum] = formatDayHeader(date).split(" ");
+
+          return (
+            <button
+              key={iso}
+              type="button"
+              onClick={() => setSelectedDay(index)}
+              className={`flex-shrink-0 px-4 py-2.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all ${
+                isSelected
+                  ? isToday
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-surface border border-border-hairline text-primary"
+                  : "bg-surface/50 border border-transparent text-muted-foreground hover:bg-muted/30"
+              }`}
+            >
+              <span className="block">{dayName}</span>
+              <span className={`block mt-0.5 ${isSelected ? "opacity-90" : "opacity-60"}`}>
+                {dayNum}
+              </span>
+            </button>
+          );
+        })}
+        </div>
+      </div>
+
+      {/* Vertical session cards for selected day */}
+      <div className="space-y-3">
+        {sessions.map((session) => {
+          const task = getTask(selectedDateIso, session.id);
+          const subject = task?.subjectId ? subjectsById[task.subjectId] : undefined;
+
+          return (
+            <div
+              key={session.id}
+              className="rounded-2xl p-4 min-h-[100px] border border-border-hairline bg-surface/30 overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  {session.label}
+                </span>
+                <span className="text-[10px] font-bold text-muted-foreground/70">
+                  {session.timeRange.split("-")[0]?.trim()}
+                </span>
+              </div>
+              <div className="min-h-[80px]">
+                <PlannerCell
+                  cellKey={`${selectedDateIso}__${session.id}`}
+                  task={task}
+                  subject={subject}
+                  onClick={() => onEditCell(selectedDateIso, session.id)}
+                  onToggleDone={
+                    task && !task.isRest
+                      ? () => onToggleDone?.(selectedDateIso, session.id)
+                      : undefined
+                  }
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <div className="hidden md:block">{desktopGrid}</div>
+      {mobileView}
+    </>
   );
 }

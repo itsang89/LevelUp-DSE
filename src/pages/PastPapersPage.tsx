@@ -62,9 +62,7 @@ export function PastPapersPage({
     let isMounted = true;
     listPastPaperAttempts(userId)
       .then((rows) => {
-        if (isMounted) {
-          setAttempts(rows);
-        }
+        if (isMounted) setAttempts(rows);
       })
       .catch((requestError) => {
         if (isMounted) {
@@ -77,6 +75,20 @@ export function PastPapersPage({
     return () => {
       isMounted = false;
     };
+  }, [userId]);
+
+  useEffect(() => {
+    const handleSubjectDeleted = () => {
+      listPastPaperAttempts(userId)
+        .then((rows) => setAttempts(rows))
+        .catch((requestError) => {
+          setDataError(
+            requestError instanceof Error ? requestError.message : "Failed to load past paper history."
+          );
+        });
+    };
+    window.addEventListener("subject-deleted", handleSubjectDeleted);
+    return () => window.removeEventListener("subject-deleted", handleSubjectDeleted);
   }, [userId]);
 
   const subjectsById = useMemo(

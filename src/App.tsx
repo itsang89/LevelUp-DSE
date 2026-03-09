@@ -145,6 +145,17 @@ function App() {
     };
   }, [session]);
 
+  useEffect(() => {
+    const handleSubjectDeleted = (e: CustomEvent<{ subjectId: string }>) => {
+      const { subjectId } = e.detail ?? {};
+      if (subjectId) {
+        setCells((prev) => prev.filter((c) => c.task?.subjectId !== subjectId));
+      }
+    };
+    window.addEventListener("subject-deleted", handleSubjectDeleted as EventListener);
+    return () => window.removeEventListener("subject-deleted", handleSubjectDeleted as EventListener);
+  }, []);
+
   if (authLoading || (session && subjectsLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
