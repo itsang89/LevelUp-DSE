@@ -6,6 +6,8 @@ import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
 import { TagInput } from "../components/ui/TagInput";
+import { Select } from "../components/ui/Select";
+import { PRESET_SUBJECTS } from "../constants";
 import {
   createSubject,
   deleteSubjectWithCascade,
@@ -46,12 +48,37 @@ const PRESET_COLORS = [
 
 export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedPresetCode, setSelectedPresetCode] = useState<string>("");
   const [newSubject, setNewSubject] = useState<SubjectDraft>({
     name: "",
     shortCode: "",
     baseColor: "#3b82f6",
     paperLabels: ["Paper 1", "Paper 2"],
   });
+
+  const handlePresetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = event.target.value;
+    setSelectedPresetCode(code);
+    if (code === "other" || !code) {
+      setNewSubject({ 
+        name: "", 
+        shortCode: "", 
+        baseColor: "#3b82f6", 
+        paperLabels: ["Paper 1", "Paper 2"] 
+      });
+    } else {
+      const preset = PRESET_SUBJECTS.find((p) => p.shortCode === code);
+      if (preset) {
+        setNewSubject({
+          name: preset.name,
+          shortCode: preset.shortCode,
+          baseColor: preset.baseColor,
+          paperLabels: preset.paperLabels || ["Paper 1", "Paper 2"],
+        });
+      }
+    }
+  };
+
   const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
   const [editingDraft, setEditingDraft] = useState<SubjectDraft>({
     name: "",
@@ -103,6 +130,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
       await createSubject(userId, newItem);
       setSubjects((prev) => [...prev, newItem]);
       setNewSubject({ name: "", shortCode: "", baseColor: "#3b82f6", paperLabels: ["Paper 1", "Paper 2"] });
+      setSelectedPresetCode("");
       setIsAddModalOpen(false);
       setError(null);
     } catch (requestError) {
@@ -316,61 +344,86 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
 
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setSelectedPresetCode("");
+          setNewSubject({ name: "", shortCode: "", baseColor: "#3b82f6", paperLabels: ["Paper 1", "Paper 2"] });
+          setError(null);
+        }}
         title="New Subject"
         description="Add a new subject to track in your planner."
       >
         <form onSubmit={handleAddSubject} className="space-y-8">
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Subject Name</label>
-              <Input
-                placeholder="e.g. Mathematics"
-                className="h-11 px-4 text-sm font-bold"
-                value={newSubject.name}
-                onChange={(event) => setNewSubject((prev) => ({ ...prev, name: event.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Short Code</label>
-              <Input
-                placeholder="e.g. MATH"
-                className="h-11 px-4 text-sm font-black uppercase tracking-widest"
-                value={newSubject.shortCode}
-                onChange={(event) =>
-                  setNewSubject((prev) => ({ ...prev, shortCode: event.target.value.toUpperCase() }))
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Paper Labels (Type & Enter)</label>
-              <TagInput
-                placeholder="e.g. Paper 1, Paper 2"
-                tags={newSubject.paperLabels}
-                onChange={(tags) =>
-                  setNewSubject((prev) => ({ ...prev, paperLabels: tags }))
-                }
-              />
-            </div>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Color Theme</label>
-              <div className="flex flex-wrap gap-3">
-                {PRESET_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setNewSubject((prev) => ({ ...prev, baseColor: color }))}
-                    className={`h-10 w-10 rounded-2xl border-2 transition-all duration-200 ${
-                      newSubject.baseColor === color 
-                        ? "border-primary scale-110 shadow-soft" 
-                        : "border-transparent hover:scale-105"
-                    }`}
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  />
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Subject Template</label>
+              <Select
+                value={selectedPresetCode}
+                onChange={handlePresetChange}
+              >
+                <option value="">Select a template...</option>
+                {PRESET_SUBJECTS.map((preset) => (
+                  <option key={preset.shortCode} value={preset.shortCode}>
+                    {preset.name} ({preset.shortCode})
+                  </option>
                 ))}
-              </div>
+                <option value="other">Other (Custom)</option>
+              </Select>
             </div>
+
+            {selectedPresetCode && (
+              <div className="space-y-6 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Subject Name</label>
+                  <Input
+                    placeholder="e.g. Mathematics"
+                    className="h-11 px-4 text-sm font-bold"
+                    value={newSubject.name}
+                    onChange={(event) => setNewSubject((prev) => ({ ...prev, name: event.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Short Code</label>
+                  <Input
+                    placeholder="e.g. MATH"
+                    className="h-11 px-4 text-sm font-black uppercase tracking-widest"
+                    value={newSubject.shortCode}
+                    onChange={(event) =>
+                      setNewSubject((prev) => ({ ...prev, shortCode: event.target.value.toUpperCase() }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Paper Labels (Type & Enter)</label>
+                  <TagInput
+                    placeholder="e.g. Paper 1, Paper 2"
+                    tags={newSubject.paperLabels}
+                    onChange={(tags) =>
+                      setNewSubject((prev) => ({ ...prev, paperLabels: tags }))
+                    }
+                  />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60 ml-1">Color Theme</label>
+                  <div className="flex flex-wrap gap-3">
+                    {PRESET_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setNewSubject((prev) => ({ ...prev, baseColor: color }))}
+                        className={`h-10 w-10 rounded-2xl border-2 transition-all duration-200 ${
+                          newSubject.baseColor === color 
+                            ? "border-primary scale-110 shadow-soft" 
+                            : "border-transparent hover:scale-105"
+                        }`}
+                        style={{ backgroundColor: color }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {error && (

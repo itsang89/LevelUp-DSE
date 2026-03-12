@@ -13,6 +13,34 @@ export const DEFAULT_SUBJECTS: Subject[] = [
   { id: "csd", name: "Citizenship and Social Development", shortCode: "C&SD", baseColor: "#f59e0b", paperLabels: ["Paper 1"] },
 ];
 
+export const PRESET_SUBJECTS: Omit<Subject, "id">[] = [
+  { name: "Chinese Language", shortCode: "CHI", baseColor: "#ef4444", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "English Language", shortCode: "ENG", baseColor: "#3b82f6", paperLabels: ["Paper 1", "Paper 2", "Paper 3"] },
+  { name: "Mathematics (Compulsory Part)", shortCode: "MATH", baseColor: "#10b981", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Citizenship and Social Development", shortCode: "C&SD", baseColor: "#f59e0b", paperLabels: ["Paper 1"] },
+  { name: "Biology", shortCode: "BIO", baseColor: "#10b981", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Chemistry", shortCode: "CHEM", baseColor: "#0ea5e9", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Physics", shortCode: "PHY", baseColor: "#6366f1", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Economics", shortCode: "ECON", baseColor: "#f59e0b", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "History", shortCode: "HIST", baseColor: "#8b5cf6", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Chinese History", shortCode: "CHIST", baseColor: "#ef4444", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Geography", shortCode: "GEOG", baseColor: "#10b981", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "BAFS", shortCode: "BAFS", baseColor: "#3b82f6", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "ICT", shortCode: "ICT", baseColor: "#64748b", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "M1 (Calculus & Statistics)", shortCode: "M1", baseColor: "#14b8a6", paperLabels: ["Paper 1"] },
+  { name: "M2 (Algebra & Calculus)", shortCode: "M2", baseColor: "#14b8a6", paperLabels: ["Paper 1"] },
+  { name: "Visual Arts", shortCode: "VA", baseColor: "#ec4899", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Ethics and Religious Studies", shortCode: "ERS", baseColor: "#8b5cf6", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Design and Applied Technology", shortCode: "DAT", baseColor: "#64748b", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Literature in English", shortCode: "LIT ENG", baseColor: "#3b82f6", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Health Management and Social Care", shortCode: "HMSC", baseColor: "#f59e0b", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Chinese Literature", shortCode: "CHILIT", baseColor: "#ef4444", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Technology and Living", shortCode: "TL", baseColor: "#ec4899", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Tourism and Hospitality Studies", shortCode: "THS", baseColor: "#f59e0b", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Music", shortCode: "MUSIC", baseColor: "#8b5cf6", paperLabels: ["Paper 1", "Paper 2"] },
+  { name: "Physical Education", shortCode: "PE", baseColor: "#10b981", paperLabels: ["Paper 1", "Paper 2"] },
+];
+
 /** Single exam entry in the DSE timetable. */
 export interface TimetableEntry {
   date: string;

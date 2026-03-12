@@ -5,6 +5,7 @@ import { Layout } from "./components/Layout";
 import { DEFAULT_SUBJECTS } from "./constants";
 import { PastPapersPage } from "./pages/PastPapersPage";
 import { PlannerPage } from "./pages/PlannerPage";
+import { PlanPage } from "./pages/PlanPage";
 import { SubjectsPage } from "./pages/SubjectsPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -202,6 +203,22 @@ function App() {
       />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={session ? <Layout subjects={subjects} cells={cells} /> : <RedirectToLogin />}>
+        <Route
+          path="/plan"
+          element={
+            userId ? (
+              <PlanPage 
+                userId={userId} 
+                subjects={subjects} 
+                cells={cells} 
+                cutoffData={cutoffData} 
+                usingGenericFallback={usingGenericFallback} 
+              />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
         <Route
           path="/planner"
           element={

@@ -197,6 +197,10 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
             <span className="material-symbols-outlined text-xl">grid_view</span>
             <span className="text-sm font-medium tracking-tight">Dashboard</span>
           </NavLink>
+          <NavLink to="/plan" className={({ isActive }) => navLinkClassName(isActive)}>
+            <span className="material-symbols-outlined text-xl">flag</span>
+            <span className="text-sm font-medium tracking-tight">Plan (Beta)</span>
+          </NavLink>
           <NavLink to="/past-papers" className={({ isActive }) => navLinkClassName(isActive)}>
             <span className="material-symbols-outlined text-xl">analytics</span>
             <span className="text-sm font-medium tracking-tight">Past Papers</span>
@@ -367,6 +371,10 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
             >
               <span className="material-symbols-outlined text-2xl">grid_view</span>
               <span className="font-medium">Dashboard</span>
+            </NavLink>
+            <NavLink to="/plan" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive)}>
+              <span className="material-symbols-outlined text-2xl">flag</span>
+              <span className="font-medium">Plan (Beta)</span>
             </NavLink>
             <NavLink to="/past-papers" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive)}>
               <span className="material-symbols-outlined text-2xl">analytics</span>

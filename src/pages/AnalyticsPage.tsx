@@ -21,40 +21,7 @@ interface AnalyticsPageProps {
   usingGenericFallback: boolean;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-surface/90 backdrop-blur-md p-4 rounded-2xl shadow-zen border border-border-hairline">
-        <p className="text-xs font-black uppercase text-muted-foreground mb-2">
-          {data.displayDate}
-        </p>
-        <div className="flex items-center gap-2 mb-1">
-          <div
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: data.color }}
-          />
-          <span className="font-bold">{data.subjectCode}</span>
-          <span className="text-muted-foreground text-sm">
-            {data.paperLabel}
-          </span>
-        </div>
-        <div className="flex gap-4 mt-2">
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Score</p>
-            <p className="font-light text-lg">{data.percentage.toFixed(1)}%</p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Level</p>
-            <p className="font-bold text-lg">{data.estimatedLevel}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
+const LEVEL_LABELS = ["U", "1", "2", "3", "4", "5", "5*", "5**"];
 
 export function AnalyticsPage({
   userId,
@@ -63,8 +30,8 @@ export function AnalyticsPage({
 }: AnalyticsPageProps) {
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
-  const [xAxisMode, setXAxisMode] = useState<"date" | "year">("date");
-  const [yAxisMode, setYAxisMode] = useState<"percentage" | "level">("percentage");
+  const [xAxisMode, setXAxisMode] = useState<"date" | "year">("year");
+  const [yAxisMode, setYAxisMode] = useState<"percentage" | "level">("level");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -108,43 +75,86 @@ export function AnalyticsPage({
   }, [attempts, subjectFilter, xAxisMode]);
 
   // Derived Stats
-  const stats = useMemo(() => {
-    if (filteredAttempts.length === 0) {
-      return { total: 0, avg: 0, bestLevel: "-", topSubject: "-" };
-    }
-
-    const total = filteredAttempts.length;
-    const avg =
-      filteredAttempts.reduce((acc, a) => acc + a.percentage, 0) / total;
-
-    // Find best level
+  const perSubjectStats = useMemo(() => {
     const levelRank = { "5**": 7, "5*": 6, "5": 5, "4": 4, "3": 3, "2": 2, "1": 1, U: 0 };
-    let best = "U";
-    for (const a of filteredAttempts) {
-      if (
-        (levelRank[a.estimatedLevel as keyof typeof levelRank] || 0) >
-        (levelRank[best as keyof typeof levelRank] || 0)
-      ) {
-        best = a.estimatedLevel;
+    
+    return subjects.map(subject => {
+      const subjectAttempts = attempts.filter(a => a.subjectId === subject.id);
+      if (subjectAttempts.length === 0) {
+        return {
+          subject,
+          attempts: 0,
+          avgScore: 0,
+          avgLevel: "-",
+          bestLevel: "-",
+          avgLevelValue: -1
+        };
       }
-    }
 
-    // Most practiced subject
-    const subjectCounts: Record<string, number> = {};
-    let topSubjId = filteredAttempts[0].subjectId;
-    let maxCount = 0;
-    for (const a of filteredAttempts) {
-      subjectCounts[a.subjectId] = (subjectCounts[a.subjectId] || 0) + 1;
-      if (subjectCounts[a.subjectId] > maxCount) {
-        maxCount = subjectCounts[a.subjectId];
-        topSubjId = a.subjectId;
+      const total = subjectAttempts.length;
+      const avgScore = subjectAttempts.reduce((acc, a) => acc + a.percentage, 0) / total;
+      
+      const avgLevelValue = subjectAttempts.reduce((acc, a) => {
+        const rank = levelRank[a.estimatedLevel as keyof typeof levelRank];
+        return acc + (rank !== undefined ? rank : 0);
+      }, 0) / total;
+      
+      const avgLevel = LEVEL_LABELS[Math.round(avgLevelValue)] || "U";
+
+      let bestRank = -1;
+      let best = "U";
+      for (const a of subjectAttempts) {
+        const rank = levelRank[a.estimatedLevel as keyof typeof levelRank] || 0;
+        if (rank > bestRank) {
+          bestRank = rank;
+          best = a.estimatedLevel;
+        }
       }
+
+      return {
+        subject,
+        attempts: total,
+        avgScore,
+        avgLevel,
+        bestLevel: best,
+        avgLevelValue
+      };
+    });
+  }, [attempts, subjects]);
+
+  const stats = useMemo(() => {
+    if (subjectFilter === "all") {
+      const totalAttempts = attempts.length;
+      
+      // Top Subject
+      const subjectCounts: Record<string, number> = {};
+      let topSubjId = attempts.length > 0 ? attempts[0].subjectId : null;
+      let maxCount = 0;
+      for (const a of attempts) {
+        subjectCounts[a.subjectId] = (subjectCounts[a.subjectId] || 0) + 1;
+        if (subjectCounts[a.subjectId] > maxCount) {
+          maxCount = subjectCounts[a.subjectId];
+          topSubjId = a.subjectId;
+        }
+      }
+      const topSubjectName = topSubjId ? subjectsById[topSubjId]?.shortCode : "-";
+      
+      return {
+        total: totalAttempts,
+        topSubject: topSubjId ? `${topSubjectName} (${maxCount})` : "-",
+        isAll: true
+      };
+    } else {
+      const s = perSubjectStats.find(ps => ps.subject.id === subjectFilter);
+      return {
+        total: s?.attempts || 0,
+        avg: s?.avgScore || 0,
+        avgLevel: s?.avgLevel || "-",
+        bestLevel: s?.bestLevel || "-",
+        isAll: false
+      };
     }
-
-    const topSubjectName = subjectsById[topSubjId]?.shortCode || "Unknown";
-
-    return { total, avg, bestLevel: best, topSubject: `${topSubjectName} (${maxCount})` };
-  }, [filteredAttempts, subjectsById]);
+  }, [attempts, subjectFilter, perSubjectStats, subjectsById]);
 
   // Chart Data preparation
   const chartData = useMemo(() => {
@@ -177,8 +187,8 @@ export function AnalyticsPage({
       .map(([level, count]) => ({ level, count }));
   }, [filteredAttempts]);
 
-  // Separate attempts by subject for multi-line chart when "All" is selected
-  const linesData = useMemo(() => {
+  // Group chart data by subject id for per-subject series
+  const seriesList = useMemo(() => {
     if (subjectFilter !== "all") {
       return [{ id: subjectFilter, data: chartData }];
     }
@@ -189,6 +199,40 @@ export function AnalyticsPage({
     }
     return Object.entries(grouped).map(([id, data]) => ({ id, data }));
   }, [chartData, subjectFilter]);
+
+  // Build a unified dataset for the LineChart: one row per unique x-value,
+  // with each subject's (averaged) y-value as a separate key.
+  // This ensures recharts uses a shared x-axis and all series are visible.
+  const unifiedChartData = useMemo(() => {
+    const xKey = xAxisMode === "date" ? "displayDate" : "displayYear";
+    const yKey = yAxisMode === "percentage" ? "percentage" : "levelValue";
+
+    // Collect all unique x values in sorted order (chartData is already sorted)
+    const seen = new Set<string>();
+    const xValues: string[] = [];
+    for (const d of chartData) {
+      const xVal = d[xKey as keyof typeof d] as string;
+      if (!seen.has(xVal)) {
+        seen.add(xVal);
+        xValues.push(xVal);
+      }
+    }
+
+    return xValues.map((xVal) => {
+      const row: Record<string, unknown> = { xVal };
+      for (const series of seriesList) {
+        const points = series.data.filter(
+          (d) => (d[xKey as keyof typeof d] as string) === xVal
+        );
+        if (points.length > 0) {
+          row[series.id] =
+            points.reduce((sum, p) => sum + (p[yKey as keyof typeof p] as number), 0) /
+            points.length;
+        }
+      }
+      return row;
+    });
+  }, [chartData, seriesList, xAxisMode, yAxisMode]);
 
   return (
     <section className="space-y-4 pt-6 lg:pt-12 pb-20">
@@ -272,43 +316,85 @@ export function AnalyticsPage({
                 </div>
               )}
 
-              {/* Stats Row */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-                <Card variant="hairline" padding="md" className="flex flex-col">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60 mb-2">
-                    Attempts
-                  </span>
-                  <span className="text-4xl font-light tabular-nums">
-                    {stats.total}
-                  </span>
+              {/* Summary Stats / Table */}
+              {!stats.isAll ? (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+                  <Card variant="hairline" padding="md" className="flex flex-col">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60 mb-2">
+                      Attempts
+                    </span>
+                    <span className="text-4xl font-light tabular-nums">
+                      {stats.total}
+                    </span>
+                  </Card>
+                  <Card variant="hairline" padding="md" className="flex flex-col">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60 mb-2">
+                      Avg Score
+                    </span>
+                    <span className={`text-4xl font-light tabular-nums ${stats.avg && stats.avg >= 70 ? "text-success" : ""}`}>
+                      {stats.avg?.toFixed(1)}%
+                    </span>
+                  </Card>
+                  <Card variant="hairline" padding="md" className="flex flex-col">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60 mb-2">
+                      Avg Level
+                    </span>
+                    <span className="text-4xl font-bold">{stats.avgLevel}</span>
+                  </Card>
+                  <Card variant="hairline" padding="md" className="flex flex-col">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60 mb-2">
+                      Best Level
+                    </span>
+                    <span className="text-4xl font-bold">{stats.bestLevel}</span>
+                  </Card>
+                </div>
+              ) : (
+                <Card variant="hairline" padding="none" className="overflow-hidden bg-surface/50 border-border-hairline shadow-soft">
+                  <div className="px-6 py-4 border-b border-border-hairline bg-muted/20 flex items-center justify-between">
+                    <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Subject Performance Summary</h4>
+                    <span className="text-[10px] font-bold text-muted-foreground/60">{perSubjectStats.filter(ps => ps.attempts > 0).length} Subjects Tracked</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead className="bg-muted/30 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        <tr>
+                          <th className="px-6 py-4">Subject</th>
+                          <th className="px-6 py-4">Attempts</th>
+                          <th className="px-6 py-4 text-center">Avg Score</th>
+                          <th className="px-6 py-4 text-center">Avg Level</th>
+                          <th className="px-6 py-4 text-center">Best Level</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border-hairline">
+                        {perSubjectStats.filter(ps => ps.attempts > 0).map((ps) => (
+                          <tr key={ps.subject.id} className="hover:bg-muted/10 transition-colors">
+                            <td className="px-6 py-4 flex items-center gap-3">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ps.subject.baseColor }} />
+                              <span className="font-bold text-sm">{ps.subject.name}</span>
+                            </td>
+                            <td className="px-6 py-4 text-sm font-medium tabular-nums">
+                              {ps.attempts}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-center font-mono">
+                              {ps.avgScore.toFixed(1)}%
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="inline-flex px-3 py-1 rounded-full bg-primary/5 text-primary text-xs font-bold border border-primary/10">
+                                {ps.avgLevel}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="inline-flex px-3 py-1 rounded-full bg-success/5 text-success text-xs font-bold border border-success/10">
+                                {ps.bestLevel}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </Card>
-                <Card variant="hairline" padding="md" className="flex flex-col">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60 mb-2">
-                    Avg Score
-                  </span>
-                  <span
-                    className={`text-4xl font-light tabular-nums ${
-                      stats.avg >= 70 ? "text-success" : ""
-                    }`}
-                  >
-                    {stats.avg.toFixed(1)}%
-                  </span>
-                </Card>
-                <Card variant="hairline" padding="md" className="flex flex-col">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60 mb-2">
-                    Best Level
-                  </span>
-                  <span className="text-4xl font-bold">{stats.bestLevel}</span>
-                </Card>
-                <Card variant="hairline" padding="md" className="flex flex-col">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60 mb-2">
-                    Top Subject
-                  </span>
-                  <span className="text-xl font-medium mt-auto pb-1">
-                    {stats.topSubject}
-                  </span>
-                </Card>
-              </div>
+              )}
 
               {/* Line Chart */}
               <Card variant="zen" padding="lg" className="space-y-8">
@@ -370,14 +456,16 @@ export function AnalyticsPage({
                 </div>
                 <div className="h-[350px] w-full -ml-4">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <LineChart
+                      data={unifiedChartData}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
                       <XAxis
-                        dataKey={xAxisMode === "date" ? "displayDate" : "displayYear"}
+                        dataKey="xVal"
                         axisLine={false}
                         tickLine={false}
                         tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
                         dy={10}
-                        allowDuplicatedCategory={xAxisMode === "date" ? false : true}
                         type="category"
                       />
                       <YAxis
@@ -387,37 +475,54 @@ export function AnalyticsPage({
                         tickCount={yAxisMode === "percentage" ? undefined : 8}
                         tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
                         tickFormatter={
-                          yAxisMode === "percentage" 
-                            ? (val) => `${val}%` 
-                            : (val) => ["U", "1", "2", "3", "4", "5", "5*", "5**"][Math.round(val)] || ""
+                          yAxisMode === "percentage"
+                            ? (val) => `${val}%`
+                            : (val) => LEVEL_LABELS[Math.round(val)] || ""
                         }
                       />
-                      <Tooltip content={<CustomTooltip />} />
-                      {subjectFilter !== "all" ? (
+                      <Tooltip
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null;
+                          return (
+                            <div className="bg-surface/90 backdrop-blur-md p-4 rounded-2xl shadow-zen border border-border-hairline">
+                              <p className="text-xs font-black uppercase text-muted-foreground mb-3">
+                                {xAxisMode === "year" ? `Paper Year ${label}` : label}
+                              </p>
+                              {payload.map((entry) => {
+                                const subject = subjectsById[entry.dataKey as string];
+                                const displayValue =
+                                  yAxisMode === "percentage"
+                                    ? `${(entry.value as number).toFixed(1)}%`
+                                    : LEVEL_LABELS[Math.round(entry.value as number)] || String(entry.value);
+                                return (
+                                  <div key={String(entry.dataKey)} className="flex items-center gap-2 mb-1">
+                                    <div
+                                      className="w-2 h-2 rounded-full flex-shrink-0"
+                                      style={{ backgroundColor: entry.color }}
+                                    />
+                                    <span className="font-bold text-sm">{subject?.shortCode || entry.dataKey}</span>
+                                    <span className="text-muted-foreground text-sm ml-auto pl-4">{displayValue}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        }}
+                      />
+                      {seriesList.map((series, i) => (
                         <Line
-                          data={chartData}
+                          key={series.id}
                           type="monotone"
-                          dataKey={yAxisMode === "percentage" ? "percentage" : "levelValue"}
-                          stroke={subjectsById[subjectFilter]?.baseColor || "#111111"}
-                          strokeWidth={3}
-                          dot={{ r: 4, strokeWidth: 2 }}
-                          activeDot={{ r: 6 }}
+                          dataKey={series.id}
+                          name={subjectsById[series.id]?.shortCode}
+                          stroke={subjectsById[series.id]?.baseColor || "#111111"}
+                          strokeWidth={subjectFilter !== "all" ? 3 : 2}
+                          dot={{ r: subjectFilter !== "all" ? 4 : 3, strokeWidth: subjectFilter !== "all" ? 2 : 1 }}
+                          activeDot={{ r: subjectFilter !== "all" ? 6 : 5 }}
+                          connectNulls={false}
+                          isAnimationActive={i === 0}
                         />
-                      ) : (
-                        linesData.map((series) => (
-                          <Line
-                            key={series.id}
-                            data={series.data}
-                            type="monotone"
-                            dataKey={yAxisMode === "percentage" ? "percentage" : "levelValue"}
-                            name={subjectsById[series.id]?.shortCode}
-                            stroke={subjectsById[series.id]?.baseColor || "#111111"}
-                            strokeWidth={2}
-                            dot={{ r: 3, strokeWidth: 1 }}
-                            activeDot={{ r: 5 }}
-                          />
-                        ))
-                      )}
+                      ))}
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
