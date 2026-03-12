@@ -7,7 +7,7 @@ import {
   Tooltip as RechartsTooltip 
 } from "recharts";
 import type { Subject, PlannerCell, CutoffData, PastPaperAttempt } from "../types";
-import { getCurrentExamYear, getTimetableForYear } from "../constants";
+import { MS_PER_DAY, getCurrentExamYear, getTimetableForYear } from "../constants";
 import { 
   formatIsoDate, 
   isDateInWeek, 
@@ -16,7 +16,6 @@ import {
   getWeekDays
 } from "../utils/dateHelpers";
 import { Card } from "../components/ui/Card";
-import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
@@ -31,6 +30,46 @@ interface PlanPageProps {
   cells: PlannerCell[];
   cutoffData: CutoffData;
   usingGenericFallback: boolean;
+}
+
+interface DonutTooltipPayload {
+  payload: {
+    color: string;
+    name: string;
+    value: number;
+    percentage: number;
+  };
+}
+
+function DonutTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: DonutTooltipPayload[];
+}) {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-surface/95 backdrop-blur-md p-3 rounded-2xl shadow-zen border border-border-hairline">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
+          <span className="font-bold text-sm tracking-tight">{data.name}</span>
+        </div>
+        <div className="flex gap-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-black">Sessions</p>
+            <p className="font-light text-lg">{data.value}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-black">Share</p>
+            <p className="font-bold text-lg">{data.percentage.toFixed(0)}%</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
 }
 
 export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps) {
@@ -133,7 +172,7 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
         .map(e => {
           const parsedDate = new Date(`${e.date}T00:00:00`);
           const diffTime = parsedDate.getTime() - today.getTime();
-          const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          const daysRemaining = Math.ceil(diffTime / MS_PER_DAY);
           return { ...e, daysRemaining, parsedDate };
         })
         .filter(e => e.daysRemaining >= 0)
@@ -263,7 +302,7 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
       
       const daysSinceLastPaper = lastAttempt 
-        ? Math.ceil((new Date().getTime() - new Date(lastAttempt.date).getTime()) / (1000 * 60 * 60 * 24))
+        ? Math.ceil((new Date().getTime() - new Date(lastAttempt.date).getTime()) / MS_PER_DAY)
         : 999;
 
       if (daysSinceLastPaper > 14 && daysUntil < 21) {
@@ -323,31 +362,6 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
 
     return { grid, stats: { avg, best, last } };
   }, [cells, currentWeekStart]);
-
-  const DonutTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-surface/95 backdrop-blur-md p-3 rounded-2xl shadow-zen border border-border-hairline">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
-            <span className="font-bold text-sm tracking-tight">{data.name}</span>
-          </div>
-          <div className="flex gap-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-black">Sessions</p>
-              <p className="font-light text-lg">{data.value}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-black">Share</p>
-              <p className="font-bold text-lg">{data.percentage.toFixed(0)}%</p>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   if (loading) {
     return <div className="p-8 text-center text-muted-foreground">Loading your study plan...</div>;
@@ -476,7 +490,9 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
                       {Math.round(percentage)}%
                     </span>
                     {count === 0 && (
-                      <Badge variant="warning" className="text-[8px] px-1.5 py-0">Neglected</Badge>
+                      <span className="inline-flex items-center rounded-full border border-dot-yellow/20 bg-dot-yellow/10 px-1.5 py-0 text-[8px] font-black uppercase tracking-widest text-amber-700">
+                        Neglected
+                      </span>
                     )}
                   </div>
                 </div>
@@ -515,9 +531,17 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <Badge variant={row.status === 'green' ? 'success' : row.status === 'red' ? 'warning' : 'outline'} className="w-fit">
+                      <span
+                        className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+                          row.status === "green"
+                            ? "border border-success/20 bg-success/10 text-success"
+                            : row.status === "red"
+                              ? "border border-dot-yellow/20 bg-dot-yellow/10 text-amber-700"
+                              : "border border-border-hairline bg-surface/50 text-foreground"
+                        }`}
+                      >
                         {row.currentLevel}
-                      </Badge>
+                      </span>
                       {row.avgPercentage !== null && (
                         <span className="text-[10px] text-muted-foreground mt-1 font-mono uppercase tracking-widest opacity-60">
                           Avg: {row.avgPercentage.toFixed(1)}%

@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { PLANNER_SESSIONS } from "../constants";
+import { MS_PER_WEEK, PLANNER_SESSIONS } from "../constants";
 import type { PlannerCell as PlannerCellType, PlannerTask, Subject } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
 import { PlannerGrid } from "../components/PlannerGrid";
@@ -338,13 +338,13 @@ export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPagePr
 
   const reachedPastLimit = useMemo(() => {
     if (weeks.length === 0) return false;
-    const diff = (initialWeek.getTime() - weeks[0].getTime()) / (1000 * 60 * 60 * 24 * 7);
+    const diff = (initialWeek.getTime() - weeks[0].getTime()) / MS_PER_WEEK;
     return diff >= LOAD_LIMIT;
   }, [weeks, initialWeek]);
 
   const reachedFutureLimit = useMemo(() => {
     if (weeks.length === 0) return false;
-    const diff = (weeks[weeks.length - 1].getTime() - initialWeek.getTime()) / (1000 * 60 * 60 * 24 * 7);
+    const diff = (weeks[weeks.length - 1].getTime() - initialWeek.getTime()) / MS_PER_WEEK;
     return diff >= LOAD_LIMIT;
   }, [weeks, initialWeek]);
 

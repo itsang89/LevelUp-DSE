@@ -7,7 +7,7 @@ import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
 import { TagInput } from "../components/ui/TagInput";
 import { Select } from "../components/ui/Select";
-import { PRESET_SUBJECTS } from "../constants";
+import { DEFAULT_SUBJECT_COLOR, MAX_SHORT_CODE_LENGTH, PRESET_SUBJECTS } from "../constants";
 import {
   createSubject,
   deleteSubjectWithCascade,
@@ -38,7 +38,7 @@ const PRESET_COLORS = [
   "#f59e0b", // Amber/Orange
   "#10b981", // Emerald/Green
   "#14b8a6", // Teal
-  "#3b82f6", // Blue
+  DEFAULT_SUBJECT_COLOR, // Blue
   "#6366f1", // Indigo
   "#8b5cf6", // Violet
   "#ec4899", // Pink
@@ -52,7 +52,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
   const [newSubject, setNewSubject] = useState<SubjectDraft>({
     name: "",
     shortCode: "",
-    baseColor: "#3b82f6",
+    baseColor: DEFAULT_SUBJECT_COLOR,
     paperLabels: ["Paper 1", "Paper 2"],
   });
 
@@ -63,7 +63,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
       setNewSubject({ 
         name: "", 
         shortCode: "", 
-        baseColor: "#3b82f6", 
+        baseColor: DEFAULT_SUBJECT_COLOR, 
         paperLabels: ["Paper 1", "Paper 2"] 
       });
     } else {
@@ -83,7 +83,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
   const [editingDraft, setEditingDraft] = useState<SubjectDraft>({
     name: "",
     shortCode: "",
-    baseColor: "#3b82f6",
+    baseColor: DEFAULT_SUBJECT_COLOR,
     paperLabels: [],
   });
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +95,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
     if (!draft.name.trim() || !draft.shortCode.trim()) {
       return "Name and short code are required.";
     }
-    if (draft.shortCode.trim().length > 5) {
+    if (draft.shortCode.trim().length > MAX_SHORT_CODE_LENGTH) {
       return "Short code should be 3-5 characters.";
     }
     return null;
@@ -129,7 +129,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
       setIsSaving(true);
       await createSubject(userId, newItem);
       setSubjects((prev) => [...prev, newItem]);
-      setNewSubject({ name: "", shortCode: "", baseColor: "#3b82f6", paperLabels: ["Paper 1", "Paper 2"] });
+      setNewSubject({ name: "", shortCode: "", baseColor: DEFAULT_SUBJECT_COLOR, paperLabels: ["Paper 1", "Paper 2"] });
       setSelectedPresetCode("");
       setIsAddModalOpen(false);
       setError(null);
@@ -347,7 +347,7 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
         onClose={() => {
           setIsAddModalOpen(false);
           setSelectedPresetCode("");
-          setNewSubject({ name: "", shortCode: "", baseColor: "#3b82f6", paperLabels: ["Paper 1", "Paper 2"] });
+          setNewSubject({ name: "", shortCode: "", baseColor: DEFAULT_SUBJECT_COLOR, paperLabels: ["Paper 1", "Paper 2"] });
           setError(null);
         }}
         title="New Subject"

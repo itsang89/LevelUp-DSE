@@ -4,9 +4,10 @@ import { getSupabaseClient } from "../lib/supabase";
 import { Modal } from "./ui/Modal";
 import { Input } from "./ui/Input";
 import { Button } from "./ui/Button";
+import { ErrorBanner } from "./ErrorBanner";
 import type { PlannerCell, Subject } from "../types";
 import { startOfWeekSunday, formatWeekLabel, isDateInWeek } from "../utils/dateHelpers";
-import { getCurrentExamYear, getTimetableForYear } from "../constants";
+import { MS_PER_DAY, getCurrentExamYear, getTimetableForYear } from "../constants";
 
 function navLinkClassName(isActive: boolean): string {
   return [
@@ -20,9 +21,16 @@ function navLinkClassName(isActive: boolean): string {
 interface LayoutProps {
   subjects?: Subject[];
   cells?: PlannerCell[];
+  warnings?: string[];
+  onDismissWarning?: (warning: string) => void;
 }
 
-export function Layout({ subjects = [], cells = [] }: LayoutProps) {
+export function Layout({
+  subjects = [],
+  cells = [],
+  warnings = [],
+  onDismissWarning,
+}: LayoutProps) {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
@@ -30,6 +38,7 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
   const [userName, setUserName] = useState("Student User");
   const [newName, setNewName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [profileWarning, setProfileWarning] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
@@ -55,6 +64,7 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
         }
       } catch (err) {
         console.error("Failed to fetch user data:", err);
+        setProfileWarning("Profile details unavailable");
       }
     }
     getUserData();
@@ -135,7 +145,7 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const diffTime = nextExam.parsedDate.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.ceil(diffTime / MS_PER_DAY);
   }, [nextExam]);
 
   const weeklyProgress = useMemo(() => {
@@ -262,7 +272,9 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-sm font-bold text-primary tracking-tight truncate">{userName}</span>
-                  <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">Candidate</span>
+                  <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">
+                    {profileWarning ?? "Candidate"}
+                  </span>
                 </div>
               </div>
 
@@ -431,7 +443,9 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-lg font-bold text-primary tracking-tight">{userName}</span>
-                  <span className="text-xs text-muted-foreground font-bold uppercase tracking-widest opacity-60">Candidate</span>
+                  <span className="text-xs text-muted-foreground font-bold uppercase tracking-widest opacity-60">
+                    {profileWarning ?? "Candidate"}
+                  </span>
                 </div>
               </div>
               <button 
@@ -449,6 +463,13 @@ export function Layout({ subjects = [], cells = [] }: LayoutProps) {
       <main className="flex-1 flex flex-col overflow-hidden w-full">
         <div className="flex-1 overflow-y-auto custom-scrollbar px-6 lg:px-12 pt-16 lg:pt-0 pb-24 lg:pb-12">
           <div className="max-w-6xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {warnings.map((warning) => (
+              <ErrorBanner
+                key={warning}
+                message={warning}
+                onDismiss={onDismissWarning ? () => onDismissWarning(warning) : undefined}
+              />
+            ))}
             <Outlet />
           </div>
         </div>

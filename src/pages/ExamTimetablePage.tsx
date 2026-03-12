@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Subject } from "../types";
-import { getCurrentExamYear, getTimetableForYear, HKEAA_TIMETABLE_URL } from "../constants";
+import { MS_PER_DAY, getCurrentExamYear, getTimetableForYear, HKEAA_TIMETABLE_URL } from "../constants";
 
 function getTodayStr(): string {
   const d = new Date();
@@ -53,7 +53,7 @@ export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
     const processedExams = relevantExams.map((exam) => {
       const parsedDate = new Date(`${exam.date}T00:00:00`);
       const diffTime = parsedDate.getTime() - today.getTime();
-      const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const daysRemaining = Math.ceil(diffTime / MS_PER_DAY);
       
       let status: "past" | "today" | "upcoming" = "upcoming";
       if (daysRemaining < 0) status = "past";

@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import type { PastPaperAttempt, Subject, CutoffData } from "../types";
 import { listPastPaperAttempts } from "../lib/api/pastPapersApi";
+import { FALLBACK_SUBJECT_COLOR } from "../constants";
 import { Card } from "../components/ui/Card";
 
 interface AnalyticsPageProps {
@@ -515,7 +516,7 @@ export function AnalyticsPage({
                           type="monotone"
                           dataKey={series.id}
                           name={subjectsById[series.id]?.shortCode}
-                          stroke={subjectsById[series.id]?.baseColor || "#111111"}
+                          stroke={subjectsById[series.id]?.baseColor || FALLBACK_SUBJECT_COLOR}
                           strokeWidth={subjectFilter !== "all" ? 3 : 2}
                           dot={{ r: subjectFilter !== "all" ? 4 : 3, strokeWidth: subjectFilter !== "all" ? 2 : 1 }}
                           activeDot={{ r: subjectFilter !== "all" ? 6 : 5 }}

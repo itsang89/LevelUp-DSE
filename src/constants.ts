@@ -1,10 +1,16 @@
 import type { PlannerSessionTemplate, Subject } from "./types";
 
-export const STORAGE_KEYS = {
-  subjects: "dse-planner-subjects",
-  plannerCells: "dse-planner-cells",
-  pastPapers: "dse-past-papers",
-} as const;
+export const MS_PER_DAY = 86_400_000;
+export const MS_PER_WEEK = MS_PER_DAY * 7;
+
+export const DEFAULT_SUBJECT_COLOR = "#3b82f6";
+export const FALLBACK_SUBJECT_COLOR = "#666666";
+
+export const MIN_CUTOFF_YEAR = 2012;
+export const MAX_CUTOFF_YEAR = 2035;
+
+export const MIN_PASSWORD_LENGTH = 6;
+export const MAX_SHORT_CODE_LENGTH = 5;
 
 export const DEFAULT_SUBJECTS: Subject[] = [
   { id: "chi", name: "Chinese", shortCode: "CHI", baseColor: "#ef4444", paperLabels: ["Paper 1", "Paper 2"] },

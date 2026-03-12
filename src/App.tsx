@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { Session } from "@supabase/supabase-js";
 import { Layout } from "./components/Layout";
+import { SkeletonLoader } from "./components/SkeletonLoader";
 import { DEFAULT_SUBJECTS } from "./constants";
 import { PastPapersPage } from "./pages/PastPapersPage";
 import { PlannerPage } from "./pages/PlannerPage";
@@ -29,9 +30,14 @@ function App() {
   const [subjectsLoading, setSubjectsLoading] = useState<boolean>(false);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [appError, setAppError] = useState<string | null>(null);
+  const [dataWarnings, setDataWarnings] = useState<string[]>([]);
   const [cutoffData, setCutoffData] = useState<CutoffData>({});
   const [usingGenericFallback, setUsingGenericFallback] = useState<boolean>(false);
   const [cells, setCells] = useState<PlannerCell[]>([]);
+
+  function addDataWarning(message: string): void {
+    setDataWarnings((prev) => (prev.includes(message) ? prev : [...prev, message]));
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -41,8 +47,15 @@ function App() {
       }
       setCutoffData(result.cutoffData);
       setUsingGenericFallback(result.usingGenericFallback);
+      if (result.usingGenericFallback) {
+        addDataWarning("Cutoff data unavailable - level estimates may be less accurate.");
+      }
     }).catch((err) => {
       console.error("Failed to load cutoff data:", err);
+      if (isMounted) {
+        setUsingGenericFallback(true);
+        addDataWarning("Cutoff data unavailable - level estimates may be less accurate.");
+      }
     });
 
     return () => {
@@ -137,8 +150,11 @@ function App() {
       .then((rows) => {
         if (isMounted) setCells(rows);
       })
-      .catch(() => {
-        if (isMounted) setCells([]);
+      .catch((error) => {
+        if (isMounted) {
+          const message = error instanceof Error ? error.message : "Failed to load planner sessions.";
+          addDataWarning(`Planner sessions unavailable: ${message}`);
+        }
       });
 
     return () => {
@@ -158,11 +174,7 @@ function App() {
   }, []);
 
   if (authLoading || (session && subjectsLoading)) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
-        Loading...
-      </div>
-    );
+    return <SkeletonLoader />;
   }
 
   if (!isSupabaseConfigured) {
@@ -202,7 +214,22 @@ function App() {
         element={session ? <Navigate to="/planner" replace /> : <LoginPage />}
       />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route element={session ? <Layout subjects={subjects} cells={cells} /> : <RedirectToLogin />}>
+      <Route
+        element={
+          session ? (
+            <Layout
+              subjects={subjects}
+              cells={cells}
+              warnings={dataWarnings}
+              onDismissWarning={(warning) =>
+                setDataWarnings((prev) => prev.filter((item) => item !== warning))
+              }
+            />
+          ) : (
+            <RedirectToLogin />
+          )
+        }
+      >
         <Route
           path="/plan"
           element={

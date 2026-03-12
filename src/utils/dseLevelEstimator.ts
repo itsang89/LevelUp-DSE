@@ -4,7 +4,7 @@ import type {
   CutoffRow,
   DseLevel,
 } from "../types";
-import { isCutoffDataByYear } from "../types";
+import { MAX_CUTOFF_YEAR, MIN_CUTOFF_YEAR } from "../constants";
 
 const LEVEL_ORDER: DseLevel[] = ["5**", "5*", "5", "4", "3", "2", "1"];
 
@@ -97,7 +97,7 @@ export function parseHkdseCutoffMarkdown(markdown: string): CutoffDataByYear {
     if (parts.length < 3) continue;
 
     const year = Number(parts[1]);
-    if (!Number.isFinite(year) || year < 2012 || year > 2030) continue;
+    if (!Number.isFinite(year) || year < MIN_CUTOFF_YEAR || year > MAX_CUTOFF_YEAR) continue;
 
     const rows: CutoffRow[] = [];
     for (let i = 0; i < LEVEL_COLUMNS.length; i++) {
@@ -143,7 +143,7 @@ export function parseHkdseElectiveCutoffMarkdown(markdown: string): CutoffDataBy
     if (parts.length < 3) continue;
 
     const year = Number(parts[1]);
-    if (!Number.isFinite(year) || year < 2012 || year > 2030) continue;
+    if (!Number.isFinite(year) || year < MIN_CUTOFF_YEAR || year > MAX_CUTOFF_YEAR) continue;
 
     const rows: CutoffRow[] = [];
     for (let i = 0; i < LEVEL_COLUMNS.length; i++) {
@@ -271,13 +271,10 @@ export function hasSubjectCutoffData(
 ): boolean {
   if (Object.keys(cutoffData).length === 0) return false;
   const normalizedKey = subjectKey.trim().toUpperCase();
-  if (isCutoffDataByYear(cutoffData)) {
-    const bySubject = cutoffData[normalizedKey];
-    if (!bySubject) return false;
-    const yearToUse = examYear ?? new Date().getFullYear();
-    return bySubject[yearToUse] != null;
-  }
-  return normalizedKey in cutoffData;
+  const bySubject = cutoffData[normalizedKey];
+  if (!bySubject) return false;
+  const yearToUse = examYear ?? new Date().getFullYear();
+  return bySubject[yearToUse] != null;
 }
 
 function getCutoffRowsForYear(
@@ -303,14 +300,6 @@ function getCutoffRowsForYear(
   return bySubject[nearest];
 }
 
-function getCutoffRowsLegacy(
-  subjectKey: string,
-  cutoffData: Record<string, CutoffRow[]>
-): CutoffRow[] {
-  const normalizedKey = subjectKey.trim().toUpperCase();
-  return cutoffData[normalizedKey] ?? GENERIC_CUTOFFS;
-}
-
 /**
  * Estimates DSE level based on percentage, subject, and exam year.
  * Uses year-specific cutoffs from HKDSE historical data when available.
@@ -322,22 +311,9 @@ export function estimateDseLevel(
   cutoffData: CutoffData,
   examYear?: number
 ): string {
-  if (isCutoffDataByYear(cutoffData)) {
-    const yearToUse = examYear ?? new Date().getFullYear();
-    const cutoffs = getCutoffRowsForYear(subjectKey, yearToUse, cutoffData);
-    if (cutoffs) {
-      for (const row of cutoffs) {
-        if (percentage >= row.minimumPercentage) {
-          return row.level;
-        }
-      }
-      return "U";
-    }
-  } else {
-    const cutoffs = getCutoffRowsLegacy(
-      subjectKey,
-      cutoffData as Record<string, CutoffRow[]>
-    );
+  const yearToUse = examYear ?? new Date().getFullYear();
+  const cutoffs = getCutoffRowsForYear(subjectKey, yearToUse, cutoffData);
+  if (cutoffs) {
     for (const row of cutoffs) {
       if (percentage >= row.minimumPercentage) {
         return row.level;
@@ -346,8 +322,8 @@ export function estimateDseLevel(
     return "U";
   }
 
-  const cutoffs = GENERIC_CUTOFFS;
-  for (const row of cutoffs) {
+  const genericCutoffs = GENERIC_CUTOFFS;
+  for (const row of genericCutoffs) {
     if (percentage >= row.minimumPercentage) {
       return row.level;
     }
@@ -371,14 +347,8 @@ export function getMarksToNextLevel(
   totalMarks: number
 ): { nextLevel: DseLevel; percentageGap: number; marksGap: number } | null {
   const normalizedKey = subjectKey.trim().toUpperCase();
-  
-  let cutoffs: CutoffRow[] | null = null;
-  if (isCutoffDataByYear(cutoffData)) {
-    cutoffs = getCutoffRowsForYear(normalizedKey, examYear, cutoffData);
-  } else {
-    cutoffs = (cutoffData as Record<string, CutoffRow[]>)[normalizedKey];
-  }
-  
+
+  const cutoffs = getCutoffRowsForYear(normalizedKey, examYear, cutoffData);
   if (!cutoffs) return null;
 
   // Find the current level index

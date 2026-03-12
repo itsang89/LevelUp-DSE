@@ -4,6 +4,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
+import { MIN_PASSWORD_LENGTH } from "../constants";
 
 export function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -56,8 +57,8 @@ export function ResetPasswordPage() {
     e.preventDefault();
     setError(null);
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
     if (password !== confirmPassword) {
@@ -131,7 +132,7 @@ export function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={MIN_PASSWORD_LENGTH}
                 className="bg-background/50 focus:bg-surface transition-colors duration-300"
               />
             </div>
@@ -146,7 +147,7 @@ export function ResetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={MIN_PASSWORD_LENGTH}
                 className="bg-background/50 focus:bg-surface transition-colors duration-300"
               />
             </div>

@@ -1,6 +1,7 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { PlannerTask, Subject } from "../types";
+import { FALLBACK_SUBJECT_COLOR } from "../constants";
 
 interface PlannerCellProps {
   cellKey: string;
@@ -106,7 +107,7 @@ export function PlannerCell({ cellKey, task, subject, onClick, onToggleDone }: P
   }
 
   const title = task.title.trim() || "(Untitled task)";
-  const subjectColor = subject?.baseColor || "#666666";
+  const subjectColor = subject?.baseColor || FALLBACK_SUBJECT_COLOR;
   const isDone = !!task.isDone;
   const bgGradient = subject
     ? `linear-gradient(135deg, ${subjectColor}${isDone ? "15" : "30"} 0%, ${subjectColor}${isDone ? "05" : "15"} 100%)`

@@ -293,7 +293,7 @@ export function LoginPage() {
         </Card>
 
         <p className="mt-10 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-30">
-          DSE Study Companion &copy; 2026
+          DSE Study Companion &copy; {new Date().getFullYear()}
         </p>
       </div>
     </div>
