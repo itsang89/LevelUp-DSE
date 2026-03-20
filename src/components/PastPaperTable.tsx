@@ -12,6 +12,8 @@ import { Button } from "./ui/Button";
 
 const EM_DASH = "—";
 
+const EMPTY_CUTOFF: CutoffData = {};
+
 // ─── Shared layout tokens ────────────────────────────────────────────────────
 // Every row (summary, column-header, attempt) uses the SAME horizontal padding
 // and the SAME metric column order: Score | % | Level | actions.
@@ -138,7 +140,7 @@ export function PastPaperTable({
   sortKey = "date",
   sortDirection = "desc",
 }: PastPaperTableProps) {
-  const cutoff = cutoffData ?? ({} as CutoffData);
+  const cutoff = cutoffData ?? EMPTY_CUTOFF;
   const groups = useMemo(
     () => buildSortedPastPaperGroups(attempts, subjectsById, cutoff, sortKey, sortDirection),
     [attempts, subjectsById, cutoff, sortKey, sortDirection]

@@ -32,7 +32,7 @@ export async function listSubjects(userId: string): Promise<Subject[]> {
     throw error;
   }
 
-  return (data as SubjectRow[]).map(toSubject);
+  return ((data ?? []) as SubjectRow[]).map(toSubject);
 }
 
 export async function seedDefaultSubjects(userId: string, subjects: Subject[]): Promise<void> {

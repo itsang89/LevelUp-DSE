@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { Session } from "@supabase/supabase-js";
 import { Layout } from "./components/Layout";
@@ -35,9 +35,9 @@ function App() {
   const [usingGenericFallback, setUsingGenericFallback] = useState<boolean>(false);
   const [cells, setCells] = useState<PlannerCell[]>([]);
 
-  function addDataWarning(message: string): void {
+  const addDataWarning = useCallback((message: string): void => {
     setDataWarnings((prev) => (prev.includes(message) ? prev : [...prev, message]));
-  }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -61,7 +61,7 @@ function App() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [addDataWarning]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -160,7 +160,7 @@ function App() {
     return () => {
       isMounted = false;
     };
-  }, [session]);
+  }, [session, addDataWarning]);
 
   useEffect(() => {
     const handleSubjectDeleted = (e: CustomEvent<{ subjectId: string }>) => {
@@ -234,12 +234,11 @@ function App() {
           path="/plan"
           element={
             userId ? (
-              <PlanPage 
-                userId={userId} 
-                subjects={subjects} 
-                cells={cells} 
-                cutoffData={cutoffData} 
-                usingGenericFallback={usingGenericFallback} 
+              <PlanPage
+                userId={userId}
+                subjects={subjects}
+                cells={cells}
+                cutoffData={cutoffData}
               />
             ) : (
               <Navigate to="/login" replace />

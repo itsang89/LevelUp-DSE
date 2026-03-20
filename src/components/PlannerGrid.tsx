@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import type { PlannerSessionTemplate } from "../types";
 import { formatDayHeader, formatIsoDate } from "../utils/dateHelpers";
 import { PlannerCell } from "./PlannerCell";
@@ -11,14 +10,8 @@ interface PlannerGridProps {
   subjectsById: Record<string, Subject>;
   onEditCell: (dateIso: string, sessionId: string) => void;
   onToggleDone?: (dateIso: string, sessionId: string) => void;
-  selectedDay?: number;
-  onSelectedDayChange?: (index: number) => void;
-}
-
-function getTodayIndexInWeek(weekDays: Date[]): number {
-  const todayIso = formatIsoDate(new Date());
-  const idx = weekDays.findIndex((d) => formatIsoDate(d) === todayIso);
-  return idx >= 0 ? idx : 0;
+  selectedDay: number;
+  onSelectedDayChange: (index: number) => void;
 }
 
 export function PlannerGrid({
@@ -28,23 +21,9 @@ export function PlannerGrid({
   subjectsById,
   onEditCell,
   onToggleDone,
-  selectedDay: controlledSelectedDay,
+  selectedDay,
   onSelectedDayChange,
 }: PlannerGridProps) {
-  const [internalSelectedDay, setInternalSelectedDay] = useState(0);
-
-  const isControlled = controlledSelectedDay !== undefined;
-  const selectedDay = isControlled ? controlledSelectedDay : internalSelectedDay;
-  const setSelectedDay = isControlled
-    ? (onSelectedDayChange ?? (() => {}))
-    : setInternalSelectedDay;
-
-  useEffect(() => {
-    if (!isControlled) {
-      setInternalSelectedDay(getTodayIndexInWeek(weekDays));
-    }
-  }, [weekDays, isControlled]);
-
   const selectedDate = weekDays[selectedDay];
   const selectedDateIso = selectedDate ? formatIsoDate(selectedDate) : "";
   const todayIso = formatIsoDate(new Date());
@@ -61,7 +40,6 @@ export function PlannerGrid({
           {weekDays.map((date, index) => {
             const formatted = formatDayHeader(date);
             const [dayName, dayNum, monthName] = formatted.split(' ');
-            const todayIso = formatIsoDate(new Date());
             const isToday = formatIsoDate(date) === todayIso;
             
             return (
@@ -102,7 +80,6 @@ export function PlannerGrid({
                 const isoDate = formatIsoDate(date);
                 const task = getTask(isoDate, session.id);
                 const subject = task?.subjectId ? subjectsById[task.subjectId] : undefined;
-                const todayIso = formatIsoDate(new Date());
                 const isToday = isoDate === todayIso;
 
                 return (
@@ -146,7 +123,7 @@ export function PlannerGrid({
             <button
               key={iso}
               type="button"
-              onClick={() => setSelectedDay(index)}
+              onClick={() => onSelectedDayChange(index)}
               className={`flex-shrink-0 px-4 py-2.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all ${
                 isSelected
                   ? isToday

@@ -45,7 +45,7 @@ export async function listPastPaperAttempts(userId: string): Promise<PastPaperAt
     throw error;
   }
 
-  return (data as PastPaperAttemptRow[]).map(toPastPaperAttempt);
+  return ((data ?? []) as PastPaperAttemptRow[]).map(toPastPaperAttempt);
 }
 
 export async function createPastPaperAttempt(userId: string, attempt: PastPaperAttempt): Promise<void> {

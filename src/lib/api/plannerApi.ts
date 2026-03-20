@@ -40,7 +40,7 @@ export async function listPlannerCells(userId: string): Promise<PlannerCell[]> {
     throw error;
   }
 
-  return (data as PlannerCellRow[]).map(toPlannerCell);
+  return ((data ?? []) as PlannerCellRow[]).map(toPlannerCell);
 }
 
 export async function upsertPlannerCell(

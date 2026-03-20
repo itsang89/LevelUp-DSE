@@ -23,7 +23,7 @@ export async function listStudyGoals(userId: string): Promise<StudyGoal[]> {
     throw new Error(`Failed to list study goals: ${error.message}`);
   }
 
-  return (data as StudyGoalRow[] || []).map((row) => ({
+  return ((data ?? []) as StudyGoalRow[]).map((row) => ({
     id: row.id,
     subjectId: row.subject_id,
     weeklyTarget: row.weekly_target,

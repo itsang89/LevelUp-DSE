@@ -29,7 +29,6 @@ interface PlanPageProps {
   subjects: Subject[];
   cells: PlannerCell[];
   cutoffData: CutoffData;
-  usingGenericFallback: boolean;
 }
 
 interface DonutTooltipPayload {
@@ -78,7 +77,12 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
   const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false);
   const [targetLevels, setTargetLevels] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem(`plan-targets-${userId}`);
-    return saved ? JSON.parse(saved) : {};
+    if (!saved) return {};
+    try {
+      return JSON.parse(saved) as Record<string, string>;
+    } catch {
+      return {};
+    }
   });
   const [loading, setLoading] = useState(true);
   const [draftGoals, setDraftGoals] = useState<Record<string, number>>({});
