@@ -14,12 +14,12 @@ const EM_DASH = "—";
 
 // ─── Shared layout tokens ────────────────────────────────────────────────────
 // Every row (summary, column-header, attempt) uses the SAME horizontal padding
-// and the SAME metric column widths so values line up perfectly.
+// and the SAME metric column order: Score | % | Level | actions.
 const OUTER_PX = "px-6 md:px-9 pl-7 md:pl-10";
 const ROW = "flex items-center gap-4 md:gap-8";
 const ID_COL = "flex-1 min-w-0";
 const MET_GROUP = "flex items-center gap-4 md:gap-8 shrink-0";
-const COL_PCT = "w-[4.75rem] md:w-[5.5rem] flex flex-col items-end text-right";
+const COL_PCT = "w-[5.25rem] md:w-[6rem] flex flex-col items-end text-right";
 const COL_SCORE = "w-[5.5rem] md:w-[6.5rem] flex flex-col items-end text-right";
 const COL_LEVEL = "w-[4.25rem] md:w-[5rem] flex flex-col items-end";
 const COL_ACTION = "w-[4rem] md:w-[4.5rem] flex justify-end";
@@ -204,8 +204,18 @@ function GroupedPastPaperCard({
   const missingPaperLabels = !group.isComplete ? getMissingRequiredPaperLabels(group) : [];
   const subjectKey = subject?.shortCode ?? group.subjectId;
 
-  const pctDisplay =
-    group.weightedPercentage != null ? `${group.weightedPercentage.toFixed(1)}%` : EM_DASH;
+  const hasFullYearPct = group.weightedPercentage != null;
+  const pctValue = hasFullYearPct ? group.weightedPercentage : group.levelBasisPercentage;
+  const pctDisplay = pctValue != null ? `${pctValue.toFixed(1)}%` : EM_DASH;
+  const showPartialPctHint = !hasFullYearPct && pctValue != null;
+  const requiredPaperCount = group.requiredPaperLabels.length;
+  const loggedRequiredCount = showPartialPctHint
+    ? group.requiredPaperLabels.filter((l) => group.bestByPaperLabel.has(l)).length
+    : 0;
+  const partialPapersLabel =
+    showPartialPctHint && requiredPaperCount > 0
+      ? `${loggedRequiredCount}/${requiredPaperCount} papers`
+      : null;
   const levelDisplay = group.overallLevel ?? EM_DASH;
 
   let gapSummary: string | null = null;
@@ -258,16 +268,48 @@ function GroupedPastPaperCard({
           </div>
         </div>
 
-        {/* Metrics (right side, fixed columns) */}
+        {/* Metrics: Score | overall % | Level | action — matches expanded row column order */}
         <div className={MET_GROUP}>
-          <div className={COL_PCT}>
-            <span className={LABEL}>Percentage</span>
-            <p className="text-2xl md:text-3xl font-light text-success leading-none tabular-nums">
+          {/* Spacer aligns with per-paper Score column when expanded */}
+          <div className={COL_SCORE} aria-hidden />
+          <div
+            className={COL_PCT}
+            title={
+              showPartialPctHint
+                ? "Weighted average over logged papers only; weights renormalized. Missing papers are excluded—not the same as the full-year aggregate."
+                : undefined
+            }
+          >
+            <span className={`${LABEL} flex flex-col items-end gap-0`}>
+              <span className="leading-tight">Overall</span>
+              <span className="leading-tight">percentage</span>
+            </span>
+            <p
+              className={`text-2xl md:text-3xl font-light leading-none tabular-nums ${showPartialPctHint ? "text-success/90" : "text-success"}`}
+              aria-label={
+                showPartialPctHint
+                  ? partialPapersLabel
+                    ? `${pctDisplay} partial year, ${partialPapersLabel} logged`
+                    : `${pctDisplay} partial year, weights renormalized over logged papers only`
+                  : undefined
+              }
+            >
               {pctDisplay}
             </p>
+            {showPartialPctHint ? (
+              <p className="text-[9px] font-bold text-muted-foreground/70 mt-1.5 text-right leading-tight max-w-[6rem]">
+                Partial
+                {partialPapersLabel ? (
+                  <>
+                    <span className="text-muted-foreground/45 mx-0.5" aria-hidden>
+                      ·
+                    </span>
+                    {partialPapersLabel}
+                  </>
+                ) : null}
+              </p>
+            ) : null}
           </div>
-          {/* Spacer: keeps Level / actions aligned with Score column when expanded */}
-          <div className={COL_SCORE} aria-hidden />
           <div className={COL_LEVEL}>
             <span className={LABEL}>Level</span>
             <LevelBadge value={levelDisplay} size="lg" subLine={gapSummary} />
@@ -300,8 +342,8 @@ function GroupedPastPaperCard({
               <span className={LABEL}>Paper / details</span>
             </div>
             <div className={MET_GROUP}>
-              <div className={COL_PCT}><span className={LABEL}>%</span></div>
               <div className={COL_SCORE}><span className={LABEL}>Score</span></div>
+              <div className={COL_PCT}><span className={LABEL}>%</span></div>
               <div className={COL_LEVEL}><span className={LABEL}>Level</span></div>
               <div className={COL_ACTION} />
             </div>
@@ -401,10 +443,10 @@ function MissingPaperRow({
         </p>
       </div>
       <div className={MET_GROUP}>
-        <div className={COL_PCT}>
+        <div className={COL_SCORE}>
           <p className="text-lg md:text-xl font-light text-muted-foreground/40 leading-none tabular-nums">{EM_DASH}</p>
         </div>
-        <div className={COL_SCORE}>
+        <div className={COL_PCT}>
           <p className="text-lg md:text-xl font-light text-muted-foreground/40 leading-none tabular-nums">{EM_DASH}</p>
         </div>
         <div className={COL_LEVEL}>
@@ -470,17 +512,17 @@ function AttemptRow({
         ) : null}
       </div>
 
-      {/* Metrics — same MET_GROUP + same column classes as summary */}
+      {/* Metrics — same MET_GROUP + column order as summary */}
       <div className={MET_GROUP}>
-        <div className={COL_PCT}>
-          <p className="text-lg md:text-xl font-light text-success leading-none tabular-nums">
-            {attempt.percentage.toFixed(1)}%
-          </p>
-        </div>
         <div className={COL_SCORE}>
           <p className="text-lg md:text-xl font-light text-primary leading-none tabular-nums">
             {attempt.score}
             <span className="text-sm font-light text-muted-foreground ml-1">/ {attempt.total}</span>
+          </p>
+        </div>
+        <div className={COL_PCT}>
+          <p className="text-lg md:text-xl font-light text-success leading-none tabular-nums">
+            {attempt.percentage.toFixed(1)}%
           </p>
         </div>
         <div className={COL_LEVEL}>
