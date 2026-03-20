@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Card } from "./ui/Card";
 import type { PastPaperAttempt, Subject } from "../types";
+import { resolveCutoffSubjectKey } from "../utils/dseLevelEstimator";
 
 interface PaperMatrixProps {
   subject: Subject;
@@ -18,8 +19,9 @@ export function PaperMatrix({ subject, attempts, availablePaperLabels, cutoffDat
     let currentMinYear = currentMaxYear - 10; // Default to last 10 years
     
     // Try to get years from cutoff data
-    if (cutoffData && cutoffData[subject.shortCode]) {
-      const subjectCutoffs = cutoffData[subject.shortCode];
+    const cutoffKey = resolveCutoffSubjectKey(subject.shortCode);
+    if (cutoffData && cutoffData[cutoffKey]) {
+      const subjectCutoffs = cutoffData[cutoffKey];
       const cutoffYears = Object.keys(subjectCutoffs)
         .map(Number)
         .filter(y => !isNaN(y));

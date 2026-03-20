@@ -91,7 +91,7 @@ Runtime cutoff data is loaded from `public/dse-cutoffs.md` (core subjects) and `
 - Parsed by `parseHkdseCutoffMarkdown` and `parseHkdseElectiveCutoffMarkdown` in `src/utils/dseLevelEstimator.ts`
 - Uses year-specific cutoffs: past paper exam year is matched to that year’s cutoffs
 - **Core subjects:** Chinese (CHI), English (ENG), Mathematics (MATH), Chemistry (CHEM), Biology (BIO)
-- **Electives:** Physics (PHY), Economics (ECON), BAFS, Chinese History (CHIST), History (HIST), Chinese Literature (CHILIT), Geography (GEOG), ICT, M1, M2
+- **Electives:** Physics (PHY), Economics (ECON), BAFS, Chinese History (CHI-HIST), History (HIST), Chinese Literature (CHI-LIT), Geography (GEOG), ICT, M1, M2, Literature in English (ENG-LIT)
 - Add subjects in Settings with these short codes for grade prediction to work
 - If parsing fails or file is unavailable, estimation falls back to generic cutoffs
 

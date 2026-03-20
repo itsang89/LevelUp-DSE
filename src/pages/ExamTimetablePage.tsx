@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Subject } from "../types";
-import { MS_PER_DAY, getCurrentExamYear, getTimetableForYear, HKEAA_TIMETABLE_URL } from "../constants";
+import {
+  MS_PER_DAY,
+  formatTimetablePaperLine,
+  getCurrentExamYear,
+  getTimetableForYear,
+  HKEAA_TIMETABLE_URL,
+} from "../constants";
 
 function getTodayStr(): string {
   const d = new Date();
@@ -184,7 +190,7 @@ export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
               </div>
               <h2 className="text-2xl font-bold tracking-tight mb-1">{nextExam.subjectName}</h2>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground">
-                <p className="text-lg">{nextExam.paper}</p>
+                <p className="text-lg">{formatTimetablePaperLine(nextExam)}</p>
                 <div className="w-1.5 h-1.5 rounded-full bg-border-hairline hidden md:block"></div>
                 <p className="text-lg font-medium text-foreground">{nextExam.time}</p>
               </div>
@@ -236,7 +242,9 @@ export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
                 
                 {nextPaper ? (
                   <div>
-                    <h4 className="text-sm font-bold truncate mb-1">{nextPaper.paper}</h4>
+                    <h4 className="text-sm font-bold truncate mb-1">
+                      {formatTimetablePaperLine(nextPaper)}
+                    </h4>
                     <p className="text-[11px] text-muted-foreground">
                       {formatDate(nextPaper.parsedDate)} • {nextPaper.time}
                     </p>
@@ -296,7 +304,7 @@ export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
                           {exam.subjectCode} <span className="font-normal text-muted-foreground hidden sm:inline ml-1">• {exam.subjectName}</span>
                         </span>
                         <span className="text-[11px] text-muted-foreground uppercase tracking-wider truncate flex items-center gap-2">
-                          {exam.paper}
+                          {formatTimetablePaperLine(exam)}
                           {exam.time && (
                             <>
                               <span className="w-1 h-1 rounded-full bg-border-hairline"></span>

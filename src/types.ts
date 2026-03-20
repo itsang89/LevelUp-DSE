@@ -6,6 +6,8 @@ export interface Subject {
   shortCode: string;
   baseColor: string;
   paperLabels?: string[];
+  /** Optional paper label -> weight (e.g. 0.5). If omitted, equal split across `paperLabels`. */
+  paperWeights?: Record<string, number>;
 }
 
 export interface PlannerSessionTemplate {
@@ -55,3 +57,14 @@ export interface CutoffRow {
 export type CutoffDataByYear = Record<string, Record<number, CutoffRow[]>>;
 
 export type CutoffData = CutoffDataByYear;
+
+/** One row in the built-in DSE exam timetable. */
+export interface TimetableEntry {
+  date: string;
+  subjectCode: string;
+  /** HKEAA / schedule display (may differ from formal weighted paper name). */
+  paper: string;
+  time: string;
+  /** When set, matches `subject_weighting.json` paper label for weighting / past papers. */
+  paperFormalLabel?: string;
+}

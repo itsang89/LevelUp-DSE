@@ -7,7 +7,7 @@ import { Button } from "./ui/Button";
 import { ErrorBanner } from "./ErrorBanner";
 import type { PlannerCell, Subject } from "../types";
 import { startOfWeekSunday, formatWeekLabel, isDateInWeek } from "../utils/dateHelpers";
-import { MS_PER_DAY, getCurrentExamYear, getTimetableForYear } from "../constants";
+import { formatTimetablePaperLine, MS_PER_DAY, getCurrentExamYear, getTimetableForYear } from "../constants";
 
 function navLinkClassName(isActive: boolean): string {
   return [
@@ -238,7 +238,7 @@ export function Layout({
                     {daysToNextExam === 0 ? "Today" : `D-${daysToNextExam}`}
                   </span>
                   <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1 mt-1">
-                    {nextExam.subjectCode} {nextExam.paper}
+                    {nextExam.subjectCode} {formatTimetablePaperLine(nextExam)}
                     <span className="material-symbols-outlined text-[10px] group-hover:translate-x-0.5 transition-transform">chevron_right</span>
                   </span>
                 </>
@@ -417,7 +417,7 @@ export function Layout({
                       {daysToNextExam === 0 ? "Today" : `D-${daysToNextExam}`}
                     </span>
                     <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1 flex items-center gap-1">
-                      {nextExam.subjectCode} {nextExam.paper}
+                      {nextExam.subjectCode} {formatTimetablePaperLine(nextExam)}
                       <span className="material-symbols-outlined text-[12px]">chevron_right</span>
                     </span>
                   </>

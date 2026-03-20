@@ -1,0 +1,201 @@
+[
+  {
+    "subjectCode": "CHI",
+    "subjectName": "Chinese Language",
+    "papers": [
+      { "label": "Paper 1 (Reading)", "weight": 0.4706 },
+      { "label": "Paper 2 (Writing)", "weight": 0.5294 }
+    ]
+  },
+  {
+    "subjectCode": "ENG",
+    "subjectName": "English Language",
+    "papers": [
+      { "label": "Paper 1 (Reading)", "weight": 0.2353 },
+      { "label": "Paper 2 (Writing)", "weight": 0.2941 },
+      { "label": "Paper 3 (Listening & Integrated Skills)", "weight": 0.3529 },
+      { "label": "Paper 4 (Speaking)", "weight": 0.1176 }
+    ]
+  },
+  {
+    "subjectCode": "MATH",
+    "subjectName": "Mathematics (Compulsory Part)",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.65 },
+      { "label": "Paper 2", "weight": 0.35 }
+    ]
+  },
+  {
+    "subjectCode": "M1",
+    "subjectName": "Mathematics Extended Part Module 1",
+    "papers": [
+      { "label": "Paper 1", "weight": 1.00 }
+    ]
+  },
+  {
+    "subjectCode": "M2",
+    "subjectName": "Mathematics Extended Part Module 2",
+    "papers": [
+      { "label": "Paper 1", "weight": 1.00 }
+    ]
+  },
+  {
+    "subjectCode": "C&SD",
+    "subjectName": "Citizenship and Social Development",
+    "note": "Attained / Unattained only — no numeric paper weighting"
+  },
+  {
+    "subjectCode": "BIO",
+    "subjectName": "Biology",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.75 },
+      { "label": "Paper 2", "weight": 0.25 }
+    ]
+  },
+  {
+    "subjectCode": "CHEM",
+    "subjectName": "Chemistry",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.75 },
+      { "label": "Paper 2", "weight": 0.25 }
+    ]
+  },
+  {
+    "subjectCode": "PHY",
+    "subjectName": "Physics",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.75 },
+      { "label": "Paper 2", "weight": 0.25 }
+    ]
+  },
+  {
+    "subjectCode": "ECON",
+    "subjectName": "Economics",
+    "note": "No SBA — weights unchanged",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.25 },
+      { "label": "Paper 2", "weight": 0.75 }
+    ]
+  },
+  {
+    "subjectCode": "GEOG",
+    "subjectName": "Geography",
+    "note": "No SBA — weights unchanged",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.75 },
+      { "label": "Paper 2", "weight": 0.25 }
+    ]
+  },
+  {
+    "subjectCode": "HIST",
+    "subjectName": "History",
+    "note": "No SBA — weights unchanged",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.40 },
+      { "label": "Paper 2", "weight": 0.60 }
+    ]
+  },
+  {
+    "subjectCode": "CHI-HIST",
+    "subjectName": "Chinese History",
+    "note": "No SBA — weights unchanged",
+    "papers": [
+      { "label": "Paper 1 (卷一)", "weight": 0.70 },
+      { "label": "Paper 2 (卷二)", "weight": 0.30 }
+    ]
+  },
+  {
+    "subjectCode": "CHI-LIT",
+    "subjectName": "Chinese Literature (中國文學)",
+    "estimated": true,
+    "papers": [
+      { "label": "Paper 1 (卷一)", "weight": 0.50 },
+      { "label": "Paper 2 (卷二)", "weight": 0.50 }
+    ]
+  },
+  {
+    "subjectCode": "BAFS",
+    "subjectName": "Business, Accounting and Financial Studies",
+    "note": "No SBA — weights unchanged",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.40 },
+      { "label": "Paper 2", "weight": 0.60 }
+    ]
+  },
+  {
+    "subjectCode": "ICT",
+    "subjectName": "Information & Communication Technology",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.6875 },
+      { "label": "Paper 2", "weight": 0.3125 }
+    ]
+  },
+  {
+    "subjectCode": "DAT",
+    "subjectName": "Design and Applied Technology",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.50 },
+      { "label": "Paper 2", "weight": 0.50 }
+    ]
+  },
+  {
+    "subjectCode": "TL",
+    "subjectName": "Technology and Living",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.43 },
+      { "label": "Paper 2", "weight": 0.57 }
+    ]
+  },
+  {
+    "subjectCode": "HMSC",
+    "subjectName": "Health Management and Social Care",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.57 },
+      { "label": "Paper 2", "weight": 0.43 }
+    ]
+  },
+  {
+    "subjectCode": "VA",
+    "subjectName": "Visual Arts",
+    "papers": [
+      { "label": "Paper 1 (Art Criticism & Art History)", "weight": 1.00 }
+    ]
+  },
+  {
+    "subjectCode": "MUSIC",
+    "subjectName": "Music",
+    "note": "No SBA — weights unchanged",
+    "papers": [
+      { "label": "Paper 1 (Listening)", "weight": 0.40 },
+      { "label": "Paper 2 (Performing)", "weight": 0.20 },
+      { "label": "Paper 3 (Creating)", "weight": 0.20 },
+      { "label": "Paper 4 (Elective)", "weight": 0.20 }
+    ]
+  },
+  {
+    "subjectCode": "PE",
+    "subjectName": "Physical Education",
+    "estimated": true,
+    "papers": [
+      { "label": "Paper 1 (Written)", "weight": 0.43 },
+      { "label": "Paper 2 (Physical Performance)", "weight": 0.57 }
+    ]
+  },
+  {
+    "subjectCode": "ENG-LIT",
+    "subjectName": "Literature in English",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.62 },
+      { "label": "Paper 2", "weight": 0.38 }
+    ]
+  },
+  {
+    "subjectCode": "ERS",
+    "subjectName": "Ethics and Religious Studies",
+    "note": "No SBA — weights unchanged",
+    "papers": [
+      { "label": "Paper 1", "weight": 0.50 },
+      { "label": "Paper 2", "weight": 0.50 }
+    ]
+  }
+]

@@ -46,6 +46,7 @@ export function PastPapersPage({
 }: PastPapersPageProps) {
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [editingAttempt, setEditingAttempt] = useState<PastPaperAttempt | null>(null);
+  const [addFormPrefill, setAddFormPrefill] = useState<Partial<PastPaperAttempt> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [paperFilter, setPaperFilter] = useState<string>("all");
@@ -208,6 +209,7 @@ export function PastPapersPage({
       }
       setDataError(null);
       setEditingAttempt(null);
+      setAddFormPrefill(null);
       setIsModalOpen(false);
     } catch (requestError) {
       setDataError(
@@ -237,12 +239,14 @@ export function PastPapersPage({
     }
   }
 
-  function openAddModal(): void {
+  function openAddModal(prefill?: Partial<PastPaperAttempt>): void {
     setEditingAttempt(null);
+    setAddFormPrefill(prefill ? { ...prefill } : null);
     setIsModalOpen(true);
   }
 
   function openEditModal(attempt: PastPaperAttempt): void {
+    setAddFormPrefill(null);
     setEditingAttempt(attempt);
     setIsModalOpen(true);
   }
@@ -283,7 +287,7 @@ export function PastPapersPage({
           <Button 
             size="sm" 
             className="rounded-full bg-primary text-primary-foreground h-10 px-6 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 zen-shadow hover:scale-105 transition-all duration-300 active:scale-95"
-            onClick={openAddModal}
+            onClick={() => openAddModal()}
           >
             <span className="material-symbols-outlined text-lg">add</span>
             Add Entry
@@ -397,8 +401,11 @@ export function PastPapersPage({
           attempts={filteredAttempts}
           subjectsById={subjectsById}
           cutoffData={cutoffData}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
           onEdit={openEditModal}
           onDelete={handleDelete}
+          onLogMissingPaper={openAddModal}
         />
       </div>
 
@@ -407,20 +414,27 @@ export function PastPapersPage({
         onClose={() => {
           setIsModalOpen(false);
           setEditingAttempt(null);
+          setAddFormPrefill(null);
         }}
         title={editingAttempt ? "Edit Past Paper" : "Add Past Paper"}
         description={editingAttempt ? "Update your past paper results." : "Log your latest past paper session."}
       >
         <PastPaperForm
-          key={editingAttempt?.id ?? "new"}
+          key={
+            editingAttempt?.id ??
+            (addFormPrefill
+              ? `add-${addFormPrefill.subjectId}-${addFormPrefill.examYear}-${addFormPrefill.paperLabel ?? ""}`
+              : "new")
+          }
           subjects={subjects}
           cutoffData={cutoffData}
-          initialValues={editingAttempt ?? undefined}
+          initialValues={editingAttempt ?? addFormPrefill ?? undefined}
           onSubmit={handleSubmit}
           submitLabel={isPersisting ? "Saving..." : editingAttempt ? "Update Entry" : "Add Entry"}
           onCancel={() => {
             setIsModalOpen(false);
             setEditingAttempt(null);
+            setAddFormPrefill(null);
           }}
         />
       </Modal>

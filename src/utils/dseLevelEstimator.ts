@@ -46,10 +46,24 @@ function parsePercentageCell(cell: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
-/** Maps elective subject heading to short code. Longer phrases first. */
+/**
+ * Normalize legacy markdown / stored keys to canonical `subject_weighting.json` subject codes.
+ * `CutoffData` uses these canonical keys after parse + migration.
+ */
+const LEGACY_CUTOFF_KEY_TO_CANONICAL: Record<string, string> = {
+  CHIST: "CHI-HIST",
+  CHILIT: "CHI-LIT",
+};
+
+export function resolveCutoffSubjectKey(subjectKey: string): string {
+  const k = subjectKey.trim().toUpperCase();
+  return LEGACY_CUTOFF_KEY_TO_CANONICAL[k] ?? k;
+}
+
+/** Elective markdown headings → canonical subject code (matches `Subject.shortCode`). */
 const ELECTIVE_HEADING_TO_CODE: [string, string][] = [
-  ["CHINESE HISTORY", "CHIST"],
-  ["CHINESE LITERATURE", "CHILIT"],
+  ["CHINESE HISTORY", "CHI-HIST"],
+  ["CHINESE LITERATURE", "CHI-LIT"],
   ["PHYSICS", "PHY"],
   ["ECONOMICS", "ECON"],
   ["BAFS", "BAFS"],
@@ -215,6 +229,26 @@ function mergeCutoffData(base: CutoffDataByYear, extra: CutoffDataByYear): Cutof
   return merged;
 }
 
+/** Merge old elective keys (CHIST/CHILIT) into canonical CHI-HIST/CHI-LIT and drop legacy keys. */
+function migrateLegacyCutoffKeys(data: CutoffDataByYear): CutoffDataByYear {
+  const pairs: [string, string][] = [
+    ["CHIST", "CHI-HIST"],
+    ["CHILIT", "CHI-LIT"],
+  ];
+  const out: CutoffDataByYear = { ...data };
+  for (const [legacy, canonical] of pairs) {
+    const leg = out[legacy];
+    if (!leg) continue;
+    if (!out[canonical]) {
+      out[canonical] = { ...leg };
+    } else {
+      out[canonical] = { ...leg, ...out[canonical] };
+    }
+    delete out[legacy];
+  }
+  return out;
+}
+
 export async function loadCutoffData(): Promise<{
   cutoffData: CutoffData;
   usingGenericFallback: boolean;
@@ -246,6 +280,8 @@ export async function loadCutoffData(): Promise<{
       }
     }
 
+    cutoffData = migrateLegacyCutoffKeys(cutoffData);
+
     if (Object.keys(cutoffData).length === 0) {
       throw new Error("Cutoff markdown was parsed but no subject cutoffs were found.");
     }
@@ -270,7 +306,7 @@ export function hasSubjectCutoffData(
   examYear?: number
 ): boolean {
   if (Object.keys(cutoffData).length === 0) return false;
-  const normalizedKey = subjectKey.trim().toUpperCase();
+  const normalizedKey = resolveCutoffSubjectKey(subjectKey);
   const bySubject = cutoffData[normalizedKey];
   if (!bySubject) return false;
   const yearToUse = examYear ?? new Date().getFullYear();
@@ -282,7 +318,7 @@ function getCutoffRowsForYear(
   examYear: number,
   cutoffData: CutoffDataByYear
 ): CutoffRow[] | null {
-  const normalizedKey = subjectKey.trim().toUpperCase();
+  const normalizedKey = resolveCutoffSubjectKey(subjectKey);
   const bySubject = cutoffData[normalizedKey];
   if (!bySubject) return null;
 
@@ -346,9 +382,7 @@ export function getMarksToNextLevel(
   examYear: number,
   totalMarks: number
 ): { nextLevel: DseLevel; percentageGap: number; marksGap: number } | null {
-  const normalizedKey = subjectKey.trim().toUpperCase();
-
-  const cutoffs = getCutoffRowsForYear(normalizedKey, examYear, cutoffData);
+  const cutoffs = getCutoffRowsForYear(subjectKey, examYear, cutoffData);
   if (!cutoffs) return null;
 
   // Find the current level index
