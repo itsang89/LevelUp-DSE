@@ -24,14 +24,19 @@ export function LoginPage() {
     hasGuestStoredData,
     migrateGuestDataToAccount,
   } = useData();
-  const redirectTo = (location.state as { from?: string } | null)?.from || "/planner";
+  const authState = location.state as { from?: string; tab?: string; intent?: string } | null;
+  const redirectTo = authState?.from || "/planner";
   const query = new URLSearchParams(location.search);
 
   useEffect(() => {
-    if (query.get("intent") === "signup") {
+    if (
+      query.get("intent") === "signup" ||
+      authState?.tab === "signup" ||
+      authState?.intent === "signup"
+    ) {
       setIsSignUp(true);
     }
-  }, [query]);
+  }, [authState?.intent, authState?.tab, query]);
 
   const handlePostAuth = async (authenticatedUserId: string): Promise<void> => {
     if (hasGuestStoredData()) {

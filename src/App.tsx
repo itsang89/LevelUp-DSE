@@ -8,6 +8,7 @@ import { PlanPage } from "./pages/PlanPage";
 import { SubjectsPage } from "./pages/SubjectsPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { LoginPage } from "./pages/LoginPage";
+import { LandingPage } from "./pages/LandingPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { ExamTimetablePage } from "./pages/ExamTimetablePage";
 import { DataProvider, useData } from "./contexts/DataContext";
@@ -66,7 +67,7 @@ function AppRoutes() {
     <Routes>
       <Route
         path="/"
-        element={canUseApp ? <Navigate to="/planner" replace /> : <Navigate to="/login" replace />}
+        element={canUseApp ? <Navigate to="/planner" replace /> : <LandingPage />}
       />
       <Route
         path="/login"
@@ -180,7 +181,7 @@ function AppRoutes() {
       </Route>
       <Route
         path="*"
-        element={canUseApp ? <Navigate to="/planner" replace /> : <Navigate to="/login" replace />}
+        element={canUseApp ? <Navigate to="/planner" replace /> : <Navigate to="/" replace />}
       />
     </Routes>
   );
