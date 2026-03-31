@@ -16,9 +16,13 @@
 Defined in `src/App.tsx`:
 
 - `/login`: Public login/sign-up page
+- `/reset-password`: Public password reset page
 - `/planner`: Protected weekly planner page
+- `/plan`: Protected strategic planning page (Plan Beta)
 - `/past-papers`: Protected history + performance page
+- `/analytics`: Protected analytics and trend insights page
 - `/subjects`: Protected subject management page
+- `/exam-timetable`: Protected exam timetable + countdown page
 - `/`: Redirects to planner when signed in, otherwise login
 - `*`: Same redirect behavior as `/`
 
@@ -37,6 +41,7 @@ These are passed into pages as props to avoid duplicated fetches.
 ### Page-level
 
 - `PlannerPage`: Week timeline window, planner cells, editor modal state
+- `PlanPage`: Weekly target tracking, readiness calculations, strategic queue, goals modal, and page-level load error banner state
 - `PastPapersPage`: Attempts list, filters/sort, edit/create modal state
 - `SubjectsPage`: Add/edit drafts, modal visibility, per-action error state
 - `LoginPage`: Auth form mode and async status
@@ -48,6 +53,7 @@ These are passed into pages as props to avoid duplicated fetches.
 - `subjectsApi.ts`: list/seed/create/update/delete subjects
 - `plannerApi.ts`: list/upsert/delete planner cells
 - `pastPapersApi.ts`: list/create/update/delete attempts
+- `goalsApi.ts`: list/upsert weekly study goals used by Plan Beta
 
 Key properties:
 

@@ -19,6 +19,7 @@ import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
+import { ErrorBanner } from "../components/ErrorBanner";
 import { listStudyGoals, upsertStudyGoal, type StudyGoal } from "../lib/api/goalsApi";
 import { listPastPaperAttempts } from "../lib/api/pastPapersApi";
 
@@ -85,6 +86,7 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
     }
   });
   const [loading, setLoading] = useState(true);
+  const [dataError, setDataError] = useState<string | null>(null);
   const [draftGoals, setDraftGoals] = useState<Record<string, number>>({});
 
   const todayStr = useMemo(() => formatIsoDate(new Date()), []);
@@ -99,11 +101,16 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
       if (isMounted) {
         setGoals(goalsData);
         setAttempts(attemptsData);
+        setDataError(null);
         setLoading(false);
       }
     }).catch(err => {
       console.error("Failed to load plan data:", err);
-      if (isMounted) setLoading(false);
+      if (isMounted) {
+        const message = err instanceof Error ? err.message : "Unable to load your plan data right now.";
+        setDataError(`Plan data unavailable: ${message}`);
+        setLoading(false);
+      }
     });
     return () => { isMounted = false; };
   }, [userId]);
@@ -373,6 +380,9 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
 
   return (
     <div className="space-y-12 pt-6 lg:pt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
+      {dataError ? (
+        <ErrorBanner message={dataError} onDismiss={() => setDataError(null)} />
+      ) : null}
       <header>
         <h1 className="text-3xl font-light tracking-tighter">Strategic Plan (Beta)</h1>
         <p className="text-sm text-muted-foreground mt-1">Step back and see the big picture</p>

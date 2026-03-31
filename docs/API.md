@@ -69,6 +69,19 @@ Updates attempt fields by `user_id + id`.
 
 Deletes a single attempt by `user_id + id`.
 
+## `goalsApi.ts`
+
+### `listStudyGoals(userId: string): Promise<StudyGoal[]>`
+
+Returns weekly study goals for a user, ordered by subject.
+
+### `upsertStudyGoal(userId: string, subjectId: string, weeklyTarget: number): Promise<StudyGoal>`
+
+Creates or updates one weekly goal row for a subject.
+
+- Conflict target: `user_id,subject_id`
+- Used by `PlanPage` for weekly target configuration in the goals modal
+
 ## Naming and Mapping
 
 API modules map between:
@@ -81,6 +94,12 @@ Mapping functions:
 - `toSubject`
 - `toPlannerCell`
 - `toPastPaperAttempt`
+- `toStudyGoal`
+
+## UI Error Handling Contract
+
+- API modules throw errors from Supabase and do not render UI directly.
+- Pages are responsible for user-visible feedback (e.g. inline banners/toasts) while optionally logging details to console.
 
 ## Related Types
 

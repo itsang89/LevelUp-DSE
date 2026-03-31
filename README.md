@@ -25,12 +25,13 @@ The app uses official DSE cutoff data to estimate levels from raw scores and sup
 
 - Email/password authentication via Supabase (including password reset flow)
 - Weekly planner with session-level tasks and rest slots
+- Plan (Beta) page (`/plan`) with weekly `study_goals`, readiness checks, and action-priority suggestions
 - Past paper attempt tracking with estimated DSE levels and sort toggle (newest/oldest first)
 - Subject management (name, short code, color, paper labels)
 - Subject-specific cutoff parsing from markdown with generic fallback
 - Analytics page: score trends, grade distribution, marks-to-next-level insights
 - Paper completion matrix: year × paper grid showing completed/missing papers per subject
-- Per-subject exam countdown and timetable
+- Per-subject exam countdown and timetable (`/exam-timetable`) with quick access from desktop sidebar and mobile menu countdown card
 - Date-range filtering for past papers (All, Last 30 days, Last 3 months, custom range)
 - CSV / JSON export (PastPapersPage and PlannerPage; respects current filters)
 - Dark mode (toggle in sidebar, persisted in localStorage)
@@ -39,6 +40,7 @@ The app uses official DSE cutoff data to estimate levels from raw scores and sup
 
 - `src/App.tsx`: App bootstrap, auth/session handling, route guards, initial data loading
 - `src/pages/PlannerPage.tsx`: Weekly planner timeline and task editor modal
+- `src/pages/PlanPage.tsx`: Plan Beta dashboard (weekly targets, readiness status, and strategic action queue)
 - `src/pages/PastPapersPage.tsx`: Past paper CRUD, filter/sort, modal form, paper matrix
 - `src/pages/AnalyticsPage.tsx`: Score trends, grade distribution, summary stats
 - `src/pages/ExamTimetablePage.tsx`: Per-subject exam timetable and countdown
@@ -49,6 +51,7 @@ The app uses official DSE cutoff data to estimate levels from raw scores and sup
 - `src/lib/api/`: Supabase data-access layer (`subjectsApi`, `plannerApi`, `pastPapersApi`, `goalsApi`)
 - `src/lib/supabase.ts`: Singleton Supabase client and environment checks
 - `src/utils/`: Date helpers, subject styles, DSE level estimation + markdown parser, export utilities
+- `subject_weighting.json`: Subject paper weighting and formal paper label source used by planner/past-paper flows
 - `supabase/schema.sql`: Database tables, indexes, constraints, and RLS policies
 - `public/dse-cutoffs.md`, `public/dse-cutoffs-electives.md`: In-app cutoff source files loaded at runtime
 
@@ -76,6 +79,9 @@ Useful scripts:
 - `npm run build`: Type-check and create production build
 - `npm run preview`: Preview production build locally
 - `npm run lint`: Run ESLint
+- `npm run test`: Run the Vitest suite once
+- `npm run test:watch`: Run Vitest in watch mode
+- `npm run test:coverage`: Run tests with coverage output
 
 ## Supabase Setup
 
@@ -83,6 +89,8 @@ Useful scripts:
 2. In SQL editor, run `supabase/schema.sql`.
 3. Enable Email auth provider.
 4. Copy project URL and anon key into `.env`.
+
+`schema.sql` includes the `study_goals` table used by Plan Beta (`/plan`) for weekly subject targets.
 
 ## DSE Cutoff Data
 
