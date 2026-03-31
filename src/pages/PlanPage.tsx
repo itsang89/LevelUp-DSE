@@ -24,9 +24,11 @@ import { listStudyGoals, upsertStudyGoal, type StudyGoal } from "../lib/api/goal
 import { listPastPaperAttempts } from "../lib/api/pastPapersApi";
 
 import { estimateDseLevel } from "../utils/dseLevelEstimator";
+import { useData } from "../contexts/DataContext";
 
 interface PlanPageProps {
   userId: string;
+  isGuest?: boolean;
   subjects: Subject[];
   cells: PlannerCell[];
   cutoffData: CutoffData;
@@ -72,12 +74,18 @@ function DonutTooltip({
   return null;
 }
 
-export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps) {
+export function PlanPage({ userId, isGuest = false, subjects, cells, cutoffData }: PlanPageProps) {
+  const {
+    getGuestPastPapersData,
+    getGuestStudyGoalsData,
+    persistGuestStudyGoals,
+  } = useData();
+  const targetLevelsStorageKey = isGuest ? "plan-targets-guest" : `plan-targets-${userId}`;
   const [goals, setGoals] = useState<StudyGoal[]>([]);
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false);
   const [targetLevels, setTargetLevels] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem(`plan-targets-${userId}`);
+    const saved = localStorage.getItem(targetLevelsStorageKey);
     if (!saved) return {};
     try {
       return JSON.parse(saved) as Record<string, string>;
@@ -93,6 +101,14 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
   const currentWeekStart = useMemo(() => startOfWeekSunday(new Date()), []);
 
   useEffect(() => {
+    if (isGuest) {
+      setGoals(getGuestStudyGoalsData());
+      setAttempts(getGuestPastPapersData());
+      setDataError(null);
+      setLoading(false);
+      return;
+    }
+
     let isMounted = true;
     Promise.all([
       listStudyGoals(userId),
@@ -113,25 +129,38 @@ export function PlanPage({ userId, subjects, cells, cutoffData }: PlanPageProps)
       }
     });
     return () => { isMounted = false; };
-  }, [userId]);
+  }, [getGuestPastPapersData, getGuestStudyGoalsData, isGuest, userId]);
 
   const handleSetTargetLevel = (subjectId: string, level: string) => {
     const next = { ...targetLevels, [subjectId]: level };
     setTargetLevels(next);
-    localStorage.setItem(`plan-targets-${userId}`, JSON.stringify(next));
+    localStorage.setItem(targetLevelsStorageKey, JSON.stringify(next));
   };
 
   const handleUpdateGoal = async (subjectId: string, target: number) => {
     try {
-      const updated = await upsertStudyGoal(userId, subjectId, target);
+      const updated = isGuest
+        ? {
+            id: goals.find((goal) => goal.subjectId === subjectId)?.id ?? `goal-${subjectId}`,
+            subjectId,
+            weeklyTarget: target,
+          }
+        : await upsertStudyGoal(userId, subjectId, target);
       setGoals(prev => {
         const idx = prev.findIndex(g => g.subjectId === subjectId);
         if (idx >= 0) {
           const next = [...prev];
           next[idx] = updated;
+          if (isGuest) {
+            persistGuestStudyGoals(next);
+          }
           return next;
         }
-        return [...prev, updated];
+        const next = [...prev, updated];
+        if (isGuest) {
+          persistGuestStudyGoals(next);
+        }
+        return next;
       });
       return updated;
     } catch (err) {

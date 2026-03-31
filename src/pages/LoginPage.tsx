@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
+import { useData } from "../contexts/DataContext";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,11 +13,46 @@ export function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotMode, setIsForgotMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const {
+    startGuestMode,
+    stopGuestMode,
+    hasGuestStoredData,
+    migrateGuestDataToAccount,
+  } = useData();
   const redirectTo = (location.state as { from?: string } | null)?.from || "/planner";
+  const query = new URLSearchParams(location.search);
+
+  useEffect(() => {
+    if (query.get("intent") === "signup") {
+      setIsSignUp(true);
+    }
+  }, [query]);
+
+  const handlePostAuth = async (authenticatedUserId: string): Promise<void> => {
+    if (hasGuestStoredData()) {
+      try {
+        setIsMigrating(true);
+        await migrateGuestDataToAccount(authenticatedUserId);
+      } catch (migrationError) {
+        setError(
+          migrationError instanceof Error
+            ? migrationError.message
+            : "Failed to automatically back up guest data."
+        );
+        setIsMigrating(false);
+        return;
+      } finally {
+        setIsMigrating(false);
+      }
+    }
+    stopGuestMode();
+    navigate(redirectTo);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,25 +86,34 @@ export function LoginPage() {
         }
         // If a session is returned, email confirmation is disabled — redirect immediately
         if (signUpData.session) {
-          navigate(redirectTo);
+          await handlePostAuth(signUpData.session.user.id);
         } else {
           setNotice("Account created. Check your inbox to confirm your email.");
         }
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
         });
         if (signInError) {
           throw signInError;
         }
-        navigate(redirectTo);
+        if (signInData.session) {
+          await handlePostAuth(signInData.session.user.id);
+        } else {
+          navigate(redirectTo);
+        }
       }
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : "Authentication failed.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleContinueWithoutAccount = (): void => {
+    startGuestMode();
+    navigate("/planner");
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -246,12 +291,16 @@ export function LoginPage() {
               <Button
                 type="submit"
                 className="w-full h-14 text-xs tracking-[0.2em]"
-                disabled={isLoading}
+                disabled={isLoading || isMigrating}
               >
-                {isLoading ? (
+                {isLoading || isMigrating ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    {isSignUp ? "Creating Account" : "Authenticating"}
+                    {isMigrating
+                      ? "Backing Up Data"
+                      : isSignUp
+                        ? "Creating Account"
+                        : "Authenticating"}
                   </div>
                 ) : (
                   isSignUp ? "Create Account" : "Begin Journey"
@@ -289,6 +338,15 @@ export function LoginPage() {
             }}
           >
             {isSignUp ? "Back To Sign In" : "Create Free Account"}
+          </Button>
+
+          <Button
+            variant="ghost"
+            className="w-full h-10 text-[10px] tracking-[0.15em]"
+            type="button"
+            onClick={handleContinueWithoutAccount}
+          >
+            Continue Without Account
           </Button>
         </Card>
 

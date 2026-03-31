@@ -14,9 +14,11 @@ import type { PastPaperAttempt, Subject, CutoffData } from "../types";
 import { listPastPaperAttempts } from "../lib/api/pastPapersApi";
 import { FALLBACK_SUBJECT_COLOR } from "../constants";
 import { Card } from "../components/ui/Card";
+import { useData } from "../contexts/DataContext";
 
 interface AnalyticsPageProps {
   userId: string;
+  isGuest?: boolean;
   subjects: Subject[];
   cutoffData: CutoffData;
   usingGenericFallback: boolean;
@@ -26,9 +28,11 @@ const LEVEL_LABELS = ["U", "1", "2", "3", "4", "5", "5*", "5**"];
 
 export function AnalyticsPage({
   userId,
+  isGuest = false,
   subjects,
   usingGenericFallback,
 }: AnalyticsPageProps) {
+  const { getGuestPastPapersData } = useData();
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [xAxisMode, setXAxisMode] = useState<"date" | "year">("year");
@@ -37,6 +41,13 @@ export function AnalyticsPage({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isGuest) {
+      setAttempts(getGuestPastPapersData());
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     let isMounted = true;
     listPastPaperAttempts(userId)
       .then((rows) => {
@@ -55,7 +66,7 @@ export function AnalyticsPage({
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [getGuestPastPapersData, isGuest, userId]);
 
   const subjectsById = useMemo(
     () => Object.fromEntries(subjects.map((s) => [s.id, s])),

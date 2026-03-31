@@ -19,6 +19,7 @@ import {
 
 interface PlannerPageProps {
   userId: string;
+  isGuest?: boolean;
   subjects: Subject[];
   cells: PlannerCellType[];
   setCells: React.Dispatch<React.SetStateAction<PlannerCellType[]>>;
@@ -35,7 +36,7 @@ function createTaskId(): string {
 
 const LOAD_LIMIT = 12; // Maximum weeks in each direction before "Load More" button
 
-export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPageProps) {
+export function PlannerPage({ userId, isGuest = false, subjects, cells, setCells }: PlannerPageProps) {
   const initialWeek = useMemo(() => startOfWeekSunday(new Date()), []);
   const [weeks, setWeeks] = useState<Date[]>([initialWeek]);
   const [currentWeekLabel, setCurrentWeekLabel] = useState<string>(formatWeekLabel(initialWeek));
@@ -196,10 +197,12 @@ export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPagePr
     });
 
     try {
-      await upsertPlannerCell(userId, toDate, toSession, draggedTask);
-      await deletePlannerCell(userId, fromDate, fromSession);
-      if (targetTask) {
-        await upsertPlannerCell(userId, fromDate, fromSession, targetTask);
+      if (!isGuest) {
+        await upsertPlannerCell(userId, toDate, toSession, draggedTask);
+        await deletePlannerCell(userId, fromDate, fromSession);
+        if (targetTask) {
+          await upsertPlannerCell(userId, fromDate, fromSession, targetTask);
+        }
       }
     } catch (requestError) {
       setCells((prev) => {
@@ -273,7 +276,9 @@ export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPagePr
 
     try {
       setIsPersisting(true);
-      await upsertPlannerCell(userId, activeCell.date, activeCell.sessionId, task);
+      if (!isGuest) {
+        await upsertPlannerCell(userId, activeCell.date, activeCell.sessionId, task);
+      }
       upsertCell(activeCell.date, activeCell.sessionId, task);
       closeEditor();
     } catch (requestError) {
@@ -290,7 +295,9 @@ export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPagePr
     const updatedTask: PlannerTask = { ...existingTask, isDone: !existingTask.isDone };
     upsertCell(dateIso, sessionId, updatedTask);
     try {
-      await upsertPlannerCell(userId, dateIso, sessionId, updatedTask);
+      if (!isGuest) {
+        await upsertPlannerCell(userId, dateIso, sessionId, updatedTask);
+      }
     } catch (requestError) {
       upsertCell(dateIso, sessionId, existingTask);
       setDataError(requestError instanceof Error ? requestError.message : "Failed to update session.");
@@ -303,7 +310,9 @@ export function PlannerPage({ userId, subjects, cells, setCells }: PlannerPagePr
     }
     try {
       setIsPersisting(true);
-      await deletePlannerCell(userId, activeCell.date, activeCell.sessionId);
+      if (!isGuest) {
+        await deletePlannerCell(userId, activeCell.date, activeCell.sessionId);
+      }
       upsertCell(activeCell.date, activeCell.sessionId, null);
       closeEditor();
     } catch (requestError) {

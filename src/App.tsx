@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import type { Session } from "@supabase/supabase-js";
 import { Layout } from "./components/Layout";
 import { SkeletonLoader } from "./components/SkeletonLoader";
-import { DEFAULT_SUBJECTS } from "./constants";
 import { PastPapersPage } from "./pages/PastPapersPage";
 import { PlannerPage } from "./pages/PlannerPage";
 import { PlanPage } from "./pages/PlanPage";
@@ -12,155 +10,31 @@ import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { ExamTimetablePage } from "./pages/ExamTimetablePage";
-import type { CutoffData, PlannerCell } from "./types";
-import { loadCutoffData } from "./utils/dseLevelEstimator";
-import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase";
-import { listSubjects, seedDefaultSubjects } from "./lib/api/subjectsApi";
-import { listPlannerCells } from "./lib/api/plannerApi";
-import type { Subject } from "./types";
+import { DataProvider, useData } from "./contexts/DataContext";
 
 function RedirectToLogin() {
   const location = useLocation();
   return <Navigate to="/login" replace state={{ from: location.pathname }} />;
 }
 
-function App() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [authLoading, setAuthLoading] = useState<boolean>(true);
-  const [subjectsLoading, setSubjectsLoading] = useState<boolean>(false);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [appError, setAppError] = useState<string | null>(null);
-  const [dataWarnings, setDataWarnings] = useState<string[]>([]);
-  const [cutoffData, setCutoffData] = useState<CutoffData>({});
-  const [usingGenericFallback, setUsingGenericFallback] = useState<boolean>(false);
-  const [cells, setCells] = useState<PlannerCell[]>([]);
-
-  const addDataWarning = useCallback((message: string): void => {
-    setDataWarnings((prev) => (prev.includes(message) ? prev : [...prev, message]));
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    loadCutoffData().then((result) => {
-      if (!isMounted) {
-        return;
-      }
-      setCutoffData(result.cutoffData);
-      setUsingGenericFallback(result.usingGenericFallback);
-      if (result.usingGenericFallback) {
-        addDataWarning("Cutoff data unavailable - level estimates may be less accurate.");
-      }
-    }).catch((err) => {
-      console.error("Failed to load cutoff data:", err);
-      if (isMounted) {
-        setUsingGenericFallback(true);
-        addDataWarning("Cutoff data unavailable - level estimates may be less accurate.");
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [addDataWarning]);
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setAuthLoading(false);
-      setAppError(
-        "Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file."
-      );
-      return;
-    }
-
-    const supabase = getSupabaseClient();
-
-    supabase.auth
-      .getSession()
-      .then(({ data, error }) => {
-        if (error) {
-          setAppError(error.message);
-          return;
-        }
-        setSession(data.session ?? null);
-      })
-      .finally(() => {
-        setAuthLoading(false);
-      });
-
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setAppError(null);
-    });
-
-    return () => {
-      data.subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!session) {
-      setSubjects([]);
-      setSubjectsLoading(false);
-      return;
-    }
-
-    const userId = session.user.id;
-    let isMounted = true;
-
-    async function loadSubjects(): Promise<void> {
-      setSubjectsLoading(true);
-      try {
-        const currentSubjects = await listSubjects(userId);
-        if (currentSubjects.length === 0) {
-          await seedDefaultSubjects(userId, DEFAULT_SUBJECTS);
-          if (isMounted) {
-            setSubjects(DEFAULT_SUBJECTS);
-          }
-        } else if (isMounted) {
-          setSubjects(currentSubjects);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setAppError(error instanceof Error ? error.message : "Failed to load subjects.");
-        }
-      } finally {
-        if (isMounted) {
-          setSubjectsLoading(false);
-        }
-      }
-    }
-
-    loadSubjects();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [session]);
-
-  useEffect(() => {
-    if (!session) {
-      setCells([]);
-      return;
-    }
-
-    const userId = session.user.id;
-    let isMounted = true;
-
-    listPlannerCells(userId)
-      .then((rows) => {
-        if (isMounted) setCells(rows);
-      })
-      .catch((error) => {
-        if (isMounted) {
-          const message = error instanceof Error ? error.message : "Failed to load planner sessions.";
-          addDataWarning(`Planner sessions unavailable: ${message}`);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [session, addDataWarning]);
+function AppRoutes() {
+  const {
+    session,
+    userId,
+    isGuest,
+    authLoading,
+    subjectsLoading,
+    subjects,
+    setSubjects,
+    cells,
+    setCells,
+    dataWarnings,
+    dismissDataWarning,
+    cutoffData,
+    usingGenericFallback,
+    appError,
+  } = useData();
+  const canUseApp = Boolean(session) || isGuest;
 
   useEffect(() => {
     const handleSubjectDeleted = (e: CustomEvent<{ subjectId: string }>) => {
@@ -171,23 +45,10 @@ function App() {
     };
     window.addEventListener("subject-deleted", handleSubjectDeleted as EventListener);
     return () => window.removeEventListener("subject-deleted", handleSubjectDeleted as EventListener);
-  }, []);
+  }, [setCells]);
 
   if (authLoading || (session && subjectsLoading)) {
     return <SkeletonLoader />;
-  }
-
-  if (!isSupabaseConfigured) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6 text-center">
-        <div className="max-w-xl space-y-3">
-          <h1 className="text-2xl font-bold text-primary">Supabase setup required</h1>
-          <p className="text-sm text-muted-foreground">
-            Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to your `.env` file.
-          </p>
-        </div>
-      </div>
-    );
   }
 
   if (appError) {
@@ -201,13 +62,11 @@ function App() {
     );
   }
 
-  const userId = session?.user.id;
-
   return (
     <Routes>
       <Route
         path="/"
-        element={session ? <Navigate to="/planner" replace /> : <Navigate to="/login" replace />}
+        element={canUseApp ? <Navigate to="/planner" replace /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/login"
@@ -216,14 +75,13 @@ function App() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route
         element={
-          session ? (
+          canUseApp ? (
             <Layout
+              isGuest={isGuest}
               subjects={subjects}
               cells={cells}
               warnings={dataWarnings}
-              onDismissWarning={(warning) =>
-                setDataWarnings((prev) => prev.filter((item) => item !== warning))
-              }
+              onDismissWarning={dismissDataWarning}
             />
           ) : (
             <RedirectToLogin />
@@ -236,6 +94,7 @@ function App() {
             userId ? (
               <PlanPage
                 userId={userId}
+                isGuest={isGuest}
                 subjects={subjects}
                 cells={cells}
                 cutoffData={cutoffData}
@@ -249,7 +108,13 @@ function App() {
           path="/planner"
           element={
             userId ? (
-              <PlannerPage subjects={subjects} userId={userId} cells={cells} setCells={setCells} />
+              <PlannerPage
+                subjects={subjects}
+                userId={userId}
+                isGuest={isGuest}
+                cells={cells}
+                setCells={setCells}
+              />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -261,6 +126,7 @@ function App() {
             userId ? (
               <PastPapersPage
                 userId={userId}
+                isGuest={isGuest}
                 subjects={subjects}
                 cutoffData={cutoffData}
                 usingGenericFallback={usingGenericFallback}
@@ -276,6 +142,7 @@ function App() {
             userId ? (
               <AnalyticsPage
                 userId={userId}
+                isGuest={isGuest}
                 subjects={subjects}
                 cutoffData={cutoffData}
                 usingGenericFallback={usingGenericFallback}
@@ -291,6 +158,7 @@ function App() {
             userId ? (
               <SubjectsPage
                 userId={userId}
+                isGuest={isGuest}
                 subjects={subjects}
                 setSubjects={setSubjects}
               />
@@ -312,9 +180,17 @@ function App() {
       </Route>
       <Route
         path="*"
-        element={session ? <Navigate to="/planner" replace /> : <Navigate to="/login" replace />}
+        element={canUseApp ? <Navigate to="/planner" replace /> : <Navigate to="/login" replace />}
       />
     </Routes>
+  );
+}
+
+function App() {
+  return (
+    <DataProvider>
+      <AppRoutes />
+    </DataProvider>
   );
 }
 

@@ -10,6 +10,7 @@ import { startOfWeekSunday, formatWeekLabel, isDateInWeek } from "../utils/dateH
 import { formatTimetablePaperLine, MS_PER_DAY, getCurrentExamYear, getTimetableForYear } from "../constants";
 import { useConfirm } from "../contexts/ConfirmContext";
 import { useToast } from "../contexts/ToastContext";
+import { useData } from "../contexts/DataContext";
 
 function navLinkClassName(isActive: boolean): string {
   return [
@@ -21,6 +22,7 @@ function navLinkClassName(isActive: boolean): string {
 }
 
 interface LayoutProps {
+  isGuest?: boolean;
   subjects?: Subject[];
   cells?: PlannerCell[];
   warnings?: string[];
@@ -28,6 +30,7 @@ interface LayoutProps {
 }
 
 export function Layout({
+  isGuest = false,
   subjects = [],
   cells = [],
   warnings = [],
@@ -36,6 +39,7 @@ export function Layout({
   const navigate = useNavigate();
   const confirm = useConfirm();
   const { addToast } = useToast();
+  const { stopGuestMode } = useData();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
   const [isNameModalOpen, setIsNameModalOpen] = useState(false);
@@ -59,6 +63,12 @@ export function Layout({
   }, [isDarkMode]);
 
   useEffect(() => {
+    if (isGuest) {
+      setUserName("Guest User");
+      setProfileWarning("Local Only");
+      return;
+    }
+
     async function getUserData() {
       try {
         const supabase = getSupabaseClient();
@@ -72,7 +82,7 @@ export function Layout({
       }
     }
     getUserData();
-  }, []);
+  }, [isGuest]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -89,6 +99,12 @@ export function Layout({
   }, [isUserPopoverOpen]);
 
   const handleSignOut = async () => {
+    if (isGuest) {
+      stopGuestMode();
+      navigate("/login");
+      return;
+    }
+
     const confirmed = await confirm({
       title: "Sign out?",
       body: "You will be redirected to the login page.",
@@ -109,6 +125,14 @@ export function Layout({
   };
 
   const handleUpdateName = async () => {
+    if (isGuest) {
+      addToast({
+        variant: "info",
+        message: "Create an account to save profile details.",
+      });
+      return;
+    }
+
     if (!newName.trim()) return;
     setIsSavingName(true);
     try {
@@ -285,7 +309,7 @@ export function Layout({
                 <div className="flex flex-col min-w-0">
                   <span className="text-sm font-bold text-primary tracking-tight truncate">{userName}</span>
                   <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">
-                    {profileWarning ?? "Candidate"}
+                    {profileWarning ?? (isGuest ? "Local Only" : "Candidate")}
                   </span>
                 </div>
               </div>
@@ -320,7 +344,9 @@ export function Layout({
                       className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground hover:text-dot-red hover:bg-dot-red/5 transition-all group"
                     >
                       <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">logout</span>
-                      <span className="text-[11px] font-black uppercase tracking-widest">Sign Out</span>
+                      <span className="text-[11px] font-black uppercase tracking-widest">
+                        {isGuest ? "Exit Guest Mode" : "Sign Out"}
+                      </span>
                     </button>
                   </div>
                 )}
@@ -456,7 +482,7 @@ export function Layout({
                 <div className="flex flex-col">
                   <span className="text-lg font-bold text-primary tracking-tight">{userName}</span>
                   <span className="text-xs text-muted-foreground font-bold uppercase tracking-widest opacity-60">
-                    {profileWarning ?? "Candidate"}
+                    {profileWarning ?? (isGuest ? "Local Only" : "Candidate")}
                   </span>
                 </div>
               </div>
@@ -475,6 +501,19 @@ export function Layout({
       <main className="flex-1 flex flex-col overflow-hidden w-full">
         <div className="flex-1 overflow-y-auto custom-scrollbar px-6 lg:px-12 pt-16 lg:pt-0 pb-24 lg:pb-12">
           <div className="max-w-6xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {isGuest ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-amber-900">
+                You are using guest mode and data is stored only on this device.{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/login?intent=signup")}
+                  className="font-bold underline underline-offset-2"
+                >
+                  Create a free account
+                </button>{" "}
+                to sync and back up your data.
+              </div>
+            ) : null}
             {warnings.map((warning) => (
               <ErrorBanner
                 key={warning}

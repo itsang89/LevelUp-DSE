@@ -15,9 +15,11 @@ import {
   updateSubject,
   type SubjectDeletionImpact,
 } from "../lib/api/subjectsApi";
+import { useData } from "../contexts/DataContext";
 
 interface SubjectsPageProps {
   userId: string;
+  isGuest?: boolean;
   subjects: Subject[];
   setSubjects: (value: Subject[] | ((prev: Subject[]) => Subject[])) => void;
 }
@@ -46,7 +48,8 @@ const PRESET_COLORS = [
   "#0ea5e9", // Cyan
 ];
 
-export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProps) {
+export function SubjectsPage({ userId, isGuest = false, subjects, setSubjects }: SubjectsPageProps) {
+  const { cells, getGuestPastPapersData, getGuestStudyGoalsData } = useData();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedPresetCode, setSelectedPresetCode] = useState<string>("");
   const [newSubject, setNewSubject] = useState<SubjectDraft>({
@@ -127,7 +130,9 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
 
     try {
       setIsSaving(true);
-      await createSubject(userId, newItem);
+      if (!isGuest) {
+        await createSubject(userId, newItem);
+      }
       setSubjects((prev) => [...prev, newItem]);
       setNewSubject({ name: "", shortCode: "", baseColor: DEFAULT_SUBJECT_COLOR, paperLabels: ["Paper 1", "Paper 2"] });
       setSelectedPresetCode("");
@@ -174,7 +179,9 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
 
     try {
       setIsSaving(true);
-      await updateSubject(userId, editingSubjectId, nextSubject);
+      if (!isGuest) {
+        await updateSubject(userId, editingSubjectId, nextSubject);
+      }
       setSubjects((prev) =>
         prev.map((subject) => (subject.id === editingSubjectId ? nextSubject : subject))
       );
@@ -192,7 +199,13 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
     setLoadingImpactForId(subject.id);
     setError(null);
     try {
-      const impact = await getSubjectDeletionImpact(userId, subject.id);
+      const impact = isGuest
+        ? {
+            plannerCellsCount: cells.filter((cell) => cell.task?.subjectId === subject.id).length,
+            pastPaperAttemptsCount: getGuestPastPapersData().filter((attempt) => attempt.subjectId === subject.id).length,
+            studyGoalsCount: getGuestStudyGoalsData().filter((goal) => goal.subjectId === subject.id).length,
+          }
+        : await getSubjectDeletionImpact(userId, subject.id);
       setDeleteTarget({ subject, impact });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Failed to load deletion impact.");
@@ -206,7 +219,9 @@ export function SubjectsPage({ userId, subjects, setSubjects }: SubjectsPageProp
     const { subject } = deleteTarget;
     try {
       setIsSaving(true);
-      await deleteSubjectWithCascade(userId, subject.id);
+      if (!isGuest) {
+        await deleteSubjectWithCascade(userId, subject.id);
+      }
       setSubjects((prev) => prev.filter((s) => s.id !== subject.id));
       setDeleteTarget(null);
       window.dispatchEvent(new CustomEvent("subject-deleted", { detail: { subjectId: subject.id } }));

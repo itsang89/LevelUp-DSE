@@ -24,9 +24,11 @@ import {
 } from "../utils/exportUtils";
 import { useConfirm } from "../contexts/ConfirmContext";
 import { useToast } from "../contexts/ToastContext";
+import { useData } from "../contexts/DataContext";
 
 interface PastPapersPageProps {
   userId: string;
+  isGuest?: boolean;
   subjects: Subject[];
   cutoffData: CutoffData;
   usingGenericFallback: boolean;
@@ -42,12 +44,14 @@ function createAttemptId(): string {
 
 export function PastPapersPage({
   userId,
+  isGuest = false,
   subjects,
   cutoffData,
   usingGenericFallback,
 }: PastPapersPageProps) {
   const confirm = useConfirm();
   const { addToast } = useToast();
+  const { getGuestPastPapersData, persistGuestPastPapers } = useData();
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [editingAttempt, setEditingAttempt] = useState<PastPaperAttempt | null>(null);
   const [addFormPrefill, setAddFormPrefill] = useState<Partial<PastPaperAttempt> | null>(null);
@@ -64,6 +68,12 @@ export function PastPapersPage({
   const [isPersisting, setIsPersisting] = useState(false);
 
   useEffect(() => {
+    if (isGuest) {
+      setAttempts(getGuestPastPapersData());
+      setDataError(null);
+      return;
+    }
+
     let isMounted = true;
     listPastPaperAttempts(userId)
       .then((rows) => {
@@ -80,10 +90,14 @@ export function PastPapersPage({
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [getGuestPastPapersData, isGuest, userId]);
 
   useEffect(() => {
     const handleSubjectDeleted = () => {
+      if (isGuest) {
+        setAttempts(getGuestPastPapersData());
+        return;
+      }
       listPastPaperAttempts(userId)
         .then((rows) => setAttempts(rows))
         .catch((requestError) => {
@@ -94,7 +108,7 @@ export function PastPapersPage({
     };
     window.addEventListener("subject-deleted", handleSubjectDeleted);
     return () => window.removeEventListener("subject-deleted", handleSubjectDeleted);
-  }, [userId]);
+  }, [getGuestPastPapersData, isGuest, userId]);
 
   const subjectsById = useMemo(
     () => Object.fromEntries(subjects.map((subject) => [subject.id, subject])),
@@ -190,10 +204,16 @@ export function PastPapersPage({
           isDse: values.isDse,
           notes: values.notes.trim() || undefined,
         };
-        await updatePastPaperAttempt(userId, updatedAttempt);
-        setAttempts((prev) =>
-          prev.map((attempt) => (attempt.id === editingAttempt.id ? updatedAttempt : attempt))
+        if (!isGuest) {
+          await updatePastPaperAttempt(userId, updatedAttempt);
+        }
+        const nextAttempts = attempts.map((attempt) =>
+          attempt.id === editingAttempt.id ? updatedAttempt : attempt
         );
+        setAttempts(nextAttempts);
+        if (isGuest) {
+          persistGuestPastPapers(nextAttempts);
+        }
       } else {
         const newAttempt: PastPaperAttempt = {
           id: createAttemptId(),
@@ -208,8 +228,14 @@ export function PastPapersPage({
           isDse: values.isDse,
           notes: values.notes.trim() || undefined,
         };
-        await createPastPaperAttempt(userId, newAttempt);
-        setAttempts((prev) => [...prev, newAttempt]);
+        if (!isGuest) {
+          await createPastPaperAttempt(userId, newAttempt);
+        }
+        const nextAttempts = [...attempts, newAttempt];
+        setAttempts(nextAttempts);
+        if (isGuest) {
+          persistGuestPastPapers(nextAttempts);
+        }
       }
       setDataError(null);
       setEditingAttempt(null);
@@ -236,8 +262,14 @@ export function PastPapersPage({
     }
     try {
       setIsPersisting(true);
-      await deletePastPaperAttempt(userId, attemptId);
-      setAttempts((prev) => prev.filter((attempt) => attempt.id !== attemptId));
+      if (!isGuest) {
+        await deletePastPaperAttempt(userId, attemptId);
+      }
+      const nextAttempts = attempts.filter((attempt) => attempt.id !== attemptId);
+      setAttempts(nextAttempts);
+      if (isGuest) {
+        persistGuestPastPapers(nextAttempts);
+      }
       setDataError(null);
       addToast({ variant: "success", message: "Attempt deleted." });
     } catch (requestError) {
