@@ -22,6 +22,8 @@ import {
   downloadBlob,
   getExportFilename,
 } from "../utils/exportUtils";
+import { useConfirm } from "../contexts/ConfirmContext";
+import { useToast } from "../contexts/ToastContext";
 
 interface PastPapersPageProps {
   userId: string;
@@ -44,6 +46,8 @@ export function PastPapersPage({
   cutoffData,
   usingGenericFallback,
 }: PastPapersPageProps) {
+  const confirm = useConfirm();
+  const { addToast } = useToast();
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [editingAttempt, setEditingAttempt] = useState<PastPaperAttempt | null>(null);
   const [addFormPrefill, setAddFormPrefill] = useState<Partial<PastPaperAttempt> | null>(null);
@@ -221,7 +225,12 @@ export function PastPapersPage({
   }
 
   async function handleDelete(attemptId: string): Promise<void> {
-    const confirmed = window.confirm("Are you sure you want to delete this attempt?");
+    const confirmed = await confirm({
+      title: "Delete attempt?",
+      body: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
     if (!confirmed) {
       return;
     }
@@ -230,6 +239,7 @@ export function PastPapersPage({
       await deletePastPaperAttempt(userId, attemptId);
       setAttempts((prev) => prev.filter((attempt) => attempt.id !== attemptId));
       setDataError(null);
+      addToast({ variant: "success", message: "Attempt deleted." });
     } catch (requestError) {
       setDataError(
         requestError instanceof Error ? requestError.message : "Failed to delete past paper attempt."

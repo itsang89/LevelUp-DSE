@@ -8,6 +8,8 @@ import { ErrorBanner } from "./ErrorBanner";
 import type { PlannerCell, Subject } from "../types";
 import { startOfWeekSunday, formatWeekLabel, isDateInWeek } from "../utils/dateHelpers";
 import { formatTimetablePaperLine, MS_PER_DAY, getCurrentExamYear, getTimetableForYear } from "../constants";
+import { useConfirm } from "../contexts/ConfirmContext";
+import { useToast } from "../contexts/ToastContext";
 
 function navLinkClassName(isActive: boolean): string {
   return [
@@ -32,6 +34,8 @@ export function Layout({
   onDismissWarning,
 }: LayoutProps) {
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const { addToast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
   const [isNameModalOpen, setIsNameModalOpen] = useState(false);
@@ -85,7 +89,12 @@ export function Layout({
   }, [isUserPopoverOpen]);
 
   const handleSignOut = async () => {
-    const confirmed = window.confirm("Are you sure you want to sign out?");
+    const confirmed = await confirm({
+      title: "Sign out?",
+      body: "You will be redirected to the login page.",
+      confirmLabel: "Sign Out",
+      destructive: true,
+    });
     if (confirmed) {
       setIsUserPopoverOpen(false);
       try {
@@ -112,7 +121,10 @@ export function Layout({
       setIsNameModalOpen(false);
     } catch (error) {
       console.error("Failed to update name.", error);
-      alert("Failed to update name. Please try again.");
+      addToast({
+        variant: "error",
+        message: "Failed to update name. Please try again.",
+      });
     } finally {
       setIsSavingName(false);
     }
