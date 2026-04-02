@@ -21,6 +21,15 @@ function navLinkClassName(isActive: boolean): string {
   ].join(" ");
 }
 
+function bottomTabClassName(isActive: boolean): string {
+  return [
+    "flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 transition-all duration-200 rounded-xl",
+    isActive
+      ? "text-primary"
+      : "text-muted-foreground/60",
+  ].join(" ");
+}
+
 interface LayoutProps {
   isGuest?: boolean;
   subjects?: Subject[];
@@ -356,22 +365,6 @@ export function Layout({
         </div>
       </aside>
 
-      {/* Mobile Nav Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b border-border-hairline bg-sidebar/80 backdrop-blur-md z-40 flex items-center justify-between px-6">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
-            <span className="material-symbols-outlined text-primary-foreground text-base">circle_notifications</span>
-          </div>
-          <h2 className="text-sm font-bold tracking-tight uppercase">LevelUp</h2>
-        </div>
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 text-muted-foreground hover:text-primary transition-colors"
-        >
-          <span className="material-symbols-outlined text-2xl">{isMobileMenuOpen ? "close" : "menu"}</span>
-        </button>
-      </div>
-
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 bg-background/95 backdrop-blur-lg z-50 pt-24 px-10 animate-in fade-in duration-300">
@@ -499,7 +492,23 @@ export function Layout({
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden w-full">
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 lg:px-12 pt-16 lg:pt-0 pb-24 lg:pb-12">
+        {/* Mobile Nav Header — static in flex column so scroll area starts below it */}
+        <div className="lg:hidden h-14 shrink-0 border-b border-border-hairline bg-sidebar/80 backdrop-blur-md z-40 flex items-center justify-between px-6">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary-foreground text-base">circle_notifications</span>
+            </div>
+            <h2 className="text-sm font-bold tracking-tight uppercase">LevelUp</h2>
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 text-muted-foreground hover:text-primary transition-colors"
+          >
+            <span className="material-symbols-outlined text-2xl">{isMobileMenuOpen ? "close" : "menu"}</span>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 lg:px-12 pb-28 lg:pb-12">
           <div className="max-w-6xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {isGuest ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-amber-900">
@@ -525,6 +534,38 @@ export function Layout({
           </div>
         </div>
       </main>
+
+      {/* Mobile Bottom Tab Bar */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-sidebar/95 backdrop-blur-md border-t border-border-hairline z-40 flex items-center px-2 safe-bottom">
+        <NavLink
+          to="/planner"
+          className={({ isActive }) => bottomTabClassName(isActive)}
+          onClick={() => {
+            if (window.location.pathname === "/planner") {
+              window.dispatchEvent(new CustomEvent("scroll-to-today"));
+            }
+          }}
+        >
+          <span className="material-symbols-outlined text-xl">grid_view</span>
+          <span className="text-[9px] font-bold tracking-wide">Home</span>
+        </NavLink>
+        <NavLink to="/plan" className={({ isActive }) => bottomTabClassName(isActive)}>
+          <span className="material-symbols-outlined text-xl">flag</span>
+          <span className="text-[9px] font-bold tracking-wide">Plan</span>
+        </NavLink>
+        <NavLink to="/past-papers" className={({ isActive }) => bottomTabClassName(isActive)}>
+          <span className="material-symbols-outlined text-xl">analytics</span>
+          <span className="text-[9px] font-bold tracking-wide">Papers</span>
+        </NavLink>
+        <NavLink to="/analytics" className={({ isActive }) => bottomTabClassName(isActive)}>
+          <span className="material-symbols-outlined text-xl">insights</span>
+          <span className="text-[9px] font-bold tracking-wide">Insights</span>
+        </NavLink>
+        <NavLink to="/subjects" className={({ isActive }) => bottomTabClassName(isActive)}>
+          <span className="material-symbols-outlined text-xl">library_books</span>
+          <span className="text-[9px] font-bold tracking-wide">Subjects</span>
+        </NavLink>
+      </nav>
 
       <Modal
         isOpen={isNameModalOpen}

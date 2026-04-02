@@ -548,7 +548,79 @@ export function PlanPage({ userId, isGuest = false, subjects, cells, cutoffData 
       {/* 4. Readiness Status */}
       <section className="space-y-4">
         <h2 className="text-lg font-bold tracking-tight">Preparedness</h2>
-        <Card className="overflow-hidden">
+
+        {/* Mobile: stacked cards */}
+        <div className="md:hidden space-y-3">
+          {readinessData.map((row) => (
+            <Card
+              key={row.subject.id}
+              className={`p-4 space-y-3 ${
+                row.status === 'green' ? 'bg-success/5' :
+                row.status === 'red' ? 'bg-dot-red/5' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: row.subject.baseColor }} />
+                  <span className="font-bold text-sm">{row.subject.name}</span>
+                </div>
+                {row.daysUntilExam !== null ? (
+                  <span className={`text-xs font-mono font-bold ${row.daysUntilExam < 7 ? "text-dot-red" : "text-muted-foreground"}`}>
+                    D-{row.daysUntilExam}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground/30">Done</span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Avg</span>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest ${
+                      row.status === "green"
+                        ? "border border-success/20 bg-success/10 text-success"
+                        : row.status === "red"
+                          ? "border border-dot-yellow/20 bg-dot-yellow/10 text-amber-700"
+                          : "border border-border-hairline bg-surface/50 text-foreground"
+                    }`}
+                  >
+                    {row.currentLevel}
+                  </span>
+                  {row.avgPercentage !== null && (
+                    <span className="text-[10px] text-muted-foreground font-mono opacity-60">
+                      {row.avgPercentage.toFixed(1)}%
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Target</span>
+                  <select
+                    value={row.targetLevel}
+                    onChange={(e) => handleSetTargetLevel(row.subject.id, e.target.value)}
+                    className="bg-transparent text-sm font-bold focus:outline-none cursor-pointer border-b border-dashed border-muted-foreground/30"
+                  >
+                    {["1", "2", "3", "4", "5", "5*", "5**"].map(l => (
+                      <option key={l} value={l} className="bg-surface">{l}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {Object.entries(row.labelCounts).length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(row.labelCounts).map(([label, count]) => (
+                    <div key={label} className="text-[9px] px-1.5 py-0.5 rounded-md bg-muted font-bold text-muted-foreground flex items-center gap-1 border border-border-hairline/50">
+                      <span className="opacity-60">{label.replace('Paper ', 'P')}</span>
+                      <span className="text-primary">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <Card className="overflow-hidden hidden md:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-muted/30 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -561,10 +633,10 @@ export function PlanPage({ userId, isGuest = false, subjects, cells, cutoffData 
             </thead>
             <tbody className="divide-y divide-border-hairline">
               {readinessData.map((row) => (
-                <tr 
-                  key={row.subject.id} 
+                <tr
+                  key={row.subject.id}
                   className={`transition-colors ${
-                    row.status === 'green' ? 'bg-success/5' : 
+                    row.status === 'green' ? 'bg-success/5' :
                     row.status === 'red' ? 'bg-dot-red/5' : ''
                   }`}
                 >
@@ -593,7 +665,7 @@ export function PlanPage({ userId, isGuest = false, subjects, cells, cutoffData 
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <select 
+                    <select
                       value={row.targetLevel}
                       onChange={(e) => handleSetTargetLevel(row.subject.id, e.target.value)}
                       className="bg-transparent text-sm font-bold focus:outline-none cursor-pointer border-b border-dashed border-muted-foreground/30"

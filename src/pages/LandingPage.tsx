@@ -303,11 +303,11 @@ function HeroPlannerShowcase() {
 
   return (
     <div
-      className="relative w-full max-w-[840px] mx-auto lg:mx-0 lg:[transform:perspective(1500px)_rotateY(-14deg)_rotateX(6deg)] lg:[transform-origin:right_center]"
+      className="relative w-full max-w-[840px] min-w-0 mx-auto lg:mx-0 lg:[transform:perspective(1500px)_rotateY(-14deg)_rotateX(6deg)] lg:[transform-origin:right_center]"
       aria-hidden="true"
     >
-      <div className="absolute -inset-6 bg-dot-blue/10 blur-3xl rounded-[2rem]" />
-      <div className="relative h-[410px] sm:h-[500px] lg:h-[560px] rounded-[1.8rem] border border-border-hairline bg-surface/90 backdrop-blur-md shadow-[0_35px_80px_-35px_rgba(0,0,0,0.65)] overflow-hidden p-3">
+      <div className="absolute -inset-6 bg-dot-blue/10 blur-3xl rounded-[2rem] pointer-events-none" />
+      <div className="relative h-[410px] sm:h-[500px] lg:h-[560px] rounded-[1.8rem] border border-border-hairline bg-surface/90 backdrop-blur-md shadow-[0_35px_80px_-35px_rgba(0,0,0,0.65)] overflow-hidden p-2.5 sm:p-3 max-w-full">
         <div className="origin-top-left scale-[0.5] sm:scale-[0.58] lg:scale-[0.66] w-[1080px]">
           <div className="w-full overflow-x-auto custom-scrollbar pb-6 planner-grid-container">
             <div className="w-fit bg-background rounded-3xl overflow-hidden">
@@ -439,14 +439,16 @@ export function LandingPage() {
       <div className="absolute bottom-[22%] left-[9%] w-10 h-10 bg-dot-red/10 rounded-full blur-lg animate-bounce duration-[4s] delay-500" />
 
       <header className="sticky top-0 z-20 backdrop-blur-md bg-background/70 border-b border-border-hairline">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between min-w-0 gap-3">
           <button
             type="button"
-            className="inline-flex items-center gap-2"
+            className="inline-flex items-center gap-2 min-w-0"
             onClick={() => navigate("/")}
           >
             <span className="material-symbols-outlined text-xl">school</span>
-            <span className="font-display text-sm font-black tracking-[0.15em] uppercase">LevelUp DSE</span>
+            <span className="font-display text-xs sm:text-sm font-black tracking-[0.15em] uppercase truncate">
+              LevelUp DSE
+            </span>
           </button>
 
           <Button
@@ -462,14 +464,14 @@ export function LandingPage() {
       </header>
 
       <main className="relative z-10">
-        <section className="max-w-6xl mx-auto px-6 pt-14 pb-16 md:pt-24 md:pb-24">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(520px,740px)] lg:items-center">
-            <div className="max-w-3xl space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 pb-16 md:pt-24 md:pb-24">
+          <div className="grid gap-10 min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(520px,740px)] lg:items-center">
+            <div className="max-w-3xl min-w-0 space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-1000">
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground opacity-70">
                 HKDSE Prep Workspace
               </p>
               <h1 className="font-display text-4xl sm:text-5xl md:text-7xl leading-[0.95] text-primary">
-                <span className="whitespace-nowrap">Your DSE.</span>
+                <span className="sm:whitespace-nowrap">Your DSE.</span>
                 <br />
                 <span className="font-black">Engineered.</span>
               </h1>
@@ -497,11 +499,13 @@ export function LandingPage() {
                 </Button>
               </div>
             </div>
-            <HeroPlannerShowcase />
+            <div className="min-w-0 w-full flex justify-center lg:justify-end lg:block">
+              <HeroPlannerShowcase />
+            </div>
           </div>
         </section>
 
-        <section className="max-w-6xl mx-auto px-6 pb-20">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
           <div className="mb-8">
             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground opacity-70 mb-3">
               What You Can Do
@@ -517,10 +521,10 @@ export function LandingPage() {
                 key={feature.title}
                 variant="zen"
                 padding="md"
-                className={`backdrop-blur-sm bg-surface/85 border border-border-hairline animate-in fade-in slide-in-from-bottom-4 duration-700 md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 md:items-center`}
+                className={`backdrop-blur-sm bg-surface/85 border border-border-hairline animate-in fade-in slide-in-from-bottom-4 duration-700 min-w-0 md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 md:items-center`}
                 style={{ animationDelay: `${index * 120}ms` }}
               >
-                <div className="space-y-3 mb-4 md:mb-0">
+                <div className="space-y-3 mb-4 min-w-0 md:mb-0">
                   <div className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-background/70">
                     <span className={`material-symbols-outlined text-2xl ${feature.accentClass}`}>
                       {feature.icon}
@@ -529,7 +533,7 @@ export function LandingPage() {
                   <h3 className="text-lg font-semibold tracking-tight text-primary">{feature.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
                 </div>
-                <div className="rounded-2xl border border-border-hairline bg-background/45 p-3.5 md:p-4">
+                <div className="rounded-2xl border border-border-hairline bg-background/45 p-3.5 md:p-4 min-w-0 max-md:overflow-x-auto">
                   <FeaturePreview id={feature.id} />
                 </div>
               </Card>
@@ -537,7 +541,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="max-w-6xl mx-auto px-6 pb-24">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">
           <Card
             variant="zen"
             padding="lg"
@@ -572,7 +576,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-border-hairline py-6 px-6 text-center">
+      <footer className="border-t border-border-hairline py-6 px-4 sm:px-6 text-center">
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-40">
           DSE Study Companion &copy; {new Date().getFullYear()}
         </p>

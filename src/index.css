@@ -145,6 +145,10 @@
     background: #333333;
   }
 
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   /* Rest session: dark background in light mode only */
   :root:not(.dark) .rest-session-cell {
     background-color: #27272a !important;

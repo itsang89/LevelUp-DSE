@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { MS_PER_WEEK, PLANNER_SESSIONS } from "../constants";
 import type { PlannerCell as PlannerCellType, PlannerTask, Subject } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
@@ -165,6 +165,9 @@ export function PlannerPage({ userId, isGuest = false, subjects, cells, setCells
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 6 },
     })
   );
 
@@ -411,12 +414,12 @@ export function PlannerPage({ userId, isGuest = false, subjects, cells, setCells
 
   return (
     <section className="space-y-12">
-      <div className="flex flex-col sm:flex-row justify-between items-end gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 sm:gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-3 sm:py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
         <div>
           <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-1 opacity-50 block">Weekly Focus</span>
-          <h1 className="text-3xl font-light text-primary tracking-tight">Daily Mastery Tracker</h1>
+          <h1 className="text-2xl sm:text-3xl font-light text-primary tracking-tight leading-none">Daily Mastery Tracker</h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="hidden sm:flex items-center gap-4 w-full sm:w-auto">
           <ExportDropdown
             onExportCsv={() => {
               const csv = exportPlannerCsv(cells, subjectsById);
@@ -427,15 +430,15 @@ export function PlannerPage({ userId, isGuest = false, subjects, cells, setCells
               downloadBlob(new Blob([json], { type: "application/json" }), getExportFilename("planner", "json"));
             }}
           />
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={scrollToToday}
-            className="rounded-full px-4 text-[10px] font-black uppercase tracking-widest text-primary bg-surface border-border-hairline shadow-sm hover:bg-muted/50 transition-all"
+            className="rounded-full px-3 sm:px-4 text-[10px] font-black uppercase tracking-widest text-primary bg-surface border-border-hairline shadow-sm hover:bg-muted/50 transition-all"
           >
             Today
           </Button>
-          <div className="flex items-center bg-surface/50 backdrop-blur-sm border border-border-hairline rounded-full p-1 shadow-sm">
+          <div className="flex items-center bg-surface/50 backdrop-blur-sm border border-border-hairline rounded-full p-1 shadow-sm justify-start">
             <button 
               onClick={() => scrollToOneWeek('up')}
               disabled={reachedPastLimit && getActiveWeekIndex() === 0}
@@ -444,12 +447,15 @@ export function PlannerPage({ userId, isGuest = false, subjects, cells, setCells
             >
               <span className="material-symbols-outlined text-lg">keyboard_arrow_up</span>
             </button>
-            <button 
-              onClick={scrollToToday}
-              className="px-4 text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-70 transition-opacity"
-            >
-              {currentWeekLabel}
-            </button>
+            <div className="min-w-0 max-w-[11rem]">
+              <button 
+                type="button"
+                onClick={scrollToToday}
+                className="w-full px-2 sm:px-4 text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-70 transition-opacity truncate text-center"
+              >
+                {currentWeekLabel}
+              </button>
+            </div>
             <button 
               onClick={() => scrollToOneWeek('down')}
               disabled={reachedFutureLimit && getActiveWeekIndex() === weeks.length - 1}

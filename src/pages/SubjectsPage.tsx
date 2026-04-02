@@ -276,7 +276,7 @@ export function SubjectsPage({ userId, isGuest = false, subjects, setSubjects }:
                       }
                     />
                     <div className="space-y-1">
-                      <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground ml-1">Paper Labels</label>
+                      <label className="text-[10px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground ml-1">Paper Labels</label>
                       <TagInput
                         tags={editingDraft.paperLabels}
                         onChange={(tags) =>

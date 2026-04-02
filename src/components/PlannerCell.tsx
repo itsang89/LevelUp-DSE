@@ -23,13 +23,13 @@ function DoneCheckmark({
       type="button"
       onClick={onToggle}
       title={isDone ? "Mark as not done" : "Mark as done"}
-      className={`absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center transition-all shrink-0 z-10 ${
+      className={`absolute top-1.5 right-1.5 md:top-2 md:right-2 w-8 h-8 md:w-5 md:h-5 rounded-full flex items-center justify-center transition-all shrink-0 z-10 ${
         isDone
           ? "bg-success text-success-foreground border-2 border-success shadow-sm"
           : "border-2 border-muted-foreground/40 hover:border-muted-foreground/70 hover:bg-muted/30"
       }`}
     >
-      {isDone && <span className="material-symbols-outlined text-xs">check</span>}
+      {isDone && <span className="material-symbols-outlined text-xs md:text-xs text-sm">check</span>}
     </button>
   );
 }
@@ -68,7 +68,7 @@ export function PlannerCell({ cellKey, task, subject, onClick, onToggleDone }: P
         <button
           type="button"
           onClick={onClick}
-          className="text-sm font-bold text-muted-foreground/40 uppercase tracking-widest opacity-0 group-hover/cell:opacity-100 hover:opacity-100 transition-opacity cursor-pointer h-full w-full"
+          className="text-sm font-bold text-muted-foreground/40 uppercase tracking-widest opacity-40 md:opacity-0 md:group-hover/cell:opacity-100 md:hover:opacity-100 transition-opacity cursor-pointer h-full w-full"
         >
           Add
         </button>

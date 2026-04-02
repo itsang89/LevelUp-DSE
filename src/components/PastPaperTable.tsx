@@ -15,16 +15,17 @@ const EM_DASH = "—";
 const EMPTY_CUTOFF: CutoffData = {};
 
 // ─── Shared layout tokens ────────────────────────────────────────────────────
-// Every row (summary, column-header, attempt) uses the SAME horizontal padding
-// and the SAME metric column order: Score | % | Level | actions.
-const OUTER_PX = "px-6 md:px-9 pl-7 md:pl-10";
-const ROW = "flex items-center gap-4 md:gap-8";
+// Desktop (md+): horizontal row with fixed-width metric columns.
+// Mobile (<md): stacked vertically — identity on top, metrics below.
+const OUTER_PX = "px-4 md:px-9 pl-5 md:pl-10";
+const ROW_DESKTOP = "md:flex md:items-center md:gap-8";
 const ID_COL = "flex-1 min-w-0";
-const MET_GROUP = "flex items-center gap-4 md:gap-8 shrink-0";
-const COL_PCT = "w-[5.25rem] md:w-[6rem] flex flex-col items-end text-right";
-const COL_SCORE = "w-[5.5rem] md:w-[6.5rem] flex flex-col items-end text-right";
-const COL_LEVEL = "w-[4.25rem] md:w-[5rem] flex flex-col items-end";
-const COL_ACTION = "w-[4rem] md:w-[4.5rem] flex justify-end";
+const MET_GROUP = "flex items-center gap-3 md:gap-8 shrink-0";
+const MET_GROUP_MOBILE = "mt-3 md:mt-0 pt-3 md:pt-0 border-t md:border-t-0 border-border-hairline/40";
+const COL_PCT = "w-auto md:w-[6rem] flex flex-col items-start md:items-end text-left md:text-right";
+const COL_SCORE = "w-auto md:w-[6.5rem] flex flex-col items-start md:items-end text-left md:text-right";
+const COL_LEVEL = "w-auto md:w-[5rem] flex flex-col items-start md:items-end";
+const COL_ACTION = "w-auto md:w-[4.5rem] flex justify-end ml-auto md:ml-0";
 
 const LABEL = "text-[9px] font-black uppercase tracking-[0.12em] text-muted-foreground/50 leading-none mb-1.5";
 
@@ -246,7 +247,7 @@ function GroupedPastPaperCard({
       />
 
       {/* ── Summary row ── */}
-      <div className={`${OUTER_PX} py-7 md:py-8 ${ROW}`}>
+      <div className={`${OUTER_PX} py-5 md:py-8 ${ROW_DESKTOP}`}>
         {/* Identity */}
         <div className={`${ID_COL} flex items-center gap-4 md:gap-5`}>
           <div className="shrink-0 text-center w-16">
@@ -268,12 +269,26 @@ function GroupedPastPaperCard({
             </span>
             <PaperProgressSummary group={group} accentColor={subject?.baseColor || "#64748b"} />
           </div>
+          {/* Expand button — mobile: inline next to identity */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpand();
+            }}
+            className="md:hidden p-2.5 rounded-xl text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors shrink-0"
+            aria-expanded={expanded}
+            aria-label={expanded ? "Collapse attempts" : "Expand attempts"}
+          >
+            <span className="material-symbols-outlined text-2xl">
+              {expanded ? "expand_less" : "expand_more"}
+            </span>
+          </button>
         </div>
 
-        {/* Metrics: Score | overall % | Level | action — matches expanded row column order */}
-        <div className={MET_GROUP}>
-          {/* Spacer aligns with per-paper Score column when expanded */}
-          <div className={COL_SCORE} aria-hidden />
+        {/* Metrics: overall % | Level | action — stacks below on mobile */}
+        <div className={`${MET_GROUP} ${MET_GROUP_MOBILE}`}>
+          <div className="hidden md:flex w-[6.5rem] flex-col items-end text-right" aria-hidden />
           <div
             className={COL_PCT}
             title={
@@ -282,24 +297,27 @@ function GroupedPastPaperCard({
                 : undefined
             }
           >
-            <span className={`${LABEL} flex flex-col items-end gap-0`}>
+            <span className={`${LABEL} hidden md:flex flex-col items-end gap-0`}>
               <span className="leading-tight">Overall</span>
               <span className="leading-tight">percentage</span>
             </span>
-            <p
-              className={`text-2xl md:text-3xl font-light leading-none tabular-nums ${showPartialPctHint ? "text-success/90" : "text-success"}`}
-              aria-label={
-                showPartialPctHint
-                  ? partialPapersLabel
-                    ? `${pctDisplay} partial year, ${partialPapersLabel} logged`
-                    : `${pctDisplay} partial year, weights renormalized over logged papers only`
-                  : undefined
-              }
-            >
-              {pctDisplay}
-            </p>
+            <div className="flex items-baseline gap-1.5 md:block">
+              <span className="md:hidden text-[9px] font-black uppercase tracking-[0.12em] text-muted-foreground/50">Score</span>
+              <p
+                className={`text-2xl md:text-3xl font-light leading-none tabular-nums ${showPartialPctHint ? "text-success/90" : "text-success"}`}
+                aria-label={
+                  showPartialPctHint
+                    ? partialPapersLabel
+                      ? `${pctDisplay} partial year, ${partialPapersLabel} logged`
+                      : `${pctDisplay} partial year, weights renormalized over logged papers only`
+                    : undefined
+                }
+              >
+                {pctDisplay}
+              </p>
+            </div>
             {showPartialPctHint ? (
-              <p className="text-[9px] font-bold text-muted-foreground/70 mt-1.5 text-right leading-tight max-w-[6rem]">
+              <p className="text-[9px] font-bold text-muted-foreground/70 mt-1 md:mt-1.5 md:text-right leading-tight max-w-[6rem]">
                 Partial
                 {partialPapersLabel ? (
                   <>
@@ -313,10 +331,11 @@ function GroupedPastPaperCard({
             ) : null}
           </div>
           <div className={COL_LEVEL}>
-            <span className={LABEL}>Level</span>
+            <span className={`${LABEL} hidden md:block`}>Level</span>
             <LevelBadge value={levelDisplay} size="lg" subLine={gapSummary} />
           </div>
-          <div className={COL_ACTION}>
+          {/* Expand button — desktop only (mobile one is above) */}
+          <div className={`${COL_ACTION} hidden md:flex`}>
             <button
               type="button"
               onClick={(e) => {
@@ -338,16 +357,16 @@ function GroupedPastPaperCard({
       {/* ── Expanded section ── */}
       {expanded && (
         <div className="border-t border-border-hairline bg-muted/10">
-          {/* Column headers — same OUTER_PX + same MET_GROUP structure */}
-          <div className={`${OUTER_PX} pt-4 pb-2 ${ROW}`}>
+          {/* Column headers — hidden on mobile (stacked layout labels inline) */}
+          <div className={`${OUTER_PX} pt-4 pb-2 hidden md:flex md:items-center md:gap-8`}>
             <div className={ID_COL}>
               <span className={LABEL}>Paper / details</span>
             </div>
             <div className={MET_GROUP}>
-              <div className={COL_SCORE}><span className={LABEL}>Score</span></div>
-              <div className={COL_PCT}><span className={LABEL}>%</span></div>
-              <div className={COL_LEVEL}><span className={LABEL}>Level</span></div>
-              <div className={COL_ACTION} />
+              <div className="w-[6.5rem] flex flex-col items-end text-right"><span className={LABEL}>Score</span></div>
+              <div className="w-[6rem] flex flex-col items-end text-right"><span className={LABEL}>%</span></div>
+              <div className="w-[5rem] flex flex-col items-end"><span className={LABEL}>Level</span></div>
+              <div className="w-[4.5rem]" />
             </div>
           </div>
 
@@ -433,28 +452,43 @@ function MissingPaperRow({
 }) {
   return (
     <div
-      className={`${OUTER_PX} py-4 ${ROW} bg-muted/10 transition-colors ${hasBorderTop ? "border-t border-dashed border-border-hairline/70" : ""}`}
+      className={`${OUTER_PX} py-4 ${ROW_DESKTOP} bg-muted/10 transition-colors ${hasBorderTop ? "border-t border-dashed border-border-hairline/70" : ""}`}
     >
-      <div className={`${ID_COL} min-w-0`}>
-        <p className="text-[13px] font-semibold text-primary/80 leading-snug">{paperLabel}</p>
-        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 opacity-50">
-          Not logged yet
-        </p>
-        <p className="text-xs text-muted-foreground/80 mt-2 max-w-md">
-          Add a result for this paper to complete the year summary.
-        </p>
+      <div className="flex items-center gap-2 md:contents">
+        <div className={`${ID_COL} min-w-0`}>
+          <p className="text-[13px] font-semibold text-primary/80 leading-snug">{paperLabel}</p>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 opacity-50">
+            Not logged yet
+          </p>
+          <p className="text-xs text-muted-foreground/80 mt-2 max-w-md hidden md:block">
+            Add a result for this paper to complete the year summary.
+          </p>
+        </div>
+        <div className="md:hidden shrink-0">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={disabled}
+            className="rounded-full text-[9px] font-black uppercase tracking-widest h-9 px-4 shrink-0"
+            onClick={onLogResult}
+          >
+            Log
+          </Button>
+        </div>
       </div>
-      <div className={MET_GROUP}>
-        <div className={COL_SCORE}>
-          <p className="text-lg md:text-xl font-light text-muted-foreground/40 leading-none tabular-nums">{EM_DASH}</p>
+      {/* Desktop metrics + action */}
+      <div className={`${MET_GROUP} hidden md:flex`}>
+        <div className="w-[6.5rem] flex flex-col items-end text-right">
+          <p className="text-xl font-light text-muted-foreground/40 leading-none tabular-nums">{EM_DASH}</p>
         </div>
-        <div className={COL_PCT}>
-          <p className="text-lg md:text-xl font-light text-muted-foreground/40 leading-none tabular-nums">{EM_DASH}</p>
+        <div className="w-[6rem] flex flex-col items-end text-right">
+          <p className="text-xl font-light text-muted-foreground/40 leading-none tabular-nums">{EM_DASH}</p>
         </div>
-        <div className={COL_LEVEL}>
+        <div className="w-[5rem] flex flex-col items-end">
           <p className="text-xl font-light text-muted-foreground/40 tabular-nums">{EM_DASH}</p>
         </div>
-        <div className={`${COL_ACTION} flex-col sm:flex-row items-end gap-1`}>
+        <div className="w-[4.5rem] flex justify-end">
           <Button
             type="button"
             size="sm"
@@ -501,21 +535,42 @@ function AttemptRow({
 
   return (
     <div
-      className={`${OUTER_PX} py-4 ${ROW} transition-colors hover:bg-muted/20 ${hasBorderTop ? "border-t border-border-hairline/50" : ""}`}
+      className={`${OUTER_PX} py-4 ${ROW_DESKTOP} transition-colors hover:bg-muted/20 ${hasBorderTop ? "border-t border-border-hairline/50" : ""}`}
     >
-      {/* Identity */}
-      <div className={ID_COL}>
-        <p className="text-[13px] font-semibold text-primary leading-snug">{attempt.paperLabel}</p>
-        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 opacity-60">
-          {formatAttemptDate(attempt.date)}
-        </p>
-        {attempt.notes ? (
-          <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{attempt.notes}</p>
-        ) : null}
+      {/* Identity + mobile actions */}
+      <div className="flex items-center gap-2 md:contents">
+        <div className={`${ID_COL} md:flex-1`}>
+          <p className="text-[13px] font-semibold text-primary leading-snug">{attempt.paperLabel}</p>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 opacity-60">
+            {formatAttemptDate(attempt.date)}
+          </p>
+          {attempt.notes ? (
+            <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{attempt.notes}</p>
+          ) : null}
+        </div>
+        {/* Mobile-only action buttons next to identity */}
+        <div className="flex md:hidden shrink-0">
+          <button
+            type="button"
+            onClick={() => onEdit(attempt)}
+            className="p-2.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors"
+            aria-label="Edit attempt"
+          >
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(attempt.id)}
+            className="p-2.5 rounded-lg text-muted-foreground hover:text-dot-red hover:bg-muted/50 transition-colors"
+            aria-label="Delete attempt"
+          >
+            <span className="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </div>
       </div>
 
-      {/* Metrics — same MET_GROUP + column order as summary */}
-      <div className={MET_GROUP}>
+      {/* Metrics — stacked row on mobile, inline on desktop */}
+      <div className={`${MET_GROUP} mt-2 md:mt-0`}>
         <div className={COL_SCORE}>
           <p className="text-lg md:text-xl font-light text-primary leading-none tabular-nums">
             {attempt.score}
@@ -530,7 +585,8 @@ function AttemptRow({
         <div className={COL_LEVEL}>
           <LevelBadge value={attempt.estimatedLevel} size="md" subLine={gapLine} />
         </div>
-        <div className={COL_ACTION}>
+        {/* Desktop-only action buttons */}
+        <div className="hidden md:flex w-[4.5rem] justify-end">
           <button
             type="button"
             onClick={() => onEdit(attempt)}

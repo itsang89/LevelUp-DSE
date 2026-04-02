@@ -247,13 +247,13 @@ export function AnalyticsPage({
   }, [chartData, seriesList, xAxisMode, yAxisMode]);
 
   return (
-    <section className="space-y-4 pt-6 lg:pt-12 pb-20">
-      <div className="flex flex-col sm:flex-row justify-between items-end gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
-        <div>
+    <section className="space-y-4 pt-2 lg:pt-10 pb-20">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
+        <div className="w-full text-left">
           <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-1 opacity-50 block">
             Performance
           </span>
-          <h1 className="text-3xl font-light text-primary tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-light text-primary tracking-tight leading-none">
             Score Insights
           </h1>
         </div>
@@ -361,51 +361,85 @@ export function AnalyticsPage({
                   </Card>
                 </div>
               ) : (
-                <Card variant="hairline" padding="none" className="overflow-hidden bg-surface/50 border-border-hairline shadow-soft">
-                  <div className="px-6 py-4 border-b border-border-hairline bg-muted/20 flex items-center justify-between">
-                    <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Subject Performance Summary</h4>
-                    <span className="text-[10px] font-bold text-muted-foreground/60">{perSubjectStats.filter(ps => ps.attempts > 0).length} Subjects Tracked</span>
+                <>
+                  {/* Mobile: stacked cards */}
+                  <div className="md:hidden space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Performance</h4>
+                      <span className="text-[10px] font-bold text-muted-foreground/60">{perSubjectStats.filter(ps => ps.attempts > 0).length} Tracked</span>
+                    </div>
+                    {perSubjectStats.filter(ps => ps.attempts > 0).map((ps) => (
+                      <Card key={ps.subject.id} variant="hairline" padding="sm" className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ps.subject.baseColor }} />
+                        <div className="flex-1 min-w-0">
+                          <span className="font-bold text-sm truncate block">{ps.subject.name}</span>
+                          <span className="text-[10px] text-muted-foreground">{ps.attempts} attempt{ps.attempts !== 1 ? "s" : ""} · {ps.avgScore.toFixed(1)}%</span>
+                        </div>
+                        <div className="flex items-end gap-3 shrink-0">
+                          <div className="flex flex-col items-end gap-0.5">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/70">Average</span>
+                            <span className="inline-flex px-2.5 py-0.5 rounded-full bg-primary/5 text-primary text-xs font-bold border border-primary/10">
+                              {ps.avgLevel}
+                            </span>
+                          </div>
+                          <div className="flex flex-col items-end gap-0.5">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/70">Best</span>
+                            <span className="inline-flex px-2.5 py-0.5 rounded-full bg-success/5 text-success text-xs font-bold border border-success/10">
+                              {ps.bestLevel}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead className="bg-muted/30 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                        <tr>
-                          <th className="px-6 py-4">Subject</th>
-                          <th className="px-6 py-4">Attempts</th>
-                          <th className="px-6 py-4 text-center">Avg Score</th>
-                          <th className="px-6 py-4 text-center">Avg Level</th>
-                          <th className="px-6 py-4 text-center">Best Level</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border-hairline">
-                        {perSubjectStats.filter(ps => ps.attempts > 0).map((ps) => (
-                          <tr key={ps.subject.id} className="hover:bg-muted/10 transition-colors">
-                            <td className="px-6 py-4 flex items-center gap-3">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ps.subject.baseColor }} />
-                              <span className="font-bold text-sm">{ps.subject.name}</span>
-                            </td>
-                            <td className="px-6 py-4 text-sm font-medium tabular-nums">
-                              {ps.attempts}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-center font-mono">
-                              {ps.avgScore.toFixed(1)}%
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="inline-flex px-3 py-1 rounded-full bg-primary/5 text-primary text-xs font-bold border border-primary/10">
-                                {ps.avgLevel}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="inline-flex px-3 py-1 rounded-full bg-success/5 text-success text-xs font-bold border border-success/10">
-                                {ps.bestLevel}
-                              </span>
-                            </td>
+
+                  {/* Desktop: table */}
+                  <Card variant="hairline" padding="none" className="overflow-hidden bg-surface/50 border-border-hairline shadow-soft hidden md:block">
+                    <div className="px-6 py-4 border-b border-border-hairline bg-muted/20 flex items-center justify-between">
+                      <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Subject Performance Summary</h4>
+                      <span className="text-[10px] font-bold text-muted-foreground/60">{perSubjectStats.filter(ps => ps.attempts > 0).length} Subjects Tracked</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="bg-muted/30 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                          <tr>
+                            <th className="px-6 py-4">Subject</th>
+                            <th className="px-6 py-4">Attempts</th>
+                            <th className="px-6 py-4 text-center">Avg Score</th>
+                            <th className="px-6 py-4 text-center">Avg Level</th>
+                            <th className="px-6 py-4 text-center">Best Level</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </Card>
+                        </thead>
+                        <tbody className="divide-y divide-border-hairline">
+                          {perSubjectStats.filter(ps => ps.attempts > 0).map((ps) => (
+                            <tr key={ps.subject.id} className="hover:bg-muted/10 transition-colors">
+                              <td className="px-6 py-4 flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ps.subject.baseColor }} />
+                                <span className="font-bold text-sm">{ps.subject.name}</span>
+                              </td>
+                              <td className="px-6 py-4 text-sm font-medium tabular-nums">
+                                {ps.attempts}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-center font-mono">
+                                {ps.avgScore.toFixed(1)}%
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className="inline-flex px-3 py-1 rounded-full bg-primary/5 text-primary text-xs font-bold border border-primary/10">
+                                  {ps.avgLevel}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className="inline-flex px-3 py-1 rounded-full bg-success/5 text-success text-xs font-bold border border-success/10">
+                                  {ps.bestLevel}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
+                </>
               )}
 
               {/* Line Chart */}

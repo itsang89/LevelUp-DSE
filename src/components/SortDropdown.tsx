@@ -47,7 +47,7 @@ export function SortDropdown({ sortKey, setSortKey, sortDirection, setSortDirect
       
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 bg-surface/95 backdrop-blur-md rounded-2xl shadow-zen border border-border-hairline p-1.5 z-40 min-w-[140px] animate-in fade-in zoom-in-95 duration-200">
-          <div className="px-3 py-2 text-[8px] font-black text-muted-foreground uppercase tracking-widest opacity-40">Sort By</div>
+          <div className="px-3 py-2 text-[10px] md:text-[8px] font-black text-muted-foreground uppercase tracking-widest opacity-40">Sort By</div>
           {options.map((option) => (
             <button
               key={option.value}

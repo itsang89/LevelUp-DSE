@@ -294,13 +294,25 @@ export function PastPapersPage({
   }
 
   return (
-    <section className="space-y-4 pt-6 lg:pt-12 pb-20">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] opacity-50 mb-1 leading-none">Evaluation</span>
-          <h1 className="text-3xl font-light text-primary tracking-tight leading-none">Past Paper History</h1>
+    <section className="space-y-4 pt-2 lg:pt-10 pb-20">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 sticky top-0 bg-background/80 backdrop-blur-md py-3 sm:py-4 z-30 border-b border-border-hairline -mx-6 px-6 lg:-mx-12 lg:px-12 transition-all duration-300 overflow-visible">
+        <div className="flex items-center justify-between w-full sm:w-auto">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] opacity-50 mb-1 leading-none">Evaluation</span>
+            <h1 className="text-2xl sm:text-3xl font-light text-primary tracking-tight leading-none">Past Paper History</h1>
+          </div>
+          <div className="sm:hidden">
+            <Button 
+              size="sm" 
+              className="rounded-full bg-primary text-primary-foreground h-10 w-10 p-0 flex items-center justify-center zen-shadow hover:scale-105 transition-all duration-300 active:scale-95"
+              onClick={() => openAddModal()}
+              aria-label="Add entry"
+            >
+              <span className="material-symbols-outlined text-lg">add</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto pb-1 sm:pb-0 overflow-visible min-w-0">
           <DateFilterDropdown
             filter={dateRangeFilter}
             setFilter={setDateRangeFilter}
@@ -325,15 +337,17 @@ export function PastPapersPage({
               downloadBlob(new Blob([json], { type: "application/json" }), getExportFilename("past-papers", "json"));
             }}
           />
-          <div className="w-px h-6 bg-border-hairline mx-2 opacity-50" />
-          <Button 
-            size="sm" 
-            className="rounded-full bg-primary text-primary-foreground h-10 px-6 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 zen-shadow hover:scale-105 transition-all duration-300 active:scale-95"
-            onClick={() => openAddModal()}
-          >
-            <span className="material-symbols-outlined text-lg">add</span>
-            Add Entry
-          </Button>
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="w-px h-6 bg-border-hairline mx-2 opacity-50" />
+            <Button 
+              size="sm" 
+              className="rounded-full bg-primary text-primary-foreground h-10 px-6 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 zen-shadow hover:scale-105 transition-all duration-300 active:scale-95"
+              onClick={() => openAddModal()}
+            >
+              <span className="material-symbols-outlined text-lg">add</span>
+              Add Entry
+            </Button>
+          </div>
         </div>
       </div>
 
