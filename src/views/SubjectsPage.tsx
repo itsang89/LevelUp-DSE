@@ -1,3 +1,5 @@
+'use client'
+
 import { type FormEvent, useState } from "react";
 import type { Subject } from "../types";
 import { getSubjectGradientStyle } from "../utils/subjectStyles";
@@ -17,12 +19,6 @@ import {
 } from "../lib/api/subjectsApi";
 import { useData } from "../contexts/DataContext";
 
-interface SubjectsPageProps {
-  userId: string;
-  isGuest?: boolean;
-  subjects: Subject[];
-  setSubjects: (value: Subject[] | ((prev: Subject[]) => Subject[])) => void;
-}
 
 interface SubjectDraft {
   name: string;
@@ -48,8 +44,9 @@ const PRESET_COLORS = [
   "#0ea5e9", // Cyan
 ];
 
-export function SubjectsPage({ userId, isGuest = false, subjects, setSubjects }: SubjectsPageProps) {
-  const { cells, getGuestPastPapersData, getGuestStudyGoalsData } = useData();
+export function SubjectsPage() {
+  const { userId, isGuest, subjects, setSubjects, cells, getGuestPastPapersData, getGuestStudyGoalsData } = useData();
+  const uid = userId ?? "guest";
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedPresetCode, setSelectedPresetCode] = useState<string>("");
   const [newSubject, setNewSubject] = useState<SubjectDraft>({
@@ -131,7 +128,7 @@ export function SubjectsPage({ userId, isGuest = false, subjects, setSubjects }:
     try {
       setIsSaving(true);
       if (!isGuest) {
-        await createSubject(userId, newItem);
+        await createSubject(uid, newItem);
       }
       setSubjects((prev) => [...prev, newItem]);
       setNewSubject({ name: "", shortCode: "", baseColor: DEFAULT_SUBJECT_COLOR, paperLabels: ["Paper 1", "Paper 2"] });
@@ -180,7 +177,7 @@ export function SubjectsPage({ userId, isGuest = false, subjects, setSubjects }:
     try {
       setIsSaving(true);
       if (!isGuest) {
-        await updateSubject(userId, editingSubjectId, nextSubject);
+        await updateSubject(uid, editingSubjectId, nextSubject);
       }
       setSubjects((prev) =>
         prev.map((subject) => (subject.id === editingSubjectId ? nextSubject : subject))
@@ -205,7 +202,7 @@ export function SubjectsPage({ userId, isGuest = false, subjects, setSubjects }:
             pastPaperAttemptsCount: getGuestPastPapersData().filter((attempt) => attempt.subjectId === subject.id).length,
             studyGoalsCount: getGuestStudyGoalsData().filter((goal) => goal.subjectId === subject.id).length,
           }
-        : await getSubjectDeletionImpact(userId, subject.id);
+        : await getSubjectDeletionImpact(uid, subject.id);
       setDeleteTarget({ subject, impact });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Failed to load deletion impact.");
@@ -220,7 +217,7 @@ export function SubjectsPage({ userId, isGuest = false, subjects, setSubjects }:
     try {
       setIsSaving(true);
       if (!isGuest) {
-        await deleteSubjectWithCascade(userId, subject.id);
+        await deleteSubjectWithCascade(uid, subject.id);
       }
       setSubjects((prev) => prev.filter((s) => s.id !== subject.id));
       setDeleteTarget(null);

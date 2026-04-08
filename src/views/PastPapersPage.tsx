@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useMemo, useState } from "react";
 import { PastPaperForm, type PastPaperFormValues } from "../components/PastPaperForm";
 import { PastPaperTable } from "../components/PastPaperTable";
@@ -5,7 +7,7 @@ import { PaperMatrix } from "../components/PaperMatrix";
 import { ExportDropdown } from "../components/ExportDropdown";
 import { SortDropdown } from "../components/SortDropdown";
 import { DateFilterDropdown } from "../components/DateFilterDropdown";
-import type { CutoffData, PastPaperAttempt, Subject } from "../types";
+import type { PastPaperAttempt } from "../types";
 import { estimateDseLevel, hasSubjectCutoffData } from "../utils/dseLevelEstimator";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
@@ -26,14 +28,6 @@ import { useConfirm } from "../contexts/ConfirmContext";
 import { useToast } from "../contexts/ToastContext";
 import { useData } from "../contexts/DataContext";
 
-interface PastPapersPageProps {
-  userId: string;
-  isGuest?: boolean;
-  subjects: Subject[];
-  cutoffData: CutoffData;
-  usingGenericFallback: boolean;
-}
-
 type SortKey = "date" | "examYear" | "percentage";
 type SortDirection = "asc" | "desc";
 type DateRangeFilter = "all" | "last30" | "last3months" | "custom";
@@ -42,16 +36,19 @@ function createAttemptId(): string {
   return `attempt-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
-export function PastPapersPage({
-  userId,
-  isGuest = false,
-  subjects,
-  cutoffData,
-  usingGenericFallback,
-}: PastPapersPageProps) {
+export function PastPapersPage() {
   const confirm = useConfirm();
   const { addToast } = useToast();
-  const { getGuestPastPapersData, persistGuestPastPapers } = useData();
+  const {
+    userId,
+    isGuest,
+    subjects,
+    cutoffData,
+    usingGenericFallback,
+    getGuestPastPapersData,
+    persistGuestPastPapers,
+  } = useData();
+  const uid = userId ?? "guest";
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [editingAttempt, setEditingAttempt] = useState<PastPaperAttempt | null>(null);
   const [addFormPrefill, setAddFormPrefill] = useState<Partial<PastPaperAttempt> | null>(null);
@@ -75,7 +72,7 @@ export function PastPapersPage({
     }
 
     let isMounted = true;
-    listPastPaperAttempts(userId)
+    listPastPaperAttempts(uid)
       .then((rows) => {
         if (isMounted) setAttempts(rows);
       })
@@ -98,7 +95,7 @@ export function PastPapersPage({
         setAttempts(getGuestPastPapersData());
         return;
       }
-      listPastPaperAttempts(userId)
+      listPastPaperAttempts(uid)
         .then((rows) => setAttempts(rows))
         .catch((requestError) => {
           setDataError(
@@ -205,7 +202,7 @@ export function PastPapersPage({
           notes: values.notes.trim() || undefined,
         };
         if (!isGuest) {
-          await updatePastPaperAttempt(userId, updatedAttempt);
+          await updatePastPaperAttempt(uid, updatedAttempt);
         }
         const nextAttempts = attempts.map((attempt) =>
           attempt.id === editingAttempt.id ? updatedAttempt : attempt
@@ -229,7 +226,7 @@ export function PastPapersPage({
           notes: values.notes.trim() || undefined,
         };
         if (!isGuest) {
-          await createPastPaperAttempt(userId, newAttempt);
+          await createPastPaperAttempt(uid, newAttempt);
         }
         const nextAttempts = [...attempts, newAttempt];
         setAttempts(nextAttempts);
@@ -263,7 +260,7 @@ export function PastPapersPage({
     try {
       setIsPersisting(true);
       if (!isGuest) {
-        await deletePastPaperAttempt(userId, attemptId);
+        await deletePastPaperAttempt(uid, attemptId);
       }
       const nextAttempts = attempts.filter((attempt) => attempt.id !== attemptId);
       setAttempts(nextAttempts);

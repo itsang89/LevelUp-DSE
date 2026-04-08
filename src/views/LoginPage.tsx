@@ -1,5 +1,7 @@
+'use client'
+
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
@@ -16,27 +18,21 @@ export function LoginPage() {
   const [isMigrating, setIsMigrating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     startGuestMode,
     stopGuestMode,
     hasGuestStoredData,
     migrateGuestDataToAccount,
   } = useData();
-  const authState = location.state as { from?: string; tab?: string; intent?: string } | null;
-  const redirectTo = authState?.from || "/planner";
-  const query = new URLSearchParams(location.search);
+  const redirectTo = searchParams.get("from") || "/planner";
 
   useEffect(() => {
-    if (
-      query.get("intent") === "signup" ||
-      authState?.tab === "signup" ||
-      authState?.intent === "signup"
-    ) {
+    if (searchParams.get("intent") === "signup") {
       setIsSignUp(true);
     }
-  }, [authState?.intent, authState?.tab, query]);
+  }, [searchParams]);
 
   const handlePostAuth = async (authenticatedUserId: string): Promise<void> => {
     if (hasGuestStoredData()) {
@@ -56,13 +52,13 @@ export function LoginPage() {
       }
     }
     stopGuestMode();
-    navigate(redirectTo);
+    router.push(redirectTo);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isSupabaseConfigured) {
-      setError("Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+      setError("Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
       return;
     }
 
@@ -106,7 +102,7 @@ export function LoginPage() {
         if (signInData.session) {
           await handlePostAuth(signInData.session.user.id);
         } else {
-          navigate(redirectTo);
+          router.push(redirectTo);
         }
       }
     } catch (authError) {
@@ -118,7 +114,7 @@ export function LoginPage() {
 
   const handleContinueWithoutAccount = (): void => {
     startGuestMode();
-    navigate("/planner");
+    router.push("/planner");
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {

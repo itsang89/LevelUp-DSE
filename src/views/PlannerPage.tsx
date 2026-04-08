@@ -1,7 +1,9 @@
+'use client'
+
 import { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
 import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { MS_PER_WEEK, PLANNER_SESSIONS } from "../constants";
-import type { PlannerCell as PlannerCellType, PlannerTask, Subject } from "../types";
+import type { PlannerTask } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
 import { PlannerGrid } from "../components/PlannerGrid";
 import { ExportDropdown } from "../components/ExportDropdown";
@@ -16,14 +18,7 @@ import {
   downloadBlob,
   getExportFilename,
 } from "../utils/exportUtils";
-
-interface PlannerPageProps {
-  userId: string;
-  isGuest?: boolean;
-  subjects: Subject[];
-  cells: PlannerCellType[];
-  setCells: React.Dispatch<React.SetStateAction<PlannerCellType[]>>;
-}
+import { useData } from "../contexts/DataContext";
 
 interface CellEditorState {
   date: string;
@@ -36,7 +31,9 @@ function createTaskId(): string {
 
 const LOAD_LIMIT = 12; // Maximum weeks in each direction before "Load More" button
 
-export function PlannerPage({ userId, isGuest = false, subjects, cells, setCells }: PlannerPageProps) {
+export function PlannerPage() {
+  const { userId, isGuest, subjects, cells, setCells } = useData();
+  const uid = userId ?? "guest";
   const initialWeek = useMemo(() => startOfWeekSunday(new Date()), []);
   const [weeks, setWeeks] = useState<Date[]>([initialWeek]);
   const [currentWeekLabel, setCurrentWeekLabel] = useState<string>(formatWeekLabel(initialWeek));
@@ -201,10 +198,10 @@ export function PlannerPage({ userId, isGuest = false, subjects, cells, setCells
 
     try {
       if (!isGuest) {
-        await upsertPlannerCell(userId, toDate, toSession, draggedTask);
-        await deletePlannerCell(userId, fromDate, fromSession);
+        await upsertPlannerCell(uid, toDate, toSession, draggedTask);
+        await deletePlannerCell(uid, fromDate, fromSession);
         if (targetTask) {
-          await upsertPlannerCell(userId, fromDate, fromSession, targetTask);
+          await upsertPlannerCell(uid, fromDate, fromSession, targetTask);
         }
       }
     } catch (requestError) {
@@ -280,7 +277,7 @@ export function PlannerPage({ userId, isGuest = false, subjects, cells, setCells
     try {
       setIsPersisting(true);
       if (!isGuest) {
-        await upsertPlannerCell(userId, activeCell.date, activeCell.sessionId, task);
+        await upsertPlannerCell(uid, activeCell.date, activeCell.sessionId, task);
       }
       upsertCell(activeCell.date, activeCell.sessionId, task);
       closeEditor();
@@ -299,7 +296,7 @@ export function PlannerPage({ userId, isGuest = false, subjects, cells, setCells
     upsertCell(dateIso, sessionId, updatedTask);
     try {
       if (!isGuest) {
-        await upsertPlannerCell(userId, dateIso, sessionId, updatedTask);
+        await upsertPlannerCell(uid, dateIso, sessionId, updatedTask);
       }
     } catch (requestError) {
       upsertCell(dateIso, sessionId, existingTask);
@@ -314,7 +311,7 @@ export function PlannerPage({ userId, isGuest = false, subjects, cells, setCells
     try {
       setIsPersisting(true);
       if (!isGuest) {
-        await deletePlannerCell(userId, activeCell.date, activeCell.sessionId);
+        await deletePlannerCell(uid, activeCell.date, activeCell.sessionId);
       }
       upsertCell(activeCell.date, activeCell.sessionId, null);
       closeEditor();

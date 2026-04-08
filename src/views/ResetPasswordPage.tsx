@@ -1,5 +1,7 @@
+'use client'
+
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
@@ -13,7 +15,7 @@ export function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -40,7 +42,7 @@ export function ResetPasswordPage() {
               setError("Invalid or expired reset link. Please request a new one.");
             }
           } else {
-            navigate("/login", { replace: true });
+            router.replace("/login");
           }
         }
       } catch (err) {
@@ -51,7 +53,7 @@ export function ResetPasswordPage() {
     }
 
     checkSession();
-  }, [navigate]);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +75,7 @@ export function ResetPasswordPage() {
       const supabase = getSupabaseClient();
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
-      navigate("/planner", { replace: true });
+      router.replace("/planner");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update password.");
     } finally {
@@ -97,7 +99,7 @@ export function ResetPasswordPage() {
       <div className="min-h-screen w-full flex items-center justify-center bg-background p-6">
         <Card variant="zen" padding="lg" className="max-w-md text-center space-y-4">
           <p className="text-sm text-muted-foreground">{error}</p>
-          <Button variant="outline" onClick={() => navigate("/login")}>
+          <Button variant="outline" onClick={() => router.push("/login")}>
             Back to Login
           </Button>
         </Card>
