@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CutoffData, PastPaperAttempt, Subject } from "../types";
-import { getMarksToNextLevel } from "../utils/dseLevelEstimator";
+import { getMarksToNextLevel, resolveCutoffYear } from "../utils/dseLevelEstimator";
 import { parseIsoDate } from "../utils/dateHelpers";
 import {
   buildSortedPastPaperGroups,
@@ -332,7 +332,13 @@ function GroupedPastPaperCard({
           </div>
           <div className={COL_LEVEL}>
             <span className={`${LABEL} hidden md:block`}>Level</span>
-            <LevelBadge value={levelDisplay} size="lg" subLine={gapSummary} />
+            <LevelBadge
+              value={levelDisplay}
+              size="lg"
+              subLine={gapSummary}
+              isExact={group.levelIsExact}
+              resolvedYear={group.levelResolvedYear}
+            />
           </div>
           {/* Expand button — desktop only (mobile one is above) */}
           <div className={`${COL_ACTION} hidden md:flex`}>
@@ -410,10 +416,14 @@ function LevelBadge({
   value,
   size,
   subLine,
+  isExact = true,
+  resolvedYear,
 }: {
   value: string;
   size: "lg" | "md";
   subLine?: string | null;
+  isExact?: boolean;
+  resolvedYear?: number | null;
 }) {
   if (value === EM_DASH) {
     const sz = size === "lg" ? "text-2xl md:text-3xl" : "text-xl";
@@ -423,16 +433,29 @@ function LevelBadge({
     size === "lg"
       ? "text-2xl min-w-[3rem] h-11 px-2 rounded-2xl"
       : "text-xl min-w-[2.75rem] h-9 px-2 rounded-xl";
+  const badgeClasses = isExact
+    ? "text-primary-foreground bg-primary shadow-md shadow-primary/20"
+    : "text-amber-800 bg-amber-100 shadow-md shadow-amber-200/40 dark:text-amber-100 dark:bg-amber-700/50";
+  const title = !isExact && resolvedYear
+    ? `Estimated from ${resolvedYear} cutoffs — exact data for this year is not available`
+    : undefined;
   return (
     <div className="flex flex-col items-end gap-0">
       <span
-        className={`font-black text-primary-foreground bg-primary inline-flex items-center justify-center shadow-md shadow-primary/20 tabular-nums ${badge}`}
+        className={`font-black inline-flex items-center justify-center tabular-nums ${badge} ${badgeClasses}`}
+        title={title}
       >
+        {!isExact && <span className="text-[0.55em] mr-0.5 opacity-60 font-bold">~</span>}
         {value}
       </span>
       {subLine ? (
         <p className="text-[9px] font-bold text-muted-foreground/70 mt-1.5 whitespace-nowrap text-right">
           {subLine}
+        </p>
+      ) : null}
+      {!isExact && resolvedYear ? (
+        <p className="text-[9px] font-bold text-amber-600/80 mt-1 whitespace-nowrap text-right">
+          Est. from {resolvedYear}
         </p>
       ) : null}
     </div>
@@ -521,8 +544,13 @@ function AttemptRow({
   onDelete: (attemptId: string) => void;
 }) {
   const subjectKey = subject?.shortCode ?? attempt.subjectId;
+  const isDse = attempt.isDse !== false;
+  const cutoffYearInfo = isDse ? resolveCutoffYear(subjectKey, attempt.examYear, cutoffData) : null;
+  const levelIsExact = cutoffYearInfo?.isExact ?? true;
+  const levelResolvedYear = cutoffYearInfo?.year ?? null;
+
   let gapLine: string | null = null;
-  if (attempt.isDse !== false) {
+  if (isDse) {
     const gap = getMarksToNextLevel(
       subjectKey,
       attempt.percentage,
@@ -583,7 +611,13 @@ function AttemptRow({
           </p>
         </div>
         <div className={COL_LEVEL}>
-          <LevelBadge value={attempt.estimatedLevel} size="md" subLine={gapLine} />
+          <LevelBadge
+            value={attempt.estimatedLevel}
+            size="md"
+            subLine={gapLine}
+            isExact={levelIsExact}
+            resolvedYear={levelResolvedYear}
+          />
         </div>
         {/* Desktop-only action buttons */}
         <div className="hidden md:flex w-[4.5rem] justify-end">

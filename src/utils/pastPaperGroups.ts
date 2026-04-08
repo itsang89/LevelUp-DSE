@@ -1,5 +1,5 @@
 import type { CutoffData, PastPaperAttempt, Subject } from "../types";
-import { estimateDseLevel, hasSubjectCutoffData } from "./dseLevelEstimator";
+import { estimateDseLevel, hasSubjectCutoffData, resolveCutoffYear } from "./dseLevelEstimator";
 import {
   attemptMatchesFormalPaper,
   getSubjectWeightingFromJson,
@@ -108,6 +108,10 @@ export interface PastPaperGroupModel {
   overallTotalSum: number | null;
   /** From cutoff estimator when DSE + data; partial/fallback when incomplete */
   overallLevel: string | null;
+  /** True when overallLevel was computed from the exact exam year's cutoffs. */
+  levelIsExact: boolean;
+  /** The cutoff year actually used when computing overallLevel; null if no cutoff data was used. */
+  levelResolvedYear: number | null;
   /**
    * Percentage used for summary level and gap-to-next (full weighted when complete,
    * renormalized partial weighted when some papers missing, else best attempt %).
@@ -168,12 +172,19 @@ export function buildPastPaperGroupModel(
   let overallScoreSum: number | null = null;
   let overallTotalSum: number | null = null;
   let overallLevel: string | null = null;
+  let levelIsExact = true;
+  let levelResolvedYear: number | null = null;
   let levelBasisPercentage: number | null = null;
   let levelBasisTotalMarks: number | null = null;
 
   const isDse = first.isDse !== false;
   const subjectKey = subject?.shortCode ?? first.subjectId;
   const hasCutoff = hasSubjectCutoffData(cutoffData, subjectKey, first.examYear);
+  if (isDse && hasCutoff) {
+    const yearInfo = resolveCutoffYear(subjectKey, first.examYear, cutoffData);
+    levelIsExact = yearInfo?.isExact ?? true;
+    levelResolvedYear = yearInfo?.year ?? null;
+  }
 
   if (isComplete) {
     let wSum = 0;
@@ -247,6 +258,8 @@ export function buildPastPaperGroupModel(
     overallScoreSum,
     overallTotalSum,
     overallLevel,
+    levelIsExact,
+    levelResolvedYear,
     levelBasisPercentage,
     levelBasisTotalMarks,
   };

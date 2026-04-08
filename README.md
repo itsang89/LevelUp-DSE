@@ -16,8 +16,7 @@ The app uses official DSE cutoff data to estimate levels from raw scores and sup
 ## Tech Stack
 
 - React 19 + TypeScript
-- Vite 7
-- React Router 7
+- Next.js 16 (App Router)
 - Tailwind CSS 4
 - Supabase (Auth + Postgres + RLS)
 
@@ -38,15 +37,18 @@ The app uses official DSE cutoff data to estimate levels from raw scores and sup
 
 ## Project Structure
 
-- `src/App.tsx`: App bootstrap, auth/session handling, route guards, initial data loading
-- `src/pages/PlannerPage.tsx`: Weekly planner timeline and task editor modal
-- `src/pages/PlanPage.tsx`: Plan Beta dashboard (weekly targets, readiness status, and strategic action queue)
-- `src/pages/PastPapersPage.tsx`: Past paper CRUD, filter/sort, modal form, paper matrix
-- `src/pages/AnalyticsPage.tsx`: Score trends, grade distribution, summary stats
-- `src/pages/ExamTimetablePage.tsx`: Per-subject exam timetable and countdown
-- `src/pages/SubjectsPage.tsx`: Subject CRUD and preset color/paper-label management
-- `src/pages/LoginPage.tsx`: Sign in/sign up flow
-- `src/pages/ResetPasswordPage.tsx`: Password reset via email link
+- `src/app/layout.tsx`: Root layout with metadata and global providers
+- `src/app/providers.tsx`: Client-side auth context provider
+- `src/app/page.tsx`: Landing page
+- `src/app/login/page.tsx`: Sign in/sign up flow
+- `src/app/reset-password/page.tsx`: Password reset via email link
+- `src/app/(protected)/layout.tsx`: Protected route layout with auth guard and shell
+- `src/app/(protected)/planner/page.tsx`: Weekly planner timeline and task editor modal
+- `src/app/(protected)/plan/page.tsx`: Plan Beta dashboard (weekly targets, readiness status, and strategic action queue)
+- `src/app/(protected)/past-papers/page.tsx`: Past paper CRUD, filter/sort, modal form, paper matrix
+- `src/app/(protected)/analytics/page.tsx`: Score trends, grade distribution, summary stats
+- `src/app/(protected)/exam-timetable/page.tsx`: Per-subject exam timetable and countdown
+- `src/app/(protected)/subjects/page.tsx`: Subject CRUD and preset color/paper-label management
 - `src/components/`: Layout, PlannerGrid, PaperMatrix, ExportDropdown, DateFilterDropdown, SortDropdown, UI primitives
 - `src/lib/api/`: Supabase data-access layer (`subjectsApi`, `plannerApi`, `pastPapersApi`, `goalsApi`)
 - `src/lib/supabase.ts`: Singleton Supabase client and environment checks
@@ -57,11 +59,11 @@ The app uses official DSE cutoff data to estimate levels from raw scores and sup
 
 ## Environment Setup
 
-Create `.env` in `dse-planner/`:
+Create `.env` in `dse-planner/` (see `.env.example`):
 
 ```bash
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co
-VITE_SUPABASE_ANON_KEY=<your-anon-key>
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
 If these variables are missing, the app shows a setup-required screen and blocks auth/data requests.
@@ -75,10 +77,10 @@ npm run dev
 
 Useful scripts:
 
-- `npm run dev`: Start dev server
+- `npm run dev`: Start Next.js dev server
 - `npm run build`: Type-check and create production build
-- `npm run preview`: Preview production build locally
-- `npm run lint`: Run ESLint
+- `npm run start`: Serve the production build
+- `npm run lint`: Run Next.js ESLint
 - `npm run test`: Run the Vitest suite once
 - `npm run test:watch`: Run Vitest in watch mode
 - `npm run test:coverage`: Run tests with coverage output

@@ -279,8 +279,8 @@ export function PlanPage() {
         ? subjectAttempts.reduce((acc, a) => acc + a.percentage, 0) / subjectAttempts.length
         : null;
       
-      const currentLevel = avgPercentage !== null 
-        ? estimateDseLevel(subject.shortCode, avgPercentage, cutoffData)
+      const currentLevel = avgPercentage !== null
+        ? (estimateDseLevel(subject.shortCode, avgPercentage, cutoffData) ?? "N/A")
         : "N/A";
 
       const targetLevel = targetLevels[subject.id] || "4";

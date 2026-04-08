@@ -14,11 +14,11 @@
 npm install
 ```
 
-2. Create `.env`:
+2. Create `.env` (see `.env.example`):
 
 ```bash
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co
-VITE_SUPABASE_ANON_KEY=<anon-key>
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 ```
 
 3. Initialize database by running `supabase/schema.sql` in Supabase SQL editor.
@@ -31,9 +31,9 @@ npm run dev
 
 ## Build and Quality
 
-- `npm run lint`: ESLint checks
+- `npm run lint`: Next.js ESLint checks
 - `npm run build`: Type-check + production build
-- `npm run preview`: Run built app locally
+- `npm run start`: Serve the production build locally
 
 ## Common Workflows
 
@@ -42,12 +42,12 @@ npm run dev
 1. Update `src/types.ts` `Subject` type.
 2. Update DB schema (`supabase/schema.sql`) and migrate in Supabase.
 3. Update mapping in `src/lib/api/subjectsApi.ts`.
-4. Update form/UI in `src/pages/SubjectsPage.tsx`.
+4. Update form/UI in `src/views/SubjectsPage.tsx`.
 
 ### Add a New Planner Session Slot
 
 1. Add item to `PLANNER_SESSIONS` in `src/constants.ts`.
-2. Verify `PlannerGrid` rendering and modal editor behavior in `src/pages/PlannerPage.tsx`.
+2. Verify `PlannerGrid` rendering and modal editor behavior in `src/views/PlannerPage.tsx`.
 
 ### Modify DSE Level Mapping
 

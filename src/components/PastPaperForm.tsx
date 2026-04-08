@@ -1,7 +1,7 @@
 import { type FormEvent, useMemo, useState } from "react";
 import type { CutoffData, PastPaperAttempt, Subject } from "../types";
 import { formatIsoDate } from "../utils/dateHelpers";
-import { estimateDseLevel, hasSubjectCutoffData, getMarksToNextLevel } from "../utils/dseLevelEstimator";
+import { estimateDseLevel, hasSubjectCutoffData, getMarksToNextLevel, resolveCutoffYear } from "../utils/dseLevelEstimator";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
@@ -64,6 +64,11 @@ export function PastPaperForm({
 
   const hasCutoffData = useMemo(
     () => hasSubjectCutoffData(cutoffData, subjectKey, examYear),
+    [cutoffData, subjectKey, examYear]
+  );
+
+  const cutoffYearInfo = useMemo(
+    () => resolveCutoffYear(subjectKey, examYear, cutoffData),
     [cutoffData, subjectKey, examYear]
   );
 
@@ -297,23 +302,41 @@ export function PastPaperForm({
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">
               Predicted grade
             </label>
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-primary/5 border border-primary/10">
-              <div className="flex flex-col items-center justify-center">
-                <span className="text-2xl font-black text-primary size-12 flex items-center justify-center rounded-xl bg-primary/10">
-                  {predictedGrade ?? "—"}
-                </span>
-                {marksGapInfo && (
-                  <span className="text-[10px] font-bold text-primary/60 mt-1 whitespace-nowrap">
-                    {marksGapInfo.percentageGap.toFixed(1)}% to {marksGapInfo.nextLevel}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {predictedGrade
-                  ? "Based on HKDSE cutoff data for this year and subject."
-                  : "Enter score and total to see predicted grade."}
-              </p>
-            </div>
+            {(() => {
+              const isExact = cutoffYearInfo?.isExact ?? true;
+              const resolvedYear = cutoffYearInfo?.year;
+              const containerClass = isExact
+                ? "flex items-center gap-3 p-4 rounded-2xl bg-primary/5 border border-primary/10"
+                : "flex items-center gap-3 p-4 rounded-2xl bg-amber-50/60 border border-amber-200/60 dark:bg-amber-900/10 dark:border-amber-700/30";
+              const badgeClass = isExact
+                ? "text-2xl font-black text-primary size-12 flex items-center justify-center rounded-xl bg-primary/10"
+                : "text-2xl font-black text-amber-800 dark:text-amber-200 size-12 flex items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-800/40";
+              const gapClass = isExact ? "text-primary/60" : "text-amber-700/70 dark:text-amber-400/70";
+              return (
+                <div className={containerClass}>
+                  <div className="flex flex-col items-center justify-center">
+                    <span className={badgeClass}>
+                      {!isExact && predictedGrade && (
+                        <span className="text-[0.5em] mr-0.5 opacity-50 font-bold self-start mt-1">~</span>
+                      )}
+                      {predictedGrade ?? "—"}
+                    </span>
+                    {marksGapInfo && (
+                      <span className={`text-[10px] font-bold mt-1 whitespace-nowrap ${gapClass}`}>
+                        {marksGapInfo.percentageGap.toFixed(1)}% to {marksGapInfo.nextLevel}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {predictedGrade
+                      ? isExact
+                        ? "Based on HKDSE cutoff data for this year and subject."
+                        : `Estimated from ${resolvedYear} cutoffs — exact data for ${examYear} is not available.`
+                      : "Enter score and total to see predicted grade."}
+                  </p>
+                </div>
+              );
+            })()}
           </div>
         )}
 

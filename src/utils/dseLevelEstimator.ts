@@ -297,8 +297,8 @@ export async function loadCutoffData(): Promise<{
 }
 
 /**
- * Returns true if cutoff data has subject-specific data for the given year.
- * For year-based data: requires the exact year to exist (no nearest-year fallback).
+ * Returns true if subject-specific cutoff data exists for the given year,
+ * including nearest-year fallback (mirrors the resolution used by estimateDseLevel).
  */
 export function hasSubjectCutoffData(
   cutoffData: CutoffData,
@@ -306,23 +306,20 @@ export function hasSubjectCutoffData(
   examYear?: number
 ): boolean {
   if (Object.keys(cutoffData).length === 0) return false;
-  const normalizedKey = resolveCutoffSubjectKey(subjectKey);
-  const bySubject = cutoffData[normalizedKey];
-  if (!bySubject) return false;
   const yearToUse = examYear ?? new Date().getFullYear();
-  return bySubject[yearToUse] != null;
+  return getCutoffRowsForYear(subjectKey, yearToUse, cutoffData) != null;
 }
 
 function getCutoffRowsForYear(
   subjectKey: string,
   examYear: number,
   cutoffData: CutoffDataByYear
-): CutoffRow[] | null {
+): { rows: CutoffRow[]; resolvedYear: number; isExact: boolean } | null {
   const normalizedKey = resolveCutoffSubjectKey(subjectKey);
   const bySubject = cutoffData[normalizedKey];
   if (!bySubject) return null;
 
-  if (bySubject[examYear]) return bySubject[examYear];
+  if (bySubject[examYear]) return { rows: bySubject[examYear], resolvedYear: examYear, isExact: true };
 
   const years = Object.keys(bySubject)
     .map(Number)
@@ -333,36 +330,40 @@ function getCutoffRowsForYear(
   const nearest = years.reduce((prev, curr) =>
     Math.abs(curr - examYear) < Math.abs(prev - examYear) ? curr : prev
   );
-  return bySubject[nearest];
+  return { rows: bySubject[nearest], resolvedYear: nearest, isExact: false };
+}
+
+/**
+ * Returns which cutoff year will be used for a given subject and exam year,
+ * and whether it is an exact match or a nearest-year fallback.
+ * Returns null if no subject-specific data exists at all.
+ */
+export function resolveCutoffYear(
+  subjectKey: string,
+  examYear: number,
+  cutoffData: CutoffData
+): { year: number; isExact: boolean } | null {
+  const result = getCutoffRowsForYear(subjectKey, examYear, cutoffData);
+  if (!result) return null;
+  return { year: result.resolvedYear, isExact: result.isExact };
 }
 
 /**
  * Estimates DSE level based on percentage, subject, and exam year.
- * Uses year-specific cutoffs from HKDSE historical data when available.
- * Falls back to nearest year, then generic cutoffs.
+ * Uses exact year cutoffs when available, or nearest available year as fallback.
+ * Returns null when no subject-specific data exists — no generic fallback.
  */
 export function estimateDseLevel(
   subjectKey: string,
   percentage: number,
   cutoffData: CutoffData,
   examYear?: number
-): string {
+): string | null {
   const yearToUse = examYear ?? new Date().getFullYear();
-  const cutoffs = getCutoffRowsForYear(subjectKey, yearToUse, cutoffData);
-  if (cutoffs) {
-    for (const row of cutoffs) {
-      if (percentage >= row.minimumPercentage) {
-        return row.level;
-      }
-    }
-    return "U";
-  }
-
-  const genericCutoffs = GENERIC_CUTOFFS;
-  for (const row of genericCutoffs) {
-    if (percentage >= row.minimumPercentage) {
-      return row.level;
-    }
+  const result = getCutoffRowsForYear(subjectKey, yearToUse, cutoffData);
+  if (!result) return null;
+  for (const row of result.rows) {
+    if (percentage >= row.minimumPercentage) return row.level;
   }
   return "U";
 }
@@ -382,8 +383,9 @@ export function getMarksToNextLevel(
   examYear: number,
   totalMarks: number
 ): { nextLevel: DseLevel; percentageGap: number; marksGap: number } | null {
-  const cutoffs = getCutoffRowsForYear(subjectKey, examYear, cutoffData);
-  if (!cutoffs) return null;
+  const result = getCutoffRowsForYear(subjectKey, examYear, cutoffData);
+  if (!result) return null;
+  const cutoffs = result.rows;
 
   // Find the current level index
   let currentLevelIdx = cutoffs.length; // defaults to 'U'

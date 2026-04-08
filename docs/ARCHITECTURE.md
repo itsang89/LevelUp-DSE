@@ -2,46 +2,46 @@
 
 ## High-Level Flow
 
-1. `src/main.tsx` mounts the app with `BrowserRouter`.
-2. `src/App.tsx` initializes:
-   - cutoff data (`loadCutoffData`)
-   - Supabase auth session
-   - subject bootstrap (`listSubjects`, optional `seedDefaultSubjects`)
-3. Routes are protected by session presence.
-4. Shared shell is rendered via `src/components/Layout.tsx`.
-5. Feature pages manage local UI state and persist through API modules.
+1. `src/app/layout.tsx` is the root Next.js layout — wraps all pages with global providers (`providers.tsx`).
+2. `src/app/providers.tsx` is a client component that initialises the Supabase auth session and exposes it via `AuthContext`.
+3. `src/app/(protected)/layout.tsx` is a client layout that reads `AuthContext`, redirects unauthenticated users to `/login`, and renders the shared app shell.
+4. Feature pages under `(protected)/` manage local UI state and persist through API modules.
+5. Public routes (`/login`, `/reset-password`, `/`) are outside the protected group.
 
 ## Routing Model
 
-Defined in `src/App.tsx`:
+Next.js App Router file-based routing:
 
-- `/login`: Public login/sign-up page
-- `/reset-password`: Public password reset page
-- `/planner`: Protected weekly planner page
-- `/plan`: Protected strategic planning page (Plan Beta)
-- `/past-papers`: Protected history + performance page
-- `/analytics`: Protected analytics and trend insights page
-- `/subjects`: Protected subject management page
-- `/exam-timetable`: Protected exam timetable + countdown page
-- `/`: Redirects to planner when signed in, otherwise login
-- `*`: Same redirect behavior as `/`
+- `/`: Landing page (`src/app/page.tsx`)
+- `/login`: Sign in/sign up page
+- `/reset-password`: Password reset via email link
+- `/(protected)/planner`: Weekly planner page
+- `/(protected)/plan`: Strategic planning page (Plan Beta)
+- `/(protected)/past-papers`: History + performance page
+- `/(protected)/analytics`: Analytics and trend insights
+- `/(protected)/subjects`: Subject management
+- `/(protected)/exam-timetable`: Exam timetable + countdown
 
 ## State Ownership
 
-### App-level (`src/App.tsx`)
+### Auth context (`src/app/providers.tsx`)
 
 - `session`: Active Supabase session
+- `authLoading`: Auth initialisation state
+
+### Protected layout (`src/app/(protected)/layout.tsx`)
+
 - `subjects`: Current user subject list
 - `cutoffData`: Parsed cutoff table map
 - `usingGenericFallback`: Cutoff parser fallback indicator
-- `authLoading`, `subjectsLoading`, `appError`: Global loading/error states
+- `subjectsLoading`, `appError`: Loading/error states
 
-These are passed into pages as props to avoid duplicated fetches.
+These are passed into page views as props to avoid duplicated fetches.
 
-### Page-level
+### Page/view-level (`src/views/`)
 
 - `PlannerPage`: Week timeline window, planner cells, editor modal state
-- `PlanPage`: Weekly target tracking, readiness calculations, strategic queue, goals modal, and page-level load error banner state
+- `PlanPage`: Weekly target tracking, readiness calculations, strategic queue, goals modal
 - `PastPapersPage`: Attempts list, filters/sort, edit/create modal state
 - `SubjectsPage`: Add/edit drafts, modal visibility, per-action error state
 - `LoginPage`: Auth form mode and async status
@@ -65,13 +65,15 @@ Key properties:
 
 `src/lib/supabase.ts`:
 
-- Validates `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+- Validates `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - Exposes `isSupabaseConfigured` for guard screens
 - Lazily creates a singleton Supabase client with session persistence enabled
 
+`@supabase/ssr` is used for SSR-compatible cookie-based sessions.
+
 ## Planner Design Notes
 
-`PlannerPage` keeps a moving week window centered around current week and allows extending in either direction up to `LOAD_LIMIT` weeks each way.
+`PlannerView` keeps a moving week window centered around current week and allows extending in either direction up to `LOAD_LIMIT` weeks each way.
 
 - Week blocks are tracked in `weekRefs` for scroll targeting
 - `IntersectionObserver` updates current week label in sticky controls
@@ -86,7 +88,7 @@ Key properties:
 
 ## Design Tokens
 
-`src/index.css` defines Tailwind theme variables for colors, radii, shadows, and fonts.
+`src/app/globals.css` defines Tailwind theme variables for colors, radii, shadows, and fonts.
 
 - Layout and components reference semantic tokens (`bg-background`, `text-primary`, etc.)
 - This keeps styling consistent while allowing central token updates

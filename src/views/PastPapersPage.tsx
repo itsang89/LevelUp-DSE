@@ -188,7 +188,7 @@ export function PastPapersPage() {
     const hasCutoff = hasSubjectCutoffData(cutoffData, subjectKey, examYear);
     const estimatedLevel =
       values.isDse && hasCutoff
-        ? estimateDseLevel(subjectKey, percentage, cutoffData, examYear)
+        ? (estimateDseLevel(subjectKey, percentage, cutoffData, examYear) ?? values.manualGrade.trim())
         : values.manualGrade.trim();
 
     try {

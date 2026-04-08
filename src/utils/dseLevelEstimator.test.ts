@@ -5,6 +5,7 @@ import {
   getMarksToNextLevel,
   hasSubjectCutoffData,
   resolveCutoffSubjectKey,
+  resolveCutoffYear,
 } from "./dseLevelEstimator";
 
 const cutoffData: CutoffData = {
@@ -47,10 +48,24 @@ describe("resolveCutoffSubjectKey", () => {
 });
 
 describe("hasSubjectCutoffData", () => {
-  it("returns true only for exact subject+year matches", () => {
-    expect(hasSubjectCutoffData(cutoffData, "CHI", 2024)).toBe(true);
-    expect(hasSubjectCutoffData(cutoffData, "CHI", 2023)).toBe(false);
+  it("returns true for exact and nearest-year matches; false for unknown subjects", () => {
+    expect(hasSubjectCutoffData(cutoffData, "CHI", 2024)).toBe(true);  // exact year
+    expect(hasSubjectCutoffData(cutoffData, "CHI", 2023)).toBe(true);  // nearest-year fallback (2024)
     expect(hasSubjectCutoffData(cutoffData, "UNKNOWN", 2024)).toBe(false);
+  });
+});
+
+describe("resolveCutoffYear", () => {
+  it("returns exact match when the year exists", () => {
+    expect(resolveCutoffYear("CHI", 2024, cutoffData)).toEqual({ year: 2024, isExact: true });
+  });
+
+  it("returns nearest year when exact year is missing", () => {
+    expect(resolveCutoffYear("CHI", 2023, cutoffData)).toEqual({ year: 2024, isExact: false });
+  });
+
+  it("returns null for unknown subjects", () => {
+    expect(resolveCutoffYear("UNKNOWN", 2024, cutoffData)).toBeNull();
   });
 });
 
@@ -64,9 +79,9 @@ describe("estimateDseLevel", () => {
     expect(estimateDseLevel("CHI", 62, cutoffData, 2023)).toBe("4");
   });
 
-  it("falls back to generic cutoffs for unknown subjects", () => {
-    expect(estimateDseLevel("UNKNOWN", 75, cutoffData, 2024)).toBe("5");
-    expect(estimateDseLevel("UNKNOWN", 29, cutoffData, 2024)).toBe("U");
+  it("returns null for unknown subjects with no cutoff data", () => {
+    expect(estimateDseLevel("UNKNOWN", 75, cutoffData, 2024)).toBeNull();
+    expect(estimateDseLevel("UNKNOWN", 29, cutoffData, 2024)).toBeNull();
   });
 });
 
