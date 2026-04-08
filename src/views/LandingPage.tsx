@@ -1,4 +1,6 @@
-import { useNavigate } from "react-router-dom";
+'use client'
+
+import { useRouter } from "next/navigation";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PLANNER_SESSIONS } from "../constants";
@@ -429,7 +431,7 @@ function HeroPlannerShowcase() {
 }
 
 export function LandingPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-x-clip font-sans selection:bg-gray-100">
@@ -443,7 +445,7 @@ export function LandingPage() {
           <button
             type="button"
             className="inline-flex items-center gap-2 min-w-0"
-            onClick={() => navigate("/")}
+            onClick={() => router.push("/")}
           >
             <span className="material-symbols-outlined text-xl">school</span>
             <span className="font-display text-xs sm:text-sm font-black tracking-[0.15em] uppercase truncate">
@@ -456,7 +458,7 @@ export function LandingPage() {
             size="sm"
             className="text-[10px] tracking-[0.15em]"
             type="button"
-            onClick={() => navigate("/login")}
+            onClick={() => router.push("/login")}
           >
             Sign In
           </Button>
@@ -484,7 +486,7 @@ export function LandingPage() {
                   size="lg"
                   className="w-full sm:w-auto text-[11px] tracking-[0.18em]"
                   type="button"
-                  onClick={() => navigate("/login", { state: { tab: "signup" } })}
+                  onClick={() => router.push("/login?intent=signup")}
                 >
                   Get Started Free
                 </Button>
@@ -493,7 +495,7 @@ export function LandingPage() {
                   size="lg"
                   className="w-full sm:w-auto text-[11px] tracking-[0.18em]"
                   type="button"
-                  onClick={() => navigate("/login")}
+                  onClick={() => router.push("/login")}
                 >
                   Sign In
                 </Button>
@@ -558,7 +560,7 @@ export function LandingPage() {
                 size="lg"
                 className="w-full sm:w-auto text-[11px] tracking-[0.18em]"
                 type="button"
-                onClick={() => navigate("/login", { state: { tab: "signup" } })}
+                onClick={() => router.push("/login?intent=signup")}
               >
                 Create Free Account
               </Button>
@@ -567,7 +569,7 @@ export function LandingPage() {
                 size="lg"
                 className="w-full sm:w-auto text-[11px] tracking-[0.18em]"
                 type="button"
-                onClick={() => navigate("/login")}
+                onClick={() => router.push("/login")}
               >
                 I Already Have An Account
               </Button>

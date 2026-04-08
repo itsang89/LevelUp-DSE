@@ -9,6 +9,8 @@ const KEYS = {
   guestMode: "guest_mode",
 } as const;
 
+const isClient = typeof window !== "undefined";
+
 function safeParseArray<T>(raw: string | null): T[] {
   if (!raw) {
     return [];
@@ -23,10 +25,12 @@ function safeParseArray<T>(raw: string | null): T[] {
 }
 
 function writeArray<T>(key: string, value: T[]): void {
+  if (!isClient) return;
   localStorage.setItem(key, JSON.stringify(value));
 }
 
 export function getGuestSubjects(): Subject[] {
+  if (!isClient) return [];
   return safeParseArray<Subject>(localStorage.getItem(KEYS.subjects));
 }
 
@@ -35,6 +39,7 @@ export function setGuestSubjects(subjects: Subject[]): void {
 }
 
 export function getGuestPlannerCells(): PlannerCell[] {
+  if (!isClient) return [];
   return safeParseArray<PlannerCell>(localStorage.getItem(KEYS.plannerCells));
 }
 
@@ -43,6 +48,7 @@ export function setGuestPlannerCells(cells: PlannerCell[]): void {
 }
 
 export function getGuestPastPapers(): PastPaperAttempt[] {
+  if (!isClient) return [];
   return safeParseArray<PastPaperAttempt>(localStorage.getItem(KEYS.pastPapers));
 }
 
@@ -51,6 +57,7 @@ export function setGuestPastPapers(attempts: PastPaperAttempt[]): void {
 }
 
 export function getGuestStudyGoals(): StudyGoal[] {
+  if (!isClient) return [];
   return safeParseArray<StudyGoal>(localStorage.getItem(KEYS.studyGoals));
 }
 
@@ -59,10 +66,12 @@ export function setGuestStudyGoals(goals: StudyGoal[]): void {
 }
 
 export function setGuestMode(enabled: boolean): void {
+  if (!isClient) return;
   localStorage.setItem(KEYS.guestMode, enabled ? "true" : "false");
 }
 
 export function isGuestMode(): boolean {
+  if (!isClient) return false;
   return localStorage.getItem(KEYS.guestMode) === "true";
 }
 
@@ -76,6 +85,7 @@ export function hasGuestData(): boolean {
 }
 
 export function clearAllGuestData(): void {
+  if (!isClient) return;
   localStorage.removeItem(KEYS.subjects);
   localStorage.removeItem(KEYS.plannerCells);
   localStorage.removeItem(KEYS.pastPapers);

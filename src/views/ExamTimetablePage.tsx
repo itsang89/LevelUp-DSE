@@ -1,5 +1,7 @@
+'use client'
+
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Subject } from "../types";
+import { useData } from "../contexts/DataContext";
 import {
   MS_PER_DAY,
   formatTimetablePaperLine,
@@ -13,11 +15,8 @@ function getTodayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-interface ExamTimetablePageProps {
-  subjects: Subject[];
-}
-
-export function ExamTimetablePage({ subjects }: ExamTimetablePageProps) {
+export function ExamTimetablePage() {
+  const { subjects } = useData();
   const [todayStr, setTodayStr] = useState(getTodayStr);
 
   // Refresh `today` when the tab regains focus (handles overnight stale date)

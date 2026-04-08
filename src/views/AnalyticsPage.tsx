@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useMemo, useState } from "react";
 import {
   LineChart,
@@ -10,29 +12,17 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import type { PastPaperAttempt, Subject, CutoffData } from "../types";
+import type { PastPaperAttempt } from "../types";
 import { listPastPaperAttempts } from "../lib/api/pastPapersApi";
 import { FALLBACK_SUBJECT_COLOR } from "../constants";
 import { Card } from "../components/ui/Card";
 import { useData } from "../contexts/DataContext";
 
-interface AnalyticsPageProps {
-  userId: string;
-  isGuest?: boolean;
-  subjects: Subject[];
-  cutoffData: CutoffData;
-  usingGenericFallback: boolean;
-}
-
 const LEVEL_LABELS = ["U", "1", "2", "3", "4", "5", "5*", "5**"];
 
-export function AnalyticsPage({
-  userId,
-  isGuest = false,
-  subjects,
-  usingGenericFallback,
-}: AnalyticsPageProps) {
-  const { getGuestPastPapersData } = useData();
+export function AnalyticsPage() {
+  const { userId, isGuest, subjects, usingGenericFallback, getGuestPastPapersData } = useData();
+  const uid = userId ?? "guest";
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [xAxisMode, setXAxisMode] = useState<"date" | "year">("year");
@@ -49,7 +39,7 @@ export function AnalyticsPage({
     }
 
     let isMounted = true;
-    listPastPaperAttempts(userId)
+    listPastPaperAttempts(uid)
       .then((rows) => {
         if (isMounted) {
           setAttempts(rows);

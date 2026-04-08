@@ -1,11 +1,13 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+'use client'
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { getSupabaseClient } from "../lib/supabase";
 import { Modal } from "./ui/Modal";
 import { Input } from "./ui/Input";
 import { Button } from "./ui/Button";
 import { ErrorBanner } from "./ErrorBanner";
-import type { PlannerCell, Subject } from "../types";
 import { startOfWeekSunday, formatWeekLabel, isDateInWeek } from "../utils/dateHelpers";
 import { formatTimetablePaperLine, MS_PER_DAY, getCurrentExamYear, getTimetableForYear } from "../constants";
 import { useConfirm } from "../contexts/ConfirmContext";
@@ -30,25 +32,19 @@ function bottomTabClassName(isActive: boolean): string {
   ].join(" ");
 }
 
-interface LayoutProps {
-  isGuest?: boolean;
-  subjects?: Subject[];
-  cells?: PlannerCell[];
-  warnings?: string[];
-  onDismissWarning?: (warning: string) => void;
-}
-
-export function Layout({
-  isGuest = false,
-  subjects = [],
-  cells = [],
-  warnings = [],
-  onDismissWarning,
-}: LayoutProps) {
-  const navigate = useNavigate();
+export function Layout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const confirm = useConfirm();
   const { addToast } = useToast();
-  const { stopGuestMode } = useData();
+  const {
+    isGuest,
+    subjects,
+    cells,
+    dataWarnings,
+    dismissDataWarning,
+    stopGuestMode,
+  } = useData();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
   const [isNameModalOpen, setIsNameModalOpen] = useState(false);
@@ -56,10 +52,15 @@ export function Layout({
   const [newName, setNewName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
   const [profileWarning, setProfileWarning] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  });
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  // Initialize dark mode from localStorage (client only)
+  useEffect(() => {
+    const stored = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setIsDarkMode(stored === 'dark' || (!stored && prefersDark));
+  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -110,7 +111,7 @@ export function Layout({
   const handleSignOut = async () => {
     if (isGuest) {
       stopGuestMode();
-      navigate("/login");
+      router.push("/login");
       return;
     }
 
@@ -125,10 +126,10 @@ export function Layout({
       try {
         const supabase = getSupabaseClient();
         await supabase.auth.signOut();
-        navigate("/login");
+        router.push("/login");
       } catch (error) {
         console.error("Failed to sign out from Supabase.", error);
-        navigate("/login");
+        router.push("/login");
       }
     }
   };
@@ -216,7 +217,7 @@ export function Layout({
 
         {weeklyProgress.total > 0 && (
           <div
-            onClick={() => navigate("/planner")}
+            onClick={() => router.push("/planner")}
             className="mb-6 px-3 py-3 rounded-2xl bg-surface/50 border border-border-hairline shadow-soft cursor-pointer hover:bg-muted/30 transition-colors group"
           >
             <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -240,40 +241,40 @@ export function Layout({
         )}
 
         <nav className="flex-1 w-full space-y-1">
-          <NavLink 
-            to="/planner" 
-            className={({ isActive }) => navLinkClassName(isActive)}
+          <Link
+            href="/planner"
+            className={navLinkClassName(pathname === '/planner')}
             onClick={() => {
-              if (window.location.pathname === "/planner") {
+              if (pathname === "/planner") {
                 window.dispatchEvent(new CustomEvent("scroll-to-today"));
               }
             }}
           >
             <span className="material-symbols-outlined text-xl">grid_view</span>
             <span className="text-sm font-medium tracking-tight">Dashboard</span>
-          </NavLink>
-          <NavLink to="/plan" className={({ isActive }) => navLinkClassName(isActive)}>
+          </Link>
+          <Link href="/plan" className={navLinkClassName(pathname === '/plan')}>
             <span className="material-symbols-outlined text-xl">flag</span>
             <span className="text-sm font-medium tracking-tight">Plan (Beta)</span>
-          </NavLink>
-          <NavLink to="/past-papers" className={({ isActive }) => navLinkClassName(isActive)}>
+          </Link>
+          <Link href="/past-papers" className={navLinkClassName(pathname === '/past-papers')}>
             <span className="material-symbols-outlined text-xl">analytics</span>
             <span className="text-sm font-medium tracking-tight">Past Papers</span>
-          </NavLink>
-          <NavLink to="/analytics" className={({ isActive }) => navLinkClassName(isActive)}>
+          </Link>
+          <Link href="/analytics" className={navLinkClassName(pathname === '/analytics')}>
             <span className="material-symbols-outlined text-xl">insights</span>
             <span className="text-sm font-medium tracking-tight">Insights</span>
-          </NavLink>
-          <NavLink to="/subjects" className={({ isActive }) => navLinkClassName(isActive)}>
+          </Link>
+          <Link href="/subjects" className={navLinkClassName(pathname === '/subjects')}>
             <span className="material-symbols-outlined text-xl">library_books</span>
             <span className="text-sm font-medium tracking-tight">Subjects</span>
-          </NavLink>
+          </Link>
         </nav>
 
         <div className="mt-auto space-y-4 pt-6">
           {/* Compact Countdown */}
-          <div 
-            onClick={() => navigate('/exam-timetable')}
+          <div
+            onClick={() => router.push('/exam-timetable')}
             className="glass-card rounded-2xl p-4 hairline-border shadow-soft flex items-center justify-between group cursor-pointer hover:bg-muted/30 transition-colors"
           >
             <div className="flex flex-col">
@@ -305,7 +306,7 @@ export function Layout({
           {/* Unified User Profile Footer */}
           <div className="pt-4 border-t border-border-hairline">
             <div className="flex items-center justify-between group px-1">
-              <div 
+              <div
                 className="flex items-center gap-3 cursor-pointer overflow-hidden"
                 onClick={() => {
                   setNewName(userName);
@@ -324,17 +325,17 @@ export function Layout({
               </div>
 
               <div className="relative" ref={popoverRef}>
-                <button 
+                <button
                   onClick={() => setIsUserPopoverOpen(!isUserPopoverOpen)}
                   className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary transition-all ${isUserPopoverOpen ? 'bg-muted/50 text-primary rotate-90' : 'hover:bg-muted/30'}`}
                   title="Options"
                 >
                   <span className="material-symbols-outlined text-xl transition-transform duration-300">chevron_right</span>
                 </button>
-                
+
                 {isUserPopoverOpen && (
                   <div className="absolute bottom-0 left-full ml-4 w-48 p-2 bg-surface border border-border-hairline rounded-2xl shadow-xl animate-in fade-in slide-in-from-left-2 duration-300 z-[100]">
-                    <button 
+                    <button
                       onClick={() => {
                         setIsDarkMode(!isDarkMode);
                         setIsUserPopoverOpen(false);
@@ -348,7 +349,7 @@ export function Layout({
                         {isDarkMode ? 'Light' : 'Dark'}
                       </span>
                     </button>
-                    <button 
+                    <button
                       onClick={handleSignOut}
                       className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground hover:text-dot-red hover:bg-dot-red/5 transition-all group"
                     >
@@ -368,7 +369,7 @@ export function Layout({
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 bg-background/95 backdrop-blur-lg z-50 pt-24 px-10 animate-in fade-in duration-300">
-          <button 
+          <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="absolute top-6 right-6 p-2 text-muted-foreground"
           >
@@ -378,7 +379,7 @@ export function Layout({
             <div
               onClick={() => {
                 setIsMobileMenuOpen(false);
-                navigate("/planner");
+                router.push("/planner");
               }}
               className="mb-6 p-4 rounded-2xl bg-surface/50 border border-border-hairline shadow-soft cursor-pointer hover:bg-muted/30 transition-colors"
             >
@@ -402,42 +403,42 @@ export function Layout({
             </div>
           )}
           <nav className="space-y-1">
-            <NavLink 
-              to="/planner" 
+            <Link
+              href="/planner"
               onClick={() => {
                 setIsMobileMenuOpen(false);
-                if (window.location.pathname === "/planner") {
+                if (pathname === "/planner") {
                   window.dispatchEvent(new CustomEvent("scroll-to-today"));
                 }
-              }} 
-              className={({ isActive }) => navLinkClassName(isActive)}
+              }}
+              className={navLinkClassName(pathname === '/planner')}
             >
               <span className="material-symbols-outlined text-2xl">grid_view</span>
               <span className="font-medium">Dashboard</span>
-            </NavLink>
-            <NavLink to="/plan" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive)}>
+            </Link>
+            <Link href="/plan" onClick={() => setIsMobileMenuOpen(false)} className={navLinkClassName(pathname === '/plan')}>
               <span className="material-symbols-outlined text-2xl">flag</span>
               <span className="font-medium">Plan (Beta)</span>
-            </NavLink>
-            <NavLink to="/past-papers" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive)}>
+            </Link>
+            <Link href="/past-papers" onClick={() => setIsMobileMenuOpen(false)} className={navLinkClassName(pathname === '/past-papers')}>
               <span className="material-symbols-outlined text-2xl">analytics</span>
               <span className="font-medium">Past Papers</span>
-            </NavLink>
-            <NavLink to="/analytics" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive)}>
+            </Link>
+            <Link href="/analytics" onClick={() => setIsMobileMenuOpen(false)} className={navLinkClassName(pathname === '/analytics')}>
               <span className="material-symbols-outlined text-2xl">insights</span>
               <span className="font-medium">Insights</span>
-            </NavLink>
-            <NavLink to="/subjects" onClick={() => setIsMobileMenuOpen(false)} className={({ isActive }) => navLinkClassName(isActive)}>
+            </Link>
+            <Link href="/subjects" onClick={() => setIsMobileMenuOpen(false)} className={navLinkClassName(pathname === '/subjects')}>
               <span className="material-symbols-outlined text-2xl">library_books</span>
               <span className="font-medium">Subjects</span>
-            </NavLink>
+            </Link>
           </nav>
 
           <div className="mt-auto space-y-6 pb-12">
-            <div 
+            <div
               onClick={() => {
                 setIsMobileMenuOpen(false);
-                navigate('/exam-timetable');
+                router.push('/exam-timetable');
               }}
               className="glass-card rounded-2xl p-6 hairline-border shadow-soft flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors"
             >
@@ -479,7 +480,7 @@ export function Layout({
                   </span>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={handleSignOut}
                 className="w-10 h-10 flex items-center justify-center rounded-full text-dot-red hover:bg-dot-red/5 transition-all"
               >
@@ -492,7 +493,7 @@ export function Layout({
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden w-full">
-        {/* Mobile Nav Header — static in flex column so scroll area starts below it */}
+        {/* Mobile Nav Header */}
         <div className="lg:hidden h-14 shrink-0 border-b border-border-hairline bg-sidebar/80 backdrop-blur-md z-40 flex items-center justify-between px-6">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
@@ -515,7 +516,7 @@ export function Layout({
                 You are using guest mode and data is stored only on this device.{" "}
                 <button
                   type="button"
-                  onClick={() => navigate("/login?intent=signup")}
+                  onClick={() => router.push("/login?intent=signup")}
                   className="font-bold underline underline-offset-2"
                 >
                   Create a free account
@@ -523,48 +524,48 @@ export function Layout({
                 to sync and back up your data.
               </div>
             ) : null}
-            {warnings.map((warning) => (
+            {dataWarnings.map((warning) => (
               <ErrorBanner
                 key={warning}
                 message={warning}
-                onDismiss={onDismissWarning ? () => onDismissWarning(warning) : undefined}
+                onDismiss={() => dismissDataWarning(warning)}
               />
             ))}
-            <Outlet />
+            {children}
           </div>
         </div>
       </main>
 
       {/* Mobile Bottom Tab Bar */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-sidebar/95 backdrop-blur-md border-t border-border-hairline z-40 flex items-center px-2 safe-bottom">
-        <NavLink
-          to="/planner"
-          className={({ isActive }) => bottomTabClassName(isActive)}
+        <Link
+          href="/planner"
+          className={bottomTabClassName(pathname === '/planner')}
           onClick={() => {
-            if (window.location.pathname === "/planner") {
+            if (pathname === "/planner") {
               window.dispatchEvent(new CustomEvent("scroll-to-today"));
             }
           }}
         >
           <span className="material-symbols-outlined text-xl">grid_view</span>
           <span className="text-[9px] font-bold tracking-wide">Home</span>
-        </NavLink>
-        <NavLink to="/plan" className={({ isActive }) => bottomTabClassName(isActive)}>
+        </Link>
+        <Link href="/plan" className={bottomTabClassName(pathname === '/plan')}>
           <span className="material-symbols-outlined text-xl">flag</span>
           <span className="text-[9px] font-bold tracking-wide">Plan</span>
-        </NavLink>
-        <NavLink to="/past-papers" className={({ isActive }) => bottomTabClassName(isActive)}>
+        </Link>
+        <Link href="/past-papers" className={bottomTabClassName(pathname === '/past-papers')}>
           <span className="material-symbols-outlined text-xl">analytics</span>
           <span className="text-[9px] font-bold tracking-wide">Papers</span>
-        </NavLink>
-        <NavLink to="/analytics" className={({ isActive }) => bottomTabClassName(isActive)}>
+        </Link>
+        <Link href="/analytics" className={bottomTabClassName(pathname === '/analytics')}>
           <span className="material-symbols-outlined text-xl">insights</span>
           <span className="text-[9px] font-bold tracking-wide">Insights</span>
-        </NavLink>
-        <NavLink to="/subjects" className={({ isActive }) => bottomTabClassName(isActive)}>
+        </Link>
+        <Link href="/subjects" className={bottomTabClassName(pathname === '/subjects')}>
           <span className="material-symbols-outlined text-xl">library_books</span>
           <span className="text-[9px] font-bold tracking-wide">Subjects</span>
-        </NavLink>
+        </Link>
       </nav>
 
       <Modal

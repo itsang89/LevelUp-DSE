@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useMemo, useState } from "react";
 import { 
   PieChart, 
@@ -6,7 +8,7 @@ import {
   ResponsiveContainer, 
   Tooltip as RechartsTooltip 
 } from "recharts";
-import type { Subject, PlannerCell, CutoffData, PastPaperAttempt } from "../types";
+import type { Subject, PastPaperAttempt } from "../types";
 import { MS_PER_DAY, getCurrentExamYear, getTimetableForYear } from "../constants";
 import { 
   formatIsoDate, 
@@ -26,13 +28,6 @@ import { listPastPaperAttempts } from "../lib/api/pastPapersApi";
 import { estimateDseLevel } from "../utils/dseLevelEstimator";
 import { useData } from "../contexts/DataContext";
 
-interface PlanPageProps {
-  userId: string;
-  isGuest?: boolean;
-  subjects: Subject[];
-  cells: PlannerCell[];
-  cutoffData: CutoffData;
-}
 
 interface DonutTooltipPayload {
   payload: {
@@ -74,13 +69,19 @@ function DonutTooltip({
   return null;
 }
 
-export function PlanPage({ userId, isGuest = false, subjects, cells, cutoffData }: PlanPageProps) {
+export function PlanPage() {
   const {
+    userId,
+    isGuest,
+    subjects,
+    cells,
+    cutoffData,
     getGuestPastPapersData,
     getGuestStudyGoalsData,
     persistGuestStudyGoals,
   } = useData();
-  const targetLevelsStorageKey = isGuest ? "plan-targets-guest" : `plan-targets-${userId}`;
+  const uid = userId ?? "guest";
+  const targetLevelsStorageKey = isGuest ? "plan-targets-guest" : `plan-targets-${uid}`;
   const [goals, setGoals] = useState<StudyGoal[]>([]);
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false);
@@ -111,8 +112,8 @@ export function PlanPage({ userId, isGuest = false, subjects, cells, cutoffData 
 
     let isMounted = true;
     Promise.all([
-      listStudyGoals(userId),
-      listPastPaperAttempts(userId)
+      listStudyGoals(uid),
+      listPastPaperAttempts(uid)
     ]).then(([goalsData, attemptsData]) => {
       if (isMounted) {
         setGoals(goalsData);
@@ -145,7 +146,7 @@ export function PlanPage({ userId, isGuest = false, subjects, cells, cutoffData 
             subjectId,
             weeklyTarget: target,
           }
-        : await upsertStudyGoal(userId, subjectId, target);
+        : await upsertStudyGoal(uid, subjectId, target);
       setGoals(prev => {
         const idx = prev.findIndex(g => g.subjectId === subjectId);
         if (idx >= 0) {
