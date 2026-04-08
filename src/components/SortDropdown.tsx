@@ -37,6 +37,9 @@ export function SortDropdown({ sortKey, setSortKey, sortDirection, setSortDirect
         size="sm"
         className="h-9 px-3 rounded-full text-[10px] font-black uppercase tracking-widest gap-2 text-muted-foreground hover:text-primary transition-all duration-300"
         onClick={() => setIsOpen((prev) => !prev)}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-controls="sort-dropdown-menu"
       >
         <span className="material-symbols-outlined text-[18px]">sort</span>
         <span className="hidden sm:inline-block">{activeOption?.label}</span>
@@ -46,7 +49,7 @@ export function SortDropdown({ sortKey, setSortKey, sortDirection, setSortDirect
       </Button>
       
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 bg-surface/95 backdrop-blur-md rounded-2xl shadow-zen border border-border-hairline p-1.5 z-40 min-w-[140px] animate-in fade-in zoom-in-95 duration-200">
+        <div id="sort-dropdown-menu" role="menu" className="absolute right-0 top-full mt-2 bg-surface/95 backdrop-blur-md rounded-2xl shadow-zen border border-border-hairline p-1.5 z-40 min-w-[140px] animate-in fade-in zoom-in-95 duration-200">
           <div className="px-3 py-2 text-[10px] md:text-[8px] font-black text-muted-foreground uppercase tracking-widest opacity-40">Sort By</div>
           {options.map((option) => (
             <button

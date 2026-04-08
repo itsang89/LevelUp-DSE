@@ -28,12 +28,15 @@ export function ExportDropdown({ onExportCsv, onExportJson, label = "Export" }: 
         size="sm"
         className="h-9 px-3 rounded-full text-[10px] font-black uppercase tracking-widest gap-2 text-muted-foreground hover:text-primary transition-all duration-300"
         onClick={() => setIsOpen((prev) => !prev)}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-controls="export-dropdown-menu"
       >
         <span className="material-symbols-outlined text-[18px]">download</span>
         <span className="hidden sm:inline-block">{label}</span>
       </Button>
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 bg-surface/95 backdrop-blur-md rounded-2xl shadow-zen border border-border-hairline p-1.5 z-40 min-w-[150px] animate-in fade-in zoom-in-95 duration-200">
+        <div id="export-dropdown-menu" role="menu" className="absolute right-0 top-full mt-2 bg-surface/95 backdrop-blur-md rounded-2xl shadow-zen border border-border-hairline p-1.5 z-40 min-w-[150px] animate-in fade-in zoom-in-95 duration-200">
           <div className="px-3 py-2 text-[10px] md:text-[8px] font-black text-muted-foreground uppercase tracking-widest opacity-40 border-b border-border-hairline/50 mb-1">
             Data Export
           </div>

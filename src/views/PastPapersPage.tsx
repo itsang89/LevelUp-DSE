@@ -63,15 +63,18 @@ export function PastPapersPage() {
   const [customToDate, setCustomToDate] = useState<string>("");
   const [dataError, setDataError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isGuest) {
       setAttempts(getGuestPastPapersData());
       setDataError(null);
+      setIsLoading(false);
       return;
     }
 
     let isMounted = true;
+    setIsLoading(true);
     listPastPaperAttempts(uid)
       .then((rows) => {
         if (isMounted) setAttempts(rows);
@@ -82,6 +85,9 @@ export function PastPapersPage() {
             requestError instanceof Error ? requestError.message : "Failed to load past paper history."
           );
         }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
       });
 
     return () => {
@@ -288,6 +294,26 @@ export function PastPapersPage() {
     setAddFormPrefill(null);
     setEditingAttempt(attempt);
     setIsModalOpen(true);
+  }
+
+  if (isLoading) {
+    return (
+      <section className="space-y-4 pt-2 lg:pt-10 pb-20" aria-busy="true" aria-label="Loading past paper history">
+        <div className="animate-pulse space-y-4">
+          <div className="h-10 w-56 rounded-2xl bg-muted" />
+          <div className="flex gap-2 flex-wrap">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-8 w-20 rounded-full bg-muted" />
+            ))}
+          </div>
+          <div className="space-y-3 pt-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-14 w-full rounded-xl bg-muted" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (

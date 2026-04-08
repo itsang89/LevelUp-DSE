@@ -269,6 +269,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="material-symbols-outlined text-xl">library_books</span>
             <span className="text-sm font-medium tracking-tight">Subjects</span>
           </Link>
+          <Link href="/exam-timetable" className={navLinkClassName(pathname === '/exam-timetable')}>
+            <span className="material-symbols-outlined text-xl">event</span>
+            <span className="text-sm font-medium tracking-tight">Timetable</span>
+          </Link>
         </nav>
 
         <div className="mt-auto space-y-4 pt-6">
@@ -431,6 +435,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/subjects" onClick={() => setIsMobileMenuOpen(false)} className={navLinkClassName(pathname === '/subjects')}>
               <span className="material-symbols-outlined text-2xl">library_books</span>
               <span className="font-medium">Subjects</span>
+            </Link>
+            <Link href="/exam-timetable" onClick={() => setIsMobileMenuOpen(false)} className={navLinkClassName(pathname === '/exam-timetable')}>
+              <span className="material-symbols-outlined text-2xl">event</span>
+              <span className="font-medium">Timetable</span>
             </Link>
           </nav>
 
