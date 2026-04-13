@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -74,6 +75,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [cutoffData, setCutoffData] = useState<CutoffData>({});
   const [usingGenericFallback, setUsingGenericFallback] = useState<boolean>(false);
   const [guestEnabled, setGuestEnabled] = useState<boolean>(() => isGuestMode());
+  const migrationInProgressRef = useRef(false);
 
   const isGuest = guestEnabled && !session;
   const userId = session?.user.id ?? (isGuest ? "guest" : null);
@@ -165,6 +167,53 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const migrateGuestDataToAccount = useCallback(async (targetUserId: string): Promise<void> => {
+    if (migrationInProgressRef.current) return;
+    migrationInProgressRef.current = true;
+
+    const guestSubjects = getGuestSubjects();
+    const guestCells = getGuestPlannerCells();
+    const guestAttempts = getGuestPastPapers();
+    const guestGoals = getGuestStudyGoals();
+
+    if (guestSubjects.length > 0) {
+      await seedDefaultSubjects(targetUserId, guestSubjects);
+    }
+
+    if (guestCells.length > 0) {
+      await Promise.all(
+        guestCells
+          .filter((cell) => Boolean(cell.task))
+          .map((cell) => upsertPlannerCell(targetUserId, cell.date, cell.sessionId, cell.task!))
+      );
+    }
+
+    if (guestAttempts.length > 0) {
+      await Promise.all(
+        guestAttempts.map(async (attempt) => {
+          try {
+            await createPastPaperAttempt(targetUserId, attempt);
+          } catch {
+            await updatePastPaperAttempt(targetUserId, attempt);
+          }
+        })
+      );
+    }
+
+    if (guestGoals.length > 0) {
+      await Promise.all(
+        guestGoals.map((goal) => upsertStudyGoal(targetUserId, goal.subjectId, goal.weeklyTarget))
+      );
+    }
+
+    clearAllGuestData();
+    setGuestEnabled(false);
+    setSubjects(await listSubjects(targetUserId));
+    setCells(await listPlannerCells(targetUserId));
+    setDataWarnings([]);
+    migrationInProgressRef.current = false;
+  }, []);
+
   useEffect(() => {
     if (isGuest) {
       const guestSubjects = getGuestSubjects();
@@ -188,6 +237,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const currentUserId = session.user.id;
     let isMounted = true;
+
+    // Auto-migrate guest data when a session is established via email-confirmation
+    // link (bypasses LoginPage's handlePostAuth). The ref guard prevents a second
+    // migration if LoginPage already started one for immediate-session signups.
+    if (hasGuestData()) {
+      migrateGuestDataToAccount(currentUserId).catch((error) => {
+        if (isMounted) {
+          addDataWarning(
+            error instanceof Error ? error.message : "Guest data migration failed."
+          );
+        }
+      });
+      return () => {
+        isMounted = false;
+      };
+    }
 
     async function loadRemoteSubjects(): Promise<void> {
       setSubjectsLoading(true);
@@ -230,7 +295,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return () => {
       isMounted = false;
     };
-  }, [session, isGuest, addDataWarning]);
+  }, [session, isGuest, addDataWarning, migrateGuestDataToAccount]);
 
   useEffect(() => {
     if (isGuest) {
@@ -243,49 +308,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setGuestPlannerCells(cells);
     }
   }, [isGuest, cells]);
-
-  const migrateGuestDataToAccount = useCallback(async (targetUserId: string): Promise<void> => {
-    const guestSubjects = getGuestSubjects();
-    const guestCells = getGuestPlannerCells();
-    const guestAttempts = getGuestPastPapers();
-    const guestGoals = getGuestStudyGoals();
-
-    if (guestSubjects.length > 0) {
-      await seedDefaultSubjects(targetUserId, guestSubjects);
-    }
-
-    if (guestCells.length > 0) {
-      await Promise.all(
-        guestCells
-          .filter((cell) => Boolean(cell.task))
-          .map((cell) => upsertPlannerCell(targetUserId, cell.date, cell.sessionId, cell.task!))
-      );
-    }
-
-    if (guestAttempts.length > 0) {
-      await Promise.all(
-        guestAttempts.map(async (attempt) => {
-          try {
-            await createPastPaperAttempt(targetUserId, attempt);
-          } catch {
-            await updatePastPaperAttempt(targetUserId, attempt);
-          }
-        })
-      );
-    }
-
-    if (guestGoals.length > 0) {
-      await Promise.all(
-        guestGoals.map((goal) => upsertStudyGoal(targetUserId, goal.subjectId, goal.weeklyTarget))
-      );
-    }
-
-    clearAllGuestData();
-    setGuestEnabled(false);
-    setSubjects(await listSubjects(targetUserId));
-    setCells(await listPlannerCells(targetUserId));
-    setDataWarnings([]);
-  }, []);
 
   const value = useMemo<DataContextValue>(
     () => ({
