@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
 import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { MS_PER_WEEK, PLANNER_SESSIONS } from "../constants";
-import type { PlannerTask } from "../types";
+import type { PlannerTask, Subject } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
 import { PlannerGrid } from "../components/PlannerGrid";
 import { ExportDropdown } from "../components/ExportDropdown";
@@ -11,7 +11,9 @@ import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import { OnboardingStreamModal } from "../components/OnboardingStreamModal";
 import { deletePlannerCell, upsertPlannerCell } from "../lib/api/plannerApi";
+import { createSubject } from "../lib/api/subjectsApi";
 import {
   exportPlannerCsv,
   exportPlannerJson,
@@ -19,6 +21,8 @@ import {
   getExportFilename,
 } from "../utils/exportUtils";
 import { useData } from "../contexts/DataContext";
+
+const CORE_CODES = ["CHI", "ENG", "MATH", "C&SD"];
 
 interface CellEditorState {
   date: string;
@@ -32,7 +36,7 @@ function createTaskId(): string {
 const LOAD_LIMIT = 12; // Maximum weeks in each direction before "Load More" button
 
 export function PlannerPage() {
-  const { userId, isGuest, subjects, cells, setCells } = useData();
+  const { userId, isGuest, subjects, subjectsLoading, cells, setCells, setSubjects } = useData();
   const uid = userId ?? "guest";
   const initialWeek = useMemo(() => startOfWeekSunday(new Date()), []);
   const [weeks, setWeeks] = useState<Date[]>([initialWeek]);
@@ -41,6 +45,28 @@ export function PlannerPage() {
   const weekRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const hasScrolledToCurrentWeekRef = useRef(false);
   const scrollAdjustmentRef = useRef<{ oldScrollHeight: number; oldScrollTop: number } | null>(null);
+
+  // Onboarding: show stream picker when user has no elective subjects
+  const hasElectives = useMemo(
+    () => subjects.some((s) => !CORE_CODES.includes(s.shortCode)),
+    [subjects]
+  );
+  const showOnboarding = !subjectsLoading && !hasElectives;
+
+  // Planner tip: show when current week has no sessions
+  const isCurrentWeekEmpty = useMemo(() => {
+    const weekDays = getWeekDays(initialWeek);
+    const weekDates = new Set(weekDays.map((d) => formatIsoDate(d)));
+    const weekCells = cells.filter((c) => weekDates.has(c.date));
+    return weekCells.every((c) => c.task === null);
+  }, [cells, initialWeek]);
+
+  async function handleAddOnboardingSubjects(newSubjects: Subject[]): Promise<void> {
+    if (!isGuest) {
+      await Promise.all(newSubjects.map((s) => createSubject(uid, s)));
+    }
+    setSubjects((prev) => [...prev, ...newSubjects]);
+  }
 
   const [activeCell, setActiveCell] = useState<CellEditorState | null>(null);
   const [subjectId, setSubjectId] = useState<string>("");
@@ -514,6 +540,12 @@ export function PlannerPage() {
                   </h4>
                   <div className="h-px flex-1 bg-border-hairline opacity-50" />
                 </div>
+                {formatIsoDate(ws) === formatIsoDate(initialWeek) && isCurrentWeekEmpty && (
+                  <div className="flex items-center gap-3 px-4 py-3 mb-4 rounded-2xl border border-border-hairline bg-surface/60 text-sm text-muted-foreground">
+                    <span className="material-symbols-outlined text-lg shrink-0 opacity-60">lightbulb</span>
+                    <span className="font-light">Tap any cell to plan a study session. Drag to reschedule. Mark done when finished.</span>
+                  </div>
+                )}
                 <PlannerGrid
                   weekDays={getWeekDays(ws)}
                   sessions={PLANNER_SESSIONS}
@@ -550,6 +582,13 @@ export function PlannerPage() {
           </div>
         )}
       </div>
+
+      <OnboardingStreamModal
+        isOpen={showOnboarding}
+        onClose={() => {}}
+        existingSubjectCodes={subjects.map((s) => s.shortCode)}
+        onAddSubjects={handleAddOnboardingSubjects}
+      />
 
       <Modal
         isOpen={!!activeCell}
