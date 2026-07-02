@@ -9,7 +9,7 @@ import { Input } from "./ui/Input";
 import { Button } from "./ui/Button";
 import { ErrorBanner } from "./ErrorBanner";
 import { startOfWeekSunday, formatWeekLabel, isDateInWeek } from "../utils/dateHelpers";
-import { formatTimetablePaperLine, MS_PER_DAY, getTimetableForYear } from "../constants";
+import { formatTimetablePaperLine, MS_PER_DAY, getActiveTimetable } from "../constants";
 import { useConfirm } from "../contexts/ConfirmContext";
 import { useToast } from "../contexts/ToastContext";
 import { useData } from "../contexts/DataContext";
@@ -165,8 +165,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const nextExam = useMemo(() => {
-    const timetable = getTimetableForYear(new Date().getFullYear());
-    if (!timetable) return null;
+    const active = getActiveTimetable();
+    if (!active) return null;
+    const timetable = active.timetable;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

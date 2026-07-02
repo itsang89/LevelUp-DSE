@@ -64,6 +64,67 @@ const RAW_DSE_TIMETABLES: Record<number, TimetableEntry[]> = {
     { date: "2026-05-05", subjectCode: "MUSIC", paper: "Paper 1A", time: "8:30–10:00" },
     { date: "2026-05-05", subjectCode: "MUSIC", paper: "Paper 1B", time: "10:45–12:15" },
   ],
+  2027: [
+    { date: "2027-04-06", subjectCode: "VA", paper: "Paper 1 & 2", time: "8:30–12:30" },
+    { date: "2027-04-07", subjectCode: "CHI-LIT", paper: "Paper 1", time: "8:30–10:30" },
+    { date: "2027-04-07", subjectCode: "CHI-LIT", paper: "Paper 2", time: "11:15–13:15" },
+    { date: "2027-04-07", subjectCode: "TL", paper: "Paper 1", time: "8:30–10:00" },
+    { date: "2027-04-07", subjectCode: "TL", paper: "Paper 2", time: "10:45–12:45" },
+    { date: "2027-04-08", subjectCode: "CHI", paper: "Paper 1", time: "8:30–10:00" },
+    { date: "2027-04-08", subjectCode: "CHI", paper: "Paper 2", time: "10:45–13:00" },
+    { date: "2027-04-09", subjectCode: "ENG", paper: "Paper 1", time: "8:30–10:00" },
+    { date: "2027-04-09", subjectCode: "ENG", paper: "Paper 2", time: "11:00–13:00" },
+    { date: "2027-04-10", subjectCode: "ENG", paper: "Paper 3", time: "9:15–12:10" },
+    { date: "2027-04-12", subjectCode: "MATH", paper: "Paper 1", time: "8:30–10:45" },
+    { date: "2027-04-12", subjectCode: "MATH", paper: "Paper 2", time: "11:30–12:45" },
+    { date: "2027-04-13", subjectCode: "C&SD", paper: "Paper 1", time: "8:30–10:30" },
+    { date: "2027-04-14", subjectCode: "HMSC", paper: "Paper 1", time: "8:30–10:30" },
+    { date: "2027-04-14", subjectCode: "HMSC", paper: "Paper 2", time: "11:15–13:00" },
+    { date: "2027-04-15", subjectCode: "CHEM", paper: "Paper 1", time: "8:30–11:00" },
+    { date: "2027-04-15", subjectCode: "CHEM", paper: "Paper 2", time: "11:45–12:45" },
+    { date: "2027-04-16", subjectCode: "GEOG", paper: "Paper 1", time: "8:30–11:15" },
+    { date: "2027-04-16", subjectCode: "GEOG", paper: "Paper 2", time: "12:00–13:15" },
+    { date: "2027-04-17", subjectCode: "ICT", paper: "Paper 1", time: "8:30–10:30" },
+    { date: "2027-04-17", subjectCode: "ICT", paper: "Paper 2", time: "11:15–12:45" },
+    { date: "2027-04-19", subjectCode: "BIO", paper: "Paper 1", time: "8:30–11:00" },
+    { date: "2027-04-19", subjectCode: "BIO", paper: "Paper 2", time: "11:45–12:45" },
+    { date: "2027-04-20", subjectCode: "DAT", paper: "Paper 1", time: "8:30–10:30" },
+    { date: "2027-04-20", subjectCode: "DAT", paper: "Paper 2", time: "11:15–13:15" },
+    { date: "2027-04-20", subjectCode: "ENG-LIT", paper: "Paper 1", time: "8:30–11:30" },
+    { date: "2027-04-20", subjectCode: "ENG-LIT", paper: "Paper 2", time: "13:30–15:30" },
+    { date: "2027-04-21", subjectCode: "PHY", paper: "Paper 1", time: "8:30–11:00" },
+    { date: "2027-04-21", subjectCode: "PHY", paper: "Paper 2", time: "11:45–12:45" },
+    { date: "2027-04-22", subjectCode: "ECON", paper: "Paper 1", time: "8:30–9:30" },
+    { date: "2027-04-22", subjectCode: "ECON", paper: "Paper 2", time: "10:15–12:45" },
+    { date: "2027-04-23", subjectCode: "M1", paper: "Module 1", time: "8:30–11:00" },
+    { date: "2027-04-23", subjectCode: "M2", paper: "Module 2", time: "8:30–11:00" },
+    { date: "2027-04-24", subjectCode: "CHI-HIST", paper: "Paper 1", time: "8:30–10:45" },
+    { date: "2027-04-24", subjectCode: "CHI-HIST", paper: "Paper 2", time: "11:30–12:50" },
+    { date: "2027-04-26", subjectCode: "BAFS", paper: "Paper 1", time: "8:30–9:30" },
+    { date: "2027-04-26", subjectCode: "BAFS", paper: "Paper 2", time: "10:15–12:45" },
+    { date: "2027-04-27", subjectCode: "HIST", paper: "Paper 1", time: "8:30–10:30" },
+    { date: "2027-04-27", subjectCode: "HIST", paper: "Paper 2", time: "11:15–12:45" },
+    { date: "2027-04-28", subjectCode: "THS", paper: "Paper 1", time: "8:30–10:00" },
+    { date: "2027-04-28", subjectCode: "THS", paper: "Paper 2", time: "10:45–12:30" },
+    { date: "2027-04-29", subjectCode: "ENG-LIT", paper: "Paper 1", time: "8:30–11:30" },
+    { date: "2027-04-29", subjectCode: "ENG-LIT", paper: "Paper 2", time: "13:30–15:30" },
+    { date: "2027-04-29", subjectCode: "TL", paper: "Paper 1", time: "8:30–10:00" },
+    { date: "2027-04-29", subjectCode: "TL", paper: "Paper 2", time: "10:45–12:45" },
+    { date: "2027-04-29", subjectCode: "PE", paper: "Paper 1", time: "8:30–10:30" },
+    { date: "2027-04-29", subjectCode: "PE", paper: "Paper 2", time: "11:15–12:45" },
+    { date: "2027-04-29", subjectCode: "MUSIC", paper: "Paper 1A", time: "8:30–10:00" },
+    { date: "2027-04-29", subjectCode: "MUSIC", paper: "Paper 1B", time: "10:45–12:15" },
+    { date: "2027-04-30", subjectCode: "ERS", paper: "Paper 1", time: "8:30–10:15" },
+    { date: "2027-04-30", subjectCode: "ERS", paper: "Paper 2", time: "11:00–12:45" },
+    { date: "2027-05-03", subjectCode: "ENG-LIT", paper: "Paper 1", time: "8:30–11:30" },
+    { date: "2027-05-03", subjectCode: "ENG-LIT", paper: "Paper 2", time: "13:30–15:30" },
+    { date: "2027-05-03", subjectCode: "TL", paper: "Paper 1", time: "8:30–10:00" },
+    { date: "2027-05-03", subjectCode: "TL", paper: "Paper 2", time: "10:45–12:45" },
+    { date: "2027-05-03", subjectCode: "PE", paper: "Paper 1", time: "8:30–10:30" },
+    { date: "2027-05-03", subjectCode: "PE", paper: "Paper 2", time: "11:15–12:45" },
+    { date: "2027-05-03", subjectCode: "MUSIC", paper: "Paper 1A", time: "8:30–10:00" },
+    { date: "2027-05-03", subjectCode: "MUSIC", paper: "Paper 1B", time: "10:45–12:15" },
+  ],
 };
 
 function enrichAllTimetables(raw: Record<number, TimetableEntry[]>): Record<number, TimetableEntry[]> {
@@ -82,6 +143,28 @@ export const HKEAA_TIMETABLE_URL = "https://www.hkeaa.edu.hk/en/hkdse/admin/exam
 /** Returns timetable for the given year, or null if not available. */
 export function getTimetableForYear(year: number): TimetableEntry[] | null {
   return DSE_TIMETABLES[year] ?? null;
+}
+
+/**
+ * Returns the timetable for the next exam sitting — current calendar year if it has
+ * any upcoming papers, otherwise the next year with a timetable. Null only if no
+ * future timetable exists at all.
+ */
+export function getActiveTimetable(now: Date = new Date()): { timetable: TimetableEntry[]; year: number } | null {
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
+
+  const current = DSE_TIMETABLES[now.getFullYear()];
+  if (current?.some((e) => new Date(`${e.date}T00:00:00`).getTime() >= todayMs)) {
+    return { timetable: current, year: now.getFullYear() };
+  }
+
+  const nextYear = Object.keys(DSE_TIMETABLES)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .find((y) => y > now.getFullYear());
+  return nextYear === undefined ? null : { timetable: DSE_TIMETABLES[nextYear], year: nextYear };
 }
 
 export const PLANNER_SESSIONS: PlannerSessionTemplate[] = [

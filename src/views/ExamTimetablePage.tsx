@@ -5,7 +5,7 @@ import { useData } from "../contexts/DataContext";
 import {
   MS_PER_DAY,
   formatTimetablePaperLine,
-  getTimetableForYear,
+  getActiveTimetable,
   HKEAA_TIMETABLE_URL,
 } from "../constants";
 import { formatIsoDate } from "../utils/dateHelpers";
@@ -26,8 +26,9 @@ export function ExamTimetablePage() {
 
   const { allExams, nextExam, nextExamPerSubject, stats, timetableYear, hasTimetable } = useMemo(() => {
     const today = new Date(`${todayStr}T00:00:00`);
-    const examYear = new Date().getFullYear();
-    const timetable = getTimetableForYear(examYear);
+    const active = getActiveTimetable();
+    const examYear = active?.year ?? new Date().getFullYear();
+    const timetable = active?.timetable ?? null;
 
     if (!timetable) {
       return {
