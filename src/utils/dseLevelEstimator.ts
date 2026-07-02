@@ -10,16 +10,6 @@ const LEVEL_ORDER: DseLevel[] = ["5**", "5*", "5", "4", "3", "2", "1"];
 
 const LEVEL_COLUMNS = ["5**", "5*", "5", "4", "3", "2"] as const;
 
-const GENERIC_CUTOFFS: CutoffRow[] = [
-  { level: "5**", minimumPercentage: 90 },
-  { level: "5*", minimumPercentage: 80 },
-  { level: "5", minimumPercentage: 70 },
-  { level: "4", minimumPercentage: 60 },
-  { level: "3", minimumPercentage: 50 },
-  { level: "2", minimumPercentage: 40 },
-  { level: "1", minimumPercentage: 30 },
-];
-
 /** Maps HKDSE section number to subject short code */
 const SECTION_TO_CODE: Record<number, string> = {
   1: "CHI",
@@ -366,10 +356,6 @@ export function estimateDseLevel(
     if (percentage >= row.minimumPercentage) return row.level;
   }
   return "U";
-}
-
-export function getGenericCutoffs(): CutoffRow[] {
-  return GENERIC_CUTOFFS;
 }
 
 /**

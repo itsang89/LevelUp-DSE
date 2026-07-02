@@ -167,12 +167,3 @@ export async function deleteSubjectWithCascade(userId: string, subjectId: string
     throw error;
   }
 }
-
-export async function deleteSubject(userId: string, subjectId: string): Promise<void> {
-  const supabase = getSupabaseClient();
-  const { error } = await supabase.from("subjects").delete().eq("user_id", userId).eq("id", subjectId);
-
-  if (error) {
-    throw error;
-  }
-}
