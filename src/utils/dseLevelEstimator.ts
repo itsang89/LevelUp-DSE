@@ -76,18 +76,22 @@ function getElectiveCode(headingText: string): string | null {
 }
 
 /**
- * Parses HKDSE year-based cutoff tables.
- * Format: ## N. Subject Name | table with 年份 | 滿分 | 5** | 5* | 5 | 4 | 3 | 2
+ * Parses HKDSE cutoff tables from main or elective markdown.
+ * Main headings start with `## N.` (N = section number); elective headings
+ * start with `### Subject`. Both produce the same year-based shape.
  */
-export function parseHkdseCutoffMarkdown(markdown: string): CutoffDataByYear {
+function parseHkdseMarkdown(
+  markdown: string,
+  headingPattern: RegExp,
+  resolveCode: (heading: string) => string | null,
+): CutoffDataByYear {
   const data: CutoffDataByYear = {};
   let currentCode: string | null = null;
 
   for (const line of markdown.split("\n")) {
-    const headingMatch = line.match(/^##\s+(\d+)\.\s+.+/);
+    const headingMatch = line.match(headingPattern);
     if (headingMatch) {
-      const sectionNum = Number(headingMatch[1]);
-      currentCode = SECTION_TO_CODE[sectionNum] ?? null;
+      currentCode = resolveCode(headingMatch[1] ?? headingMatch[0]);
       if (currentCode && !data[currentCode]) {
         data[currentCode] = {};
       }
@@ -122,50 +126,20 @@ export function parseHkdseCutoffMarkdown(markdown: string): CutoffDataByYear {
   return data;
 }
 
-/**
- * Parses HKDSE elective cutoff tables.
- * Format: ### Subject Name | table with Year | Max | 5** | 5* | 5 | 4 | 3 | 2
- */
+export function parseHkdseCutoffMarkdown(markdown: string): CutoffDataByYear {
+  return parseHkdseMarkdown(
+    markdown,
+    /^##\s+(\d+)\.\s+.+/,
+    (heading) => SECTION_TO_CODE[Number(heading)] ?? null,
+  );
+}
+
 export function parseHkdseElectiveCutoffMarkdown(markdown: string): CutoffDataByYear {
-  const data: CutoffDataByYear = {};
-  let currentCode: string | null = null;
-
-  for (const line of markdown.split("\n")) {
-    const headingMatch = line.match(/^###\s+(.+)$/);
-    if (headingMatch) {
-      currentCode = getElectiveCode(headingMatch[1]);
-      if (currentCode && !data[currentCode]) {
-        data[currentCode] = {};
-      }
-      continue;
-    }
-
-    if (!currentCode) continue;
-
-    const tableRowMatch = line.match(/^\|\s*(\d{4})\s*\|/);
-    if (!tableRowMatch) continue;
-
-    const parts = line.split("|").map((p) => p.trim());
-    if (parts.length < 3) continue;
-
-    const year = Number(parts[1]);
-    if (!Number.isFinite(year) || year < MIN_CUTOFF_YEAR || year > MAX_CUTOFF_YEAR) continue;
-
-    const rows: CutoffRow[] = [];
-    for (let i = 0; i < LEVEL_COLUMNS.length; i++) {
-      const cell = parts[i + 3] ?? "";
-      const pct = parsePercentageCell(cell);
-      if (pct !== null) {
-        rows.push({ level: LEVEL_COLUMNS[i], minimumPercentage: pct });
-      }
-    }
-
-    if (rows.length > 0) {
-      data[currentCode][year] = normalizeRows(rows);
-    }
-  }
-
-  return data;
+  return parseHkdseMarkdown(
+    markdown,
+    /^###\s+(.+)$/,
+    (heading) => getElectiveCode(heading),
+  );
 }
 
 /**
