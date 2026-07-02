@@ -1,7 +1,8 @@
 'use client'
 
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
-import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import { Button } from "../components/ui/Button";
+import { Modal } from "../components/ui/Modal";
 
 interface ConfirmOptions {
   title: string;
@@ -39,16 +40,24 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   return (
     <ConfirmContext.Provider value={contextValue}>
       {children}
-      <ConfirmDialog
+      <Modal
         isOpen={pendingConfirm !== null}
+        onClose={() => closeConfirm(false)}
         title={pendingConfirm?.title ?? ""}
-        body={pendingConfirm?.body}
-        confirmLabel={pendingConfirm?.confirmLabel}
-        cancelLabel={pendingConfirm?.cancelLabel}
-        destructive={pendingConfirm?.destructive}
-        onCancel={() => closeConfirm(false)}
-        onConfirm={() => closeConfirm(true)}
-      />
+        description={pendingConfirm?.body}
+      >
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="outline" onClick={() => closeConfirm(false)}>
+            {pendingConfirm?.cancelLabel ?? "Cancel"}
+          </Button>
+          <Button
+            variant={pendingConfirm?.destructive ? "danger" : "primary"}
+            onClick={() => closeConfirm(true)}
+          >
+            {pendingConfirm?.confirmLabel ?? "Confirm"}
+          </Button>
+        </div>
+      </Modal>
     </ConfirmContext.Provider>
   );
 }
