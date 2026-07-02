@@ -11,58 +11,50 @@ const KEYS = {
 
 const isClient = typeof window !== "undefined";
 
-function safeParseArray<T>(raw: string | null): T[] {
-  if (!raw) {
-    return [];
-  }
-
+function getJSON<T>(key: string, fallback: T): T {
+  if (!isClient) return fallback;
+  const raw = localStorage.getItem(key);
+  if (!raw) return fallback;
   try {
-    const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? (parsed as T[]) : [];
+    return JSON.parse(raw) as T;
   } catch {
-    return [];
+    return fallback;
   }
 }
 
-function writeArray<T>(key: string, value: T[]): void {
+function setJSON(key: string, value: unknown): void {
   if (!isClient) return;
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-export function getGuestSubjects(): Subject[] {
-  if (!isClient) return [];
-  return safeParseArray<Subject>(localStorage.getItem(KEYS.subjects));
-}
+const getArray = <T>(key: string): T[] => getJSON<T[]>(key, []);
 
+export function getGuestSubjects(): Subject[] {
+  return getArray<Subject>(KEYS.subjects);
+}
 export function setGuestSubjects(subjects: Subject[]): void {
-  writeArray(KEYS.subjects, subjects);
+  setJSON(KEYS.subjects, subjects);
 }
 
 export function getGuestPlannerCells(): PlannerCell[] {
-  if (!isClient) return [];
-  return safeParseArray<PlannerCell>(localStorage.getItem(KEYS.plannerCells));
+  return getArray<PlannerCell>(KEYS.plannerCells);
 }
-
 export function setGuestPlannerCells(cells: PlannerCell[]): void {
-  writeArray(KEYS.plannerCells, cells);
+  setJSON(KEYS.plannerCells, cells);
 }
 
 export function getGuestPastPapers(): PastPaperAttempt[] {
-  if (!isClient) return [];
-  return safeParseArray<PastPaperAttempt>(localStorage.getItem(KEYS.pastPapers));
+  return getArray<PastPaperAttempt>(KEYS.pastPapers);
 }
-
 export function setGuestPastPapers(attempts: PastPaperAttempt[]): void {
-  writeArray(KEYS.pastPapers, attempts);
+  setJSON(KEYS.pastPapers, attempts);
 }
 
 export function getGuestStudyGoals(): StudyGoal[] {
-  if (!isClient) return [];
-  return safeParseArray<StudyGoal>(localStorage.getItem(KEYS.studyGoals));
+  return getArray<StudyGoal>(KEYS.studyGoals);
 }
-
 export function setGuestStudyGoals(goals: StudyGoal[]): void {
-  writeArray(KEYS.studyGoals, goals);
+  setJSON(KEYS.studyGoals, goals);
 }
 
 export function setGuestMode(enabled: boolean): void {
@@ -86,9 +78,7 @@ export function hasGuestData(): boolean {
 
 export function clearAllGuestData(): void {
   if (!isClient) return;
-  localStorage.removeItem(KEYS.subjects);
-  localStorage.removeItem(KEYS.plannerCells);
-  localStorage.removeItem(KEYS.pastPapers);
-  localStorage.removeItem(KEYS.studyGoals);
-  localStorage.removeItem(KEYS.guestMode);
+  for (const key of Object.values(KEYS)) {
+    localStorage.removeItem(key);
+  }
 }
