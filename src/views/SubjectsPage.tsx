@@ -2,7 +2,6 @@
 
 import { type FormEvent, useState } from "react";
 import type { Subject } from "../types";
-import { getSubjectGradientStyle } from "../utils/subjectStyles";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
@@ -19,6 +18,7 @@ import {
 } from "../lib/api/subjectsApi";
 import { useData } from "../contexts/DataContext";
 import { getGuestPastPapers, getGuestStudyGoals } from "../lib/localStorageService";
+import type { CSSProperties } from "react";
 
 
 interface SubjectDraft {
@@ -26,6 +26,20 @@ interface SubjectDraft {
   shortCode: string;
   baseColor: string;
   paperLabels: string[];
+}
+
+function subjectGradientStyle(baseColor: string): CSSProperties {
+  const normalized = baseColor.replace("#", "");
+  const full = normalized.length === 3
+    ? normalized.split("").map((char) => `${char}${char}`).join("")
+    : normalized;
+  const numeric = Number.parseInt(full, 16);
+  const r = (numeric >> 16) & 255;
+  const g = (numeric >> 8) & 255;
+  const b = numeric & 255;
+  return {
+    background: `linear-gradient(135deg, rgba(${r}, ${g}, ${b}, 0.22), rgba(${r}, ${g}, ${b}, 0.12))`,
+  };
 }
 
 const PRESET_COLORS = [
@@ -250,7 +264,7 @@ export function SubjectsPage() {
                 key={subject.id} 
                 variant="hairline" 
                 padding="sm"
-                style={getSubjectGradientStyle(subject)}
+                style={subjectGradientStyle(subject.baseColor)}
                 className="group relative transition-all duration-300 hover:bg-surface hover:shadow-soft"
               >
                 {editingSubjectId === subject.id ? (
