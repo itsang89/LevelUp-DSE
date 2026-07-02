@@ -12,7 +12,7 @@ import {
 } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { CutoffData, PlannerCell, Subject } from "../types";
-import { DEFAULT_SUBJECTS } from "../constants";
+import { DEFAULT_SUBJECTS } from "../subjectCatalog";
 import { loadCutoffData } from "../utils/dseLevelEstimator";
 import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
 import { listSubjects, seedDefaultSubjects } from "../lib/api/subjectsApi";

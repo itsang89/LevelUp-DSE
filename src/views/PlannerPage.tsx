@@ -2,7 +2,8 @@
 
 import { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
 import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { CORE_SUBJECT_CODES, ELECTIVE_GROUPS, MS_PER_WEEK, PLANNER_SESSIONS, PRESET_SUBJECTS, createSubjectId } from "../constants";
+import { CORE_SUBJECT_CODES, ELECTIVE_GROUPS, MS_PER_WEEK, PLANNER_SESSIONS, createSubjectId } from "../constants";
+import { PRESET_SUBJECTS } from "../subjectCatalog";
 import type { PlannerTask, Subject } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
 import { PlannerGrid } from "../components/PlannerGrid";

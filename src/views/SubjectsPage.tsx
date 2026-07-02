@@ -8,7 +8,8 @@ import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
 import { TagInput } from "../components/ui/TagInput";
 import { Select } from "../components/ui/Select";
-import { DEFAULT_SUBJECT_COLOR, MAX_SHORT_CODE_LENGTH, PRESET_SUBJECTS, createSubjectId } from "../constants";
+import { DEFAULT_SUBJECT_COLOR, MAX_SHORT_CODE_LENGTH, createSubjectId } from "../constants";
+import { PRESET_SUBJECTS } from "../subjectCatalog";
 import {
   createSubject,
   deleteSubjectWithCascade,

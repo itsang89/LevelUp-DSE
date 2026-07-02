@@ -1,6 +1,5 @@
-import type { PlannerSessionTemplate, Subject, TimetableEntry } from "./types";
+import type { PlannerSessionTemplate, TimetableEntry } from "./types";
 import { attachFormalPaperLabels, formatTimetablePaperLine } from "./timetableFormalLabels";
-import { DEFAULT_SUBJECTS as BUILT_DEFAULT_SUBJECTS, PRESET_SUBJECTS as BUILT_PRESET_SUBJECTS } from "./subjectCatalog";
 
 export const MS_PER_DAY = 86_400_000;
 export const MS_PER_WEEK = MS_PER_DAY * 7;
@@ -11,12 +10,6 @@ export const FALLBACK_SUBJECT_COLOR = "#666666";
 export const MIN_PASSWORD_LENGTH = 6;
 /** Allow hyphenated codes aligned with subject_weighting.json (e.g. CHI-HIST). */
 export const MAX_SHORT_CODE_LENGTH = 12;
-
-/** Derived from `subject_weighting.json` + `src/data/subjectExtras.json`. */
-export const DEFAULT_SUBJECTS: Subject[] = BUILT_DEFAULT_SUBJECTS;
-
-/** Preset picker list — same source as defaults + extras (e.g. THS). */
-export const PRESET_SUBJECTS: Omit<Subject, "id">[] = BUILT_PRESET_SUBJECTS;
 
 export { formatTimetablePaperLine };
 
