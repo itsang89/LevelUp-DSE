@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import type { PastPaperAttempt } from "../types";
 import { listPastPaperAttempts } from "../lib/api/pastPapersApi";
+import { getGuestPastPapers } from "../lib/localStorageService";
 import { FALLBACK_SUBJECT_COLOR } from "../constants";
 import { Card } from "../components/ui/Card";
 import { useData } from "../contexts/DataContext";
@@ -21,7 +22,7 @@ import { useData } from "../contexts/DataContext";
 const LEVEL_LABELS = ["U", "1", "2", "3", "4", "5", "5*", "5**"];
 
 export function AnalyticsPage() {
-  const { userId, isGuest, subjects, usingGenericFallback, getGuestPastPapersData } = useData();
+  const { userId, isGuest, subjects, usingGenericFallback } = useData();
   const uid = userId ?? "guest";
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
@@ -32,7 +33,7 @@ export function AnalyticsPage() {
 
   useEffect(() => {
     if (isGuest) {
-      setAttempts(getGuestPastPapersData());
+      setAttempts(getGuestPastPapers());
       setError(null);
       setLoading(false);
       return;
@@ -56,7 +57,7 @@ export function AnalyticsPage() {
     return () => {
       isMounted = false;
     };
-  }, [getGuestPastPapersData, isGuest, userId]);
+  }, [getGuestPastPapers, isGuest, userId]);
 
   const subjectsById = useMemo(
     () => Object.fromEntries(subjects.map((s) => [s.id, s])),

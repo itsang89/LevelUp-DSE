@@ -18,6 +18,7 @@ import {
   updatePastPaperAttempt,
 } from "../lib/api/pastPapersApi";
 import { formatIsoDate, addDays } from "../utils/dateHelpers";
+import { getGuestPastPapers, setGuestPastPapers } from "../lib/localStorageService";
 import {
   exportPastPapersCsv,
   exportPastPapersJson,
@@ -45,8 +46,6 @@ export function PastPapersPage() {
     subjects,
     cutoffData,
     usingGenericFallback,
-    getGuestPastPapersData,
-    persistGuestPastPapers,
   } = useData();
   const uid = userId ?? "guest";
   const [attempts, setAttempts] = useState<PastPaperAttempt[]>([]);
@@ -67,7 +66,7 @@ export function PastPapersPage() {
 
   useEffect(() => {
     if (isGuest) {
-      setAttempts(getGuestPastPapersData());
+      setAttempts(getGuestPastPapers());
       setDataError(null);
       setIsLoading(false);
       return;
@@ -93,12 +92,12 @@ export function PastPapersPage() {
     return () => {
       isMounted = false;
     };
-  }, [getGuestPastPapersData, isGuest, userId]);
+  }, [getGuestPastPapers, isGuest, userId]);
 
   useEffect(() => {
     const handleSubjectDeleted = () => {
       if (isGuest) {
-        setAttempts(getGuestPastPapersData());
+        setAttempts(getGuestPastPapers());
         return;
       }
       listPastPaperAttempts(uid)
@@ -111,7 +110,7 @@ export function PastPapersPage() {
     };
     window.addEventListener("subject-deleted", handleSubjectDeleted);
     return () => window.removeEventListener("subject-deleted", handleSubjectDeleted);
-  }, [getGuestPastPapersData, isGuest, userId]);
+  }, [getGuestPastPapers, isGuest, userId]);
 
   const subjectsById = useMemo(
     () => Object.fromEntries(subjects.map((subject) => [subject.id, subject])),
@@ -215,7 +214,7 @@ export function PastPapersPage() {
         );
         setAttempts(nextAttempts);
         if (isGuest) {
-          persistGuestPastPapers(nextAttempts);
+          setGuestPastPapers(nextAttempts);
         }
       } else {
         const newAttempt: PastPaperAttempt = {
@@ -237,7 +236,7 @@ export function PastPapersPage() {
         const nextAttempts = [...attempts, newAttempt];
         setAttempts(nextAttempts);
         if (isGuest) {
-          persistGuestPastPapers(nextAttempts);
+          setGuestPastPapers(nextAttempts);
         }
       }
       setDataError(null);
@@ -271,7 +270,7 @@ export function PastPapersPage() {
       const nextAttempts = attempts.filter((attempt) => attempt.id !== attemptId);
       setAttempts(nextAttempts);
       if (isGuest) {
-        persistGuestPastPapers(nextAttempts);
+        setGuestPastPapers(nextAttempts);
       }
       setDataError(null);
       addToast({ variant: "success", message: "Attempt deleted." });

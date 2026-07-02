@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Session } from "@supabase/supabase-js";
-import type { CutoffData, PlannerCell, PastPaperAttempt, Subject } from "../types";
+import type { CutoffData, PlannerCell, Subject } from "../types";
 import { DEFAULT_SUBJECTS } from "../constants";
 import { loadCutoffData } from "../utils/dseLevelEstimator";
 import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
@@ -21,7 +21,7 @@ import {
   createPastPaperAttempt,
   updatePastPaperAttempt,
 } from "../lib/api/pastPapersApi";
-import { type StudyGoal, upsertStudyGoal } from "../lib/api/goalsApi";
+import { upsertStudyGoal } from "../lib/api/goalsApi";
 import {
   clearAllGuestData,
   getGuestPastPapers,
@@ -31,9 +31,7 @@ import {
   hasGuestData,
   isGuestMode,
   setGuestMode,
-  setGuestPastPapers,
   setGuestPlannerCells,
-  setGuestStudyGoals,
   setGuestSubjects,
 } from "../lib/localStorageService";
 
@@ -54,11 +52,6 @@ interface DataContextValue {
   appError: string | null;
   startGuestMode: () => void;
   stopGuestMode: () => void;
-  persistGuestPastPapers: (attempts: PastPaperAttempt[]) => void;
-  persistGuestStudyGoals: (goals: StudyGoal[]) => void;
-  getGuestPastPapersData: () => PastPaperAttempt[];
-  getGuestStudyGoalsData: () => StudyGoal[];
-  hasGuestStoredData: () => boolean;
   migrateGuestDataToAccount: (targetUserId: string) => Promise<void>;
 }
 
@@ -98,18 +91,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setGuestMode(false);
     setGuestEnabled(false);
   }, []);
-
-  const persistGuestPastPapers = useCallback((attempts: PastPaperAttempt[]) => {
-    setGuestPastPapers(attempts);
-  }, []);
-
-  const persistGuestStudyGoals = useCallback((goals: StudyGoal[]) => {
-    setGuestStudyGoals(goals);
-  }, []);
-
-  const getGuestPastPapersData = useCallback(() => getGuestPastPapers(), []);
-  const getGuestStudyGoalsData = useCallback(() => getGuestStudyGoals(), []);
-  const hasGuestStoredData = useCallback(() => hasGuestData(), []);
 
   useEffect(() => {
     let isMounted = true;
@@ -327,11 +308,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       appError,
       startGuestMode,
       stopGuestMode,
-      persistGuestPastPapers,
-      persistGuestStudyGoals,
-      getGuestPastPapersData,
-      getGuestStudyGoalsData,
-      hasGuestStoredData,
       migrateGuestDataToAccount,
     }),
     [
@@ -341,13 +317,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       cutoffData,
       dataWarnings,
       dismissDataWarning,
-      getGuestPastPapersData,
-      getGuestStudyGoalsData,
-      hasGuestStoredData,
       isGuest,
       migrateGuestDataToAccount,
-      persistGuestPastPapers,
-      persistGuestStudyGoals,
       session,
       startGuestMode,
       stopGuestMode,

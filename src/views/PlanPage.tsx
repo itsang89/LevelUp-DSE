@@ -24,6 +24,7 @@ import { Input } from "../components/ui/Input";
 import { ErrorBanner } from "../components/ErrorBanner";
 import { listStudyGoals, upsertStudyGoal, type StudyGoal } from "../lib/api/goalsApi";
 import { listPastPaperAttempts } from "../lib/api/pastPapersApi";
+import { getGuestPastPapers, getGuestStudyGoals, setGuestStudyGoals } from "../lib/localStorageService";
 
 import { estimateDseLevel } from "../utils/dseLevelEstimator";
 import { useData } from "../contexts/DataContext";
@@ -76,9 +77,6 @@ export function PlanPage() {
     subjects,
     cells,
     cutoffData,
-    getGuestPastPapersData,
-    getGuestStudyGoalsData,
-    persistGuestStudyGoals,
   } = useData();
   const uid = userId ?? "guest";
   const targetLevelsStorageKey = isGuest ? "plan-targets-guest" : `plan-targets-${uid}`;
@@ -103,8 +101,8 @@ export function PlanPage() {
 
   useEffect(() => {
     if (isGuest) {
-      setGoals(getGuestStudyGoalsData());
-      setAttempts(getGuestPastPapersData());
+      setGoals(getGuestStudyGoals());
+      setAttempts(getGuestPastPapers());
       setDataError(null);
       setLoading(false);
       return;
@@ -130,7 +128,7 @@ export function PlanPage() {
       }
     });
     return () => { isMounted = false; };
-  }, [getGuestPastPapersData, getGuestStudyGoalsData, isGuest, userId]);
+  }, [getGuestPastPapers, getGuestStudyGoals, isGuest, userId]);
 
   const handleSetTargetLevel = (subjectId: string, level: string) => {
     const next = { ...targetLevels, [subjectId]: level };
@@ -153,13 +151,13 @@ export function PlanPage() {
           const next = [...prev];
           next[idx] = updated;
           if (isGuest) {
-            persistGuestStudyGoals(next);
+            setGuestStudyGoals(next);
           }
           return next;
         }
         const next = [...prev, updated];
         if (isGuest) {
-          persistGuestStudyGoals(next);
+          setGuestStudyGoals(next);
         }
         return next;
       });

@@ -98,6 +98,7 @@ beforeEach(() => {
 import { DataProvider, useData } from "./DataContext";
 import {
   clearAllGuestData,
+  hasGuestData,
   setGuestPastPapers,
   setGuestPlannerCells,
   setGuestStudyGoals,
@@ -256,7 +257,7 @@ describe("DataProvider.migrateGuestDataToAccount", () => {
     });
 
     // hasGuestData should now be false
-    expect(api.hasGuestStoredData()).toBe(false);
+    expect(hasGuestData()).toBe(false);
   });
 
   it("is a no-op on the second concurrent call (migrationInProgressRef guard)", async () => {

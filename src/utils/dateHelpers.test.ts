@@ -9,7 +9,6 @@ import {
   isDateInWeek,
   parseIsoDate,
   startOfWeekSunday,
-  subDays,
 } from "./dateHelpers";
 
 describe("dateHelpers", () => {
@@ -70,10 +69,10 @@ describe("startOfWeekSunday resets to the previous Sunday", () => {
   });
 });
 
-describe("subDays / addWeeks", () => {
-  it("subDays(date, 1) returns the previous day", () => {
+describe("addWeeks / addDays negative", () => {
+  it("addDays(date, -1) returns the previous day", () => {
     const d = new Date(2026, 3, 2);
-    expect(formatIsoDate(subDays(d, 1))).toBe("2026-04-01");
+    expect(formatIsoDate(addDays(d, -1))).toBe("2026-04-01");
   });
 
   it("addWeeks(date, 1) advances by 7 days", () => {

@@ -6,6 +6,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
+import { hasGuestData } from "../lib/localStorageService";
 import { useData } from "../contexts/DataContext";
 
 export function LoginPage() {
@@ -23,7 +24,6 @@ export function LoginPage() {
   const {
     startGuestMode,
     stopGuestMode,
-    hasGuestStoredData,
     migrateGuestDataToAccount,
   } = useData();
   const redirectTo = searchParams.get("from") || "/planner";
@@ -35,7 +35,7 @@ export function LoginPage() {
   }, [searchParams]);
 
   const handlePostAuth = async (authenticatedUserId: string): Promise<void> => {
-    if (hasGuestStoredData()) {
+    if (hasGuestData()) {
       try {
         setIsMigrating(true);
         await migrateGuestDataToAccount(authenticatedUserId);

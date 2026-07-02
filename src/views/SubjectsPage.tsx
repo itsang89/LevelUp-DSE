@@ -18,6 +18,7 @@ import {
   type SubjectDeletionImpact,
 } from "../lib/api/subjectsApi";
 import { useData } from "../contexts/DataContext";
+import { getGuestPastPapers, getGuestStudyGoals } from "../lib/localStorageService";
 
 
 interface SubjectDraft {
@@ -45,7 +46,7 @@ const PRESET_COLORS = [
 ];
 
 export function SubjectsPage() {
-  const { userId, isGuest, subjects, setSubjects, cells, getGuestPastPapersData, getGuestStudyGoalsData } = useData();
+  const { userId, isGuest, subjects, setSubjects, cells } = useData();
   const uid = userId ?? "guest";
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedPresetCode, setSelectedPresetCode] = useState<string>("");
@@ -199,8 +200,8 @@ export function SubjectsPage() {
       const impact = isGuest
         ? {
             plannerCellsCount: cells.filter((cell) => cell.task?.subjectId === subject.id).length,
-            pastPaperAttemptsCount: getGuestPastPapersData().filter((attempt) => attempt.subjectId === subject.id).length,
-            studyGoalsCount: getGuestStudyGoalsData().filter((goal) => goal.subjectId === subject.id).length,
+            pastPaperAttemptsCount: getGuestPastPapers().filter((attempt) => attempt.subjectId === subject.id).length,
+            studyGoalsCount: getGuestStudyGoals().filter((goal) => goal.subjectId === subject.id).length,
           }
         : await getSubjectDeletionImpact(uid, subject.id);
       setDeleteTarget({ subject, impact });
