@@ -33,7 +33,7 @@ type SortDirection = "asc" | "desc";
 type DateRangeFilter = "all" | "last30" | "last3months" | "custom";
 
 function createAttemptId(): string {
-  return `attempt-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  return `attempt-${crypto.randomUUID()}`;
 }
 
 export function PastPapersPage() {

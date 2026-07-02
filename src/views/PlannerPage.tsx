@@ -30,7 +30,7 @@ interface CellEditorState {
 }
 
 function createTaskId(): string {
-  return `task-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  return `task-${crypto.randomUUID()}`;
 }
 
 const LOAD_LIMIT = 12; // Maximum weeks in each direction before "Load More" button
