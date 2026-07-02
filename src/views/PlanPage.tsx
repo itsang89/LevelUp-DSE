@@ -22,7 +22,8 @@ import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
 import { ErrorBanner } from "../components/ErrorBanner";
-import { listStudyGoals, upsertStudyGoal, type StudyGoal } from "../lib/api/goalsApi";
+import { listStudyGoals, upsertStudyGoal } from "../lib/api/goalsApi";
+import type { StudyGoal } from "../types";
 import { listPastPaperAttempts } from "../lib/api/pastPapersApi";
 import { getGuestPastPapers, getGuestStudyGoals, setGuestStudyGoals } from "../lib/localStorageService";
 

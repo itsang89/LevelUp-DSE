@@ -1,16 +1,5 @@
+import type { StudyGoal } from "../../types";
 import { getSupabaseClient } from "../supabase";
-
-export interface StudyGoal {
-  id: string;
-  subjectId: string;
-  weeklyTarget: number;
-}
-
-interface StudyGoalRow {
-  id: string;
-  subject_id: string;
-  weekly_target: number;
-}
 
 export async function listStudyGoals(userId: string): Promise<StudyGoal[]> {
   const supabase = getSupabaseClient();
@@ -23,7 +12,7 @@ export async function listStudyGoals(userId: string): Promise<StudyGoal[]> {
     throw new Error(`Failed to list study goals: ${error.message}`);
   }
 
-  return ((data ?? []) as StudyGoalRow[]).map((row) => ({
+  return ((data ?? []) as Array<{ id: string; subject_id: string; weekly_target: number }>).map((row) => ({
     id: row.id,
     subjectId: row.subject_id,
     weeklyTarget: row.weekly_target,
@@ -57,9 +46,6 @@ export async function upsertStudyGoal(
     throw new Error("Failed to upsert study goal: no data returned");
   }
 
-  return {
-    id: (data as StudyGoalRow).id,
-    subjectId: (data as StudyGoalRow).subject_id,
-    weeklyTarget: (data as StudyGoalRow).weekly_target,
-  };
+  const row = data as { id: string; subject_id: string; weekly_target: number };
+  return { id: row.id, subjectId: row.subject_id, weeklyTarget: row.weekly_target };
 }

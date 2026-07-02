@@ -1,5 +1,4 @@
-import type { PastPaperAttempt, PlannerCell, Subject } from "../types";
-import type { StudyGoal } from "./api/goalsApi";
+import type { PastPaperAttempt, PlannerCell, StudyGoal, Subject } from "../types";
 
 const KEYS = {
   subjects: "guest_subjects",

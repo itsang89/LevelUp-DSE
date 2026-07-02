@@ -68,3 +68,9 @@ export interface TimetableEntry {
   /** When set, matches `subject_weighting.json` paper label for weighting / past papers. */
   paperFormalLabel?: string;
 }
+
+export interface StudyGoal {
+  id: string;
+  subjectId: string;
+  weeklyTarget: number;
+}
