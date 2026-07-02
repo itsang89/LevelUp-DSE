@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
 import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { MS_PER_WEEK, PLANNER_SESSIONS } from "../constants";
+import { CORE_SUBJECT_CODES, ELECTIVE_GROUPS, MS_PER_WEEK, PLANNER_SESSIONS, PRESET_SUBJECTS, createSubjectId } from "../constants";
 import type { PlannerTask, Subject } from "../types";
 import { addWeeks, formatWeekLabel, getWeekDays, startOfWeekSunday, formatIsoDate } from "../utils/dateHelpers";
 import { PlannerGrid } from "../components/PlannerGrid";
@@ -11,7 +11,6 @@ import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
-import { OnboardingStreamModal } from "../components/OnboardingStreamModal";
 import { deletePlannerCell, upsertPlannerCell } from "../lib/api/plannerApi";
 import { createSubject } from "../lib/api/subjectsApi";
 import {
@@ -22,7 +21,136 @@ import {
 } from "../utils/exportUtils";
 import { useData } from "../contexts/DataContext";
 
-const CORE_CODES = ["CHI", "ENG", "MATH", "C&SD"];
+const CORE_CODES = CORE_SUBJECT_CODES;
+
+interface OnboardingModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  existingSubjectCodes: string[];
+  onAddSubjects: (subjects: Subject[]) => Promise<void>;
+}
+
+function OnboardingStreamModal({
+  isOpen,
+  onClose,
+  existingSubjectCodes,
+  onAddSubjects,
+}: OnboardingModalProps) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
+
+  const presetsByCode = new Map(PRESET_SUBJECTS.map((p) => [p.shortCode, p]));
+
+  function toggle(code: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+  }
+
+  async function handleAdd() {
+    const toAdd: Subject[] = [];
+    for (const code of selected) {
+      if (existingSubjectCodes.includes(code)) continue;
+      const preset = presetsByCode.get(code);
+      if (!preset) continue;
+      toAdd.push({ id: createSubjectId(code), ...preset });
+    }
+    if (toAdd.length === 0) {
+      onClose();
+      return;
+    }
+    try {
+      setIsSaving(true);
+      await onAddSubjects(toAdd);
+      setSelected(new Set());
+      onClose();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function handleSkip() {
+    setSelected(new Set());
+    onClose();
+  }
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={handleSkip}
+      title="Add Your Electives"
+      description="Pick the subjects you're taking. You can always add or remove them later in Settings."
+    >
+      <div className="space-y-6">
+        {ELECTIVE_GROUPS.map((group) => {
+          const groupSubjects = group.codes
+            .map((code) => presetsByCode.get(code))
+            .filter(Boolean) as (typeof PRESET_SUBJECTS)[number][];
+          if (groupSubjects.length === 0) return null;
+          return (
+            <div key={group.label}>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60 mb-3">
+                {group.label}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {groupSubjects.map((preset) => {
+                  const code = preset.shortCode;
+                  const isExisting = existingSubjectCodes.includes(code) && !CORE_CODES.includes(code);
+                  const isChecked = selected.has(code) || isExisting;
+                  return (
+                    <label
+                      key={code}
+                      className={`flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition-all select-none ${
+                        isExisting
+                          ? "border-border-hairline opacity-40 cursor-not-allowed"
+                          : isChecked
+                          ? "border-primary/30 bg-primary/5"
+                          : "border-border-hairline hover:bg-muted/30"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        disabled={isExisting}
+                        onChange={() => !isExisting && toggle(code)}
+                        className="accent-primary shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-primary truncate">{preset.name}</div>
+                        <div className="text-[10px] text-muted-foreground opacity-60">{code}</div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        <div className="flex flex-col gap-3 pt-2">
+          <Button
+            className="w-full rounded-full text-[10px] font-black uppercase tracking-widest"
+            onClick={handleAdd}
+            disabled={isSaving || selected.size === 0}
+          >
+            {isSaving ? "Adding..." : `Add ${selected.size > 0 ? selected.size : ""} Subject${selected.size !== 1 ? "s" : ""}`}
+          </Button>
+          <button
+            type="button"
+            onClick={handleSkip}
+            disabled={isSaving}
+            className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50 hover:opacity-80 transition-opacity"
+          >
+            Skip — I'll add subjects manually
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
 
 interface CellEditorState {
   date: string;

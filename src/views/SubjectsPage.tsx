@@ -9,7 +9,7 @@ import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
 import { TagInput } from "../components/ui/TagInput";
 import { Select } from "../components/ui/Select";
-import { DEFAULT_SUBJECT_COLOR, MAX_SHORT_CODE_LENGTH, PRESET_SUBJECTS } from "../constants";
+import { DEFAULT_SUBJECT_COLOR, MAX_SHORT_CODE_LENGTH, PRESET_SUBJECTS, createSubjectId } from "../constants";
 import {
   createSubject,
   deleteSubjectWithCascade,
@@ -26,10 +26,6 @@ interface SubjectDraft {
   shortCode: string;
   baseColor: string;
   paperLabels: string[];
-}
-
-function createSubjectId(shortCode: string): string {
-  return shortCode.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
 const PRESET_COLORS = [

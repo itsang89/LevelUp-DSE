@@ -97,3 +97,19 @@ export const PLANNER_SESSIONS: PlannerSessionTemplate[] = [
   { id: "s2b", label: "Session 3", timeRange: "16:30-19:00" },
   { id: "s3", label: "Session 4", timeRange: "20:00-23:00" },
 ];
+
+/** Default core subjects seeded for every new user (CHI / ENG / MATH / C&SD). */
+export const CORE_SUBJECT_CODES: string[] = ["CHI", "ENG", "MATH", "C&SD"];
+
+/** Subject-code groups shown in the onboarding elective picker. */
+export const ELECTIVE_GROUPS: { label: string; codes: string[] }[] = [
+  { label: "Sciences", codes: ["BIO", "CHEM", "PHY", "M1", "M2"] },
+  { label: "Humanities", codes: ["HIST", "GEOG", "CHI-HIST", "CHI-LIT", "ENG-LIT", "ERS"] },
+  { label: "Business & Technology", codes: ["ECON", "BAFS", "ICT", "DAT", "TL", "THS"] },
+  { label: "Arts & Health", codes: ["VA", "MUSIC", "PE", "HMSC"] },
+];
+
+/** Normalises a subject shortCode into a stable lowercase storage id. */
+export function createSubjectId(shortCode: string): string {
+  return shortCode.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
