@@ -29,8 +29,15 @@ interface PastPaperFormProps {
   onCancel?: () => void;
 }
 
-function buildInitialValues(initialValues?: Partial<PastPaperAttempt>): PastPaperFormValues {
-  return {
+export function PastPaperForm({
+  subjects,
+  cutoffData,
+  initialValues,
+  onSubmit,
+  submitLabel,
+  onCancel,
+}: PastPaperFormProps) {
+  const [values, setValues] = useState<PastPaperFormValues>(() => ({
     subjectId: initialValues?.subjectId ?? "",
     examYear: initialValues?.examYear ? String(initialValues.examYear) : String(new Date().getFullYear()),
     paperLabel: initialValues?.paperLabel ?? "",
@@ -40,18 +47,7 @@ function buildInitialValues(initialValues?: Partial<PastPaperAttempt>): PastPape
     isDse: initialValues?.isDse ?? true,
     manualGrade: initialValues?.estimatedLevel ?? "5",
     notes: initialValues?.notes ?? "",
-  };
-}
-
-export function PastPaperForm({
-  subjects,
-  cutoffData,
-  initialValues,
-  onSubmit,
-  submitLabel,
-  onCancel,
-}: PastPaperFormProps) {
-  const [values, setValues] = useState<PastPaperFormValues>(() => buildInitialValues(initialValues));
+  }));
   const [error, setError] = useState<string | null>(null);
 
   const selectedSubject = subjects.find((s) => s.id === values.subjectId);

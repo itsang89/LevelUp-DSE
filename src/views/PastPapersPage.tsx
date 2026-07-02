@@ -17,7 +17,7 @@ import {
   listPastPaperAttempts,
   updatePastPaperAttempt,
 } from "../lib/api/pastPapersApi";
-import { formatIsoDate, subDays } from "../utils/dateHelpers";
+import { formatIsoDate, addDays } from "../utils/dateHelpers";
 import {
   exportPastPapersCsv,
   exportPastPapersJson,
@@ -155,10 +155,10 @@ export function PastPapersPage() {
     if (dateRangeFilter !== "all") {
       const today = formatIsoDate(new Date());
       if (dateRangeFilter === "last30") {
-        const cutoff = formatIsoDate(subDays(new Date(), 30));
+        const cutoff = formatIsoDate(addDays(new Date(), -30));
         list = list.filter((a) => a.date >= cutoff && a.date <= today);
       } else if (dateRangeFilter === "last3months") {
-        const cutoff = formatIsoDate(subDays(new Date(), 90));
+        const cutoff = formatIsoDate(addDays(new Date(), -90));
         list = list.filter((a) => a.date >= cutoff && a.date <= today);
       } else if (dateRangeFilter === "custom" && customFromDate && customToDate) {
         list = list.filter((a) => a.date >= customFromDate && a.date <= customToDate);

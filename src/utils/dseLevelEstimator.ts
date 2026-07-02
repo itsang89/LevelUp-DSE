@@ -4,7 +4,9 @@ import type {
   CutoffRow,
   DseLevel,
 } from "../types";
-import { MAX_CUTOFF_YEAR, MIN_CUTOFF_YEAR } from "../constants";
+
+const MIN_CUTOFF_YEAR = 2012;
+const MAX_CUTOFF_YEAR = 2035;
 
 const LEVEL_ORDER: DseLevel[] = ["5**", "5*", "5", "4", "3", "2", "1"];
 

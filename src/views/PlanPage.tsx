@@ -9,7 +9,7 @@ import {
   Tooltip as RechartsTooltip 
 } from "recharts";
 import type { Subject, PastPaperAttempt } from "../types";
-import { MS_PER_DAY, getCurrentExamYear, getTimetableForYear } from "../constants";
+import { MS_PER_DAY, getTimetableForYear } from "../constants";
 import { 
   formatIsoDate, 
   isDateInWeek, 
@@ -201,7 +201,7 @@ export function PlanPage() {
 
   // 1. Countdown Data
   const countdownData = useMemo(() => {
-    const examYear = getCurrentExamYear();
+    const examYear = new Date().getFullYear();
     const timetable = getTimetableForYear(examYear);
     if (!timetable) return [];
 

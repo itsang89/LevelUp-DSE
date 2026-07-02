@@ -8,9 +8,6 @@ export const MS_PER_WEEK = MS_PER_DAY * 7;
 export const DEFAULT_SUBJECT_COLOR = "#3b82f6";
 export const FALLBACK_SUBJECT_COLOR = "#666666";
 
-export const MIN_CUTOFF_YEAR = 2012;
-export const MAX_CUTOFF_YEAR = 2035;
-
 export const MIN_PASSWORD_LENGTH = 6;
 /** Allow hyphenated codes aligned with subject_weighting.json (e.g. CHI-HIST). */
 export const MAX_SHORT_CODE_LENGTH = 12;
@@ -88,11 +85,6 @@ const DSE_TIMETABLES: Record<number, TimetableEntry[]> = enrichAllTimetables(RAW
 
 /** HKEAA official timetable page — use when current year timetable not yet available. */
 export const HKEAA_TIMETABLE_URL = "https://www.hkeaa.edu.hk/en/hkdse/admin/exam_timetable/";
-
-/** Current exam year based on today's date (DSE exams run April–May). */
-export function getCurrentExamYear(): number {
-  return new Date().getFullYear();
-}
 
 /** Returns timetable for the given year, or null if not available. */
 export function getTimetableForYear(year: number): TimetableEntry[] | null {

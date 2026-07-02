@@ -5,26 +5,18 @@ import { useData } from "../contexts/DataContext";
 import {
   MS_PER_DAY,
   formatTimetablePaperLine,
-  getCurrentExamYear,
   getTimetableForYear,
   HKEAA_TIMETABLE_URL,
 } from "../constants";
-
-function getTodayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+import { formatIsoDate } from "../utils/dateHelpers";
 
 export function ExamTimetablePage() {
   const { subjects } = useData();
-  const [todayStr, setTodayStr] = useState(getTodayStr);
+  const [todayStr, setTodayStr] = useState(formatIsoDate(new Date()));
 
   // Refresh `today` when the tab regains focus (handles overnight stale date)
   const checkDate = useCallback(() => {
-    setTodayStr((prev) => {
-      const now = getTodayStr();
-      return now !== prev ? now : prev;
-    });
+    setTodayStr((prev) => (formatIsoDate(new Date()) !== prev ? formatIsoDate(new Date()) : prev));
   }, []);
 
   useEffect(() => {
@@ -34,7 +26,7 @@ export function ExamTimetablePage() {
 
   const { allExams, nextExam, nextExamPerSubject, stats, timetableYear, hasTimetable } = useMemo(() => {
     const today = new Date(`${todayStr}T00:00:00`);
-    const examYear = getCurrentExamYear();
+    const examYear = new Date().getFullYear();
     const timetable = getTimetableForYear(examYear);
 
     if (!timetable) {
