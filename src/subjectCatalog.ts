@@ -23,7 +23,7 @@ type ExtraSubject = {
 const FALLBACK_COLOR = "#64748b";
 
 /** Accent colors keyed by official `subjectCode` (covers weighting + extras). */
-export const SUBJECT_BASE_COLORS: Record<string, string> = {
+const SUBJECT_BASE_COLORS: Record<string, string> = {
   CHI: "#ef4444",
   ENG: "#3b82f6",
   MATH: "#10b981",

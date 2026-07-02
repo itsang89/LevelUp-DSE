@@ -2,8 +2,6 @@ import type { PlannerSessionTemplate, Subject, TimetableEntry } from "./types";
 import { attachFormalPaperLabels, formatTimetablePaperLine } from "./timetableFormalLabels";
 import { DEFAULT_SUBJECTS as BUILT_DEFAULT_SUBJECTS, PRESET_SUBJECTS as BUILT_PRESET_SUBJECTS } from "./subjectCatalog";
 
-export type { TimetableEntry };
-
 export const MS_PER_DAY = 86_400_000;
 export const MS_PER_WEEK = MS_PER_DAY * 7;
 
@@ -86,7 +84,7 @@ function enrichAllTimetables(raw: Record<number, TimetableEntry[]>): Record<numb
   return out;
 }
 
-export const DSE_TIMETABLES: Record<number, TimetableEntry[]> = enrichAllTimetables(RAW_DSE_TIMETABLES);
+const DSE_TIMETABLES: Record<number, TimetableEntry[]> = enrichAllTimetables(RAW_DSE_TIMETABLES);
 
 /** HKEAA official timetable page — use when current year timetable not yet available. */
 export const HKEAA_TIMETABLE_URL = "https://www.hkeaa.edu.hk/en/hkdse/admin/exam_timetable/";

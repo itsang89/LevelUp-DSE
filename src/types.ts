@@ -1,4 +1,4 @@
-export type SubjectId = string;
+type SubjectId = string;
 
 export interface Subject {
   id: SubjectId;
