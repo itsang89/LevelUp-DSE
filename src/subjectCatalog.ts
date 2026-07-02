@@ -4,7 +4,7 @@
  */
 import type { Subject } from "./types";
 import subjectWeightingJson from "../subject_weighting.json";
-import subjectExtrasJson from "./data/subjectExtras.json";
+import subjectExtrasJson from "./subjectExtras.json";
 
 type WeightingRow = {
   subjectCode: string;
