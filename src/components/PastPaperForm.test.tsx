@@ -27,7 +27,7 @@ const cutoffData: CutoffData = {
 };
 
 function getSelectForField(labelText: string): HTMLSelectElement {
-  const label = screen.getByText(labelText);
+  const label = screen.getByText(labelText, { selector: "label" });
   const wrapper = label.parentElement;
   const select = wrapper?.querySelector("select");
   if (!(select instanceof HTMLSelectElement)) {
@@ -37,7 +37,7 @@ function getSelectForField(labelText: string): HTMLSelectElement {
 }
 
 function getInputForField(labelText: string, type: string): HTMLInputElement {
-  const label = screen.getByText(labelText);
+  const label = screen.getByText(labelText, { selector: "label" });
   const wrapper = label.parentElement;
   const input = wrapper?.querySelector(`input[type="${type}"]`);
   if (!(input instanceof HTMLInputElement)) {

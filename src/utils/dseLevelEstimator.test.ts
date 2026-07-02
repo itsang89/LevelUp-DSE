@@ -4,6 +4,9 @@ import {
   estimateDseLevel,
   getMarksToNextLevel,
   hasSubjectCutoffData,
+  parseCutoffMarkdown,
+  parseHkdseCutoffMarkdown,
+  parseHkdseElectiveCutoffMarkdown,
   resolveCutoffSubjectKey,
   resolveCutoffYear,
 } from "./dseLevelEstimator";
@@ -98,5 +101,149 @@ describe("getMarksToNextLevel", () => {
   it("returns null at top level or without cutoffs", () => {
     expect(getMarksToNextLevel("CHI", 90, cutoffData, 2024, 100)).toBeNull();
     expect(getMarksToNextLevel("UNKNOWN", 60, cutoffData, 2024, 100)).toBeNull();
+  });
+});
+
+describe("parseHkdseCutoffMarkdown", () => {
+  it("parses section-numbered year tables keyed by short code", () => {
+    const md = `
+## 1. 中國語文 (Chinese Language)
+| 年份 | 滿分 | 5** | 5* | 5 | 4 | 3 | 2 |
+|------|------|-----|-----|---|---|---|---|
+| 2024 | 100  | 88 (88%) | 80 (80%) | 70 (70%) | 60 (60%) | 50 (50%) | 40 (40%) |
+`;
+    const data = parseHkdseCutoffMarkdown(md);
+    expect(data.CHI?.[2024]).toEqual([
+      { level: "5**", minimumPercentage: 88 },
+      { level: "5*", minimumPercentage: 80 },
+      { level: "5", minimumPercentage: 70 },
+      { level: "4", minimumPercentage: 60 },
+      { level: "3", minimumPercentage: 50 },
+      { level: "2", minimumPercentage: 40 },
+    ]);
+  });
+
+  it("drops rows with em-dash or N/A cells", () => {
+    const md = `
+## 1. 中國語文
+| 年份 | 滿分 | 5** | 5* | 5 | 4 | 3 | 2 |
+|------|------|-----|-----|---|---|---|---|
+| 2024 | 100  | — | 80 (80%) | — | 60 (60%) | N/A | — |
+`;
+    const data = parseHkdseCutoffMarkdown(md);
+    expect(data.CHI?.[2024]).toEqual([
+      { level: "5*", minimumPercentage: 80 },
+      { level: "4", minimumPercentage: 60 },
+    ]);
+  });
+
+  it("drops rows with year outside MIN..MAX bounds", () => {
+    const md = `
+## 1. 中國語文
+| 年份 | 滿分 | 5** | 5* | 5 | 4 | 3 | 2 |
+|------|------|-----|-----|---|---|---|---|
+| 1999 | 100  | 90 (90%) | 80 (80%) | 70 (70%) | 60 (60%) | 50 (50%) | 40 (40%) |
+| 2024 | 100  | 90 (90%) | 80 (80%) | 70 (70%) | 60 (60%) | 50 (50%) | 40 (40%) |
+`;
+    const data = parseHkdseCutoffMarkdown(md);
+    expect(Object.keys(data.CHI ?? {})).toEqual(["2024"]);
+  });
+
+  it("ignores unknown section numbers", () => {
+    const md = `
+## 99. Not A Real Subject
+| 年份 | 滿分 | 5** | 5* | 5 | 4 | 3 | 2 |
+|------|------|-----|-----|---|---|---|---|
+| 2024 | 100  | 90 (90%) | 80 (80%) | 70 (70%) | 60 (60%) | 50 (50%) | 40 (40%) |
+`;
+    expect(parseHkdseCutoffMarkdown(md)).toEqual({});
+  });
+});
+
+describe("parseHkdseElectiveCutoffMarkdown", () => {
+  it("parses elective headings into canonical short codes", () => {
+    const md = `
+### Physics (PHY)
+| Year | Max | 5** | 5* | 5 | 4 | 3 | 2 |
+|------|-----|-----|-----|---|---|---|---|
+| 2024 | 100 | 80 (80%) | 70 (70%) | 60 (60%) | 50 (50%) | 40 (40%) | 30 (30%) |
+
+### BAFS
+| Year | Max | 5** | 5* | 5 | 4 | 3 | 2 |
+|------|-----|-----|-----|---|---|---|---|
+| 2024 | 100 | 85 (85%) | 75 (75%) | 65 (65%) | 55 (55%) | 45 (45%) | 35 (35%) |
+`;
+    const data = parseHkdseElectiveCutoffMarkdown(md);
+    expect(data.PHY?.[2024]?.[0]).toEqual({ level: "5**", minimumPercentage: 80 });
+    expect(data.BAFS?.[2024]?.[0]).toEqual({ level: "5**", minimumPercentage: 85 });
+  });
+
+  it("returns null for an unrecognised elective heading", () => {
+    const md = `
+### Made Up Subject (XYZ)
+| Year | Max | 5** | 5* | 5 | 4 | 3 | 2 |
+|------|-----|-----|-----|---|---|---|---|
+| 2024 | 100 | 90 (90%) | 80 (80%) | 70 (70%) | 60 (60%) | 50 (50%) | 40 (40%) |
+`;
+    expect(parseHkdseElectiveCutoffMarkdown(md)).toEqual({});
+  });
+});
+
+describe("parseCutoffMarkdown (legacy)", () => {
+  it("puts legacy tables under a synthetic year 0 key", () => {
+    const md = `
+## Chinese Language (CHI)
+| Level | Minimum % |
+|-------|-----------|
+| 5**   | 88 |
+| 5*    | 80 |
+| 5     | 70 |
+`;
+    const data = parseCutoffMarkdown(md);
+    expect(data.CHI?.[0]).toEqual([
+      { level: "5**", minimumPercentage: 88 },
+      { level: "5*", minimumPercentage: 80 },
+      { level: "5", minimumPercentage: 70 },
+    ]);
+  });
+
+  it("returns empty object when no rows are parsed", () => {
+    const md = "## Chinese (CHI)\nNo table here.\n";
+    expect(parseCutoffMarkdown(md)).toEqual({});
+  });
+});
+
+describe("estimateDseLevel edge cases", () => {
+  it("returns null when cutoffData is empty (no generic fallback)", () => {
+    expect(estimateDseLevel("CHI", 80, {})).toBeNull();
+  });
+
+  it("uses current year when examYear is omitted", () => {
+    const thisYear = new Date().getFullYear();
+    const dataWithThisYear: CutoffData = {
+      CHI: {
+        [thisYear]: [
+          { level: "5**", minimumPercentage: 90 },
+          { level: "5*", minimumPercentage: 80 },
+          { level: "5", minimumPercentage: 70 },
+          { level: "4", minimumPercentage: 60 },
+          { level: "3", minimumPercentage: 50 },
+          { level: "2", minimumPercentage: 40 },
+        ],
+      },
+    };
+    expect(estimateDseLevel("CHI", 85, dataWithThisYear)).toBe("5*");
+  });
+});
+
+describe("getMarksToNextLevel edge cases", () => {
+  it("returns null when percentageGap is not positive", () => {
+    // 88 hits 5** band; no positive gap
+    expect(getMarksToNextLevel("CHI", 88, cutoffData, 2024, 100)).toBeNull();
+  });
+
+  it("scales marksGap by totalMarks", () => {
+    const gap = getMarksToNextLevel("CHI", 64, cutoffData, 2024, 200);
+    expect(gap?.marksGap).toBeCloseTo(12); // 6% of 200
   });
 });
